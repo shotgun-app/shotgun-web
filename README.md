@@ -1,73 +1,157 @@
-# .
+# shotgun-web
 
-This template should help get you started developing with Vue 3 in Vite.
+Web client for **Shotgun**, a carpooling app: drivers publish trips they are
+driving anyway, passengers book the empty seats.
 
-## Recommended IDE Setup
+This repo is the Vue 3 front end. The backend lives in a sibling repo,
+[`../shotgun-api`](../shotgun-api) (Go), and is **not wired up yet** - the front
+end currently runs against an in-memory mock.
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## Status
 
-## Recommended Browser Setup
+Sprint scope is authentication only:
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+- `/` - public landing page: photographic hero on the left, login/register on the right.
+- `/app` - protected area; visiting it logged out redirects to `/`.
+- `/app/profile` - placeholder profile page.
+- Top nav with a user dropdown (My profile, Log out).
 
-## Type Support for `.vue` Imports in TS
+Trip search, trip creation and bookings are separate tickets. Their domain types
+and seed data already exist so those screens have something to read.
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+## Setup
 
 ```sh
 npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+Open http://localhost:5173. On the landing page, **Use demo account** fills the
+seeded credentials:
+
+| Email               | Password      |
+| ------------------- | ------------- |
+| `alice@shotgun.app` | `password123` |
+
+Registering a new account works too, but the mock keeps accounts in memory only -
+they are gone after a page reload.
+
+## Scripts
 
 ```sh
-npm run build
+npm run dev          # dev server
+npm run build        # type-check + production build
+npm run preview      # serve the production build
+npm run test:unit    # Vitest (19 tests)
+npm run test:e2e     # Playwright (npx playwright install chromium on first run)
+npm run lint         # oxlint + eslint, both with --fix
+npm run format       # prettier
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+## Architecture
 
-```sh
-npm run test:unit
+```
+src/
+  mock/data.ts        all hardcoded data (users, trips, bookings) - one file
+  services/
+    api.ts            the Api interface + which implementation is active
+    mock.ts           in-memory implementation, reads mock/data.ts
+    http.ts           fetch implementation against ../shotgun-api (not active)
+  assets/main.css     Tailwind import, @theme design tokens, shared .btn/.field
+  stores/auth.ts      Pinia store: the only owner of "who is logged in"
+  router/index.ts     routes + the requiresAuth / guestOnly guard
+  views/              LandingView, AppLayout, HomeView, ProfileView
+  components/         PromoPanel, AuthPanel, TopNav
+  types/index.ts      domain types shared by mock, http and UI
 ```
 
-### Run End-to-End Tests with [Playwright](https://playwright.dev)
+Components never call a service directly - they go through a Pinia store, which
+calls `api` from `src/services/api.ts`.
 
-```sh
-# Install browsers for the first run
-npx playwright install
+### Styling
 
-# When testing on CI, must build the project first
-npm run build
+Tailwind CSS v4 through `@tailwindcss/vite`. There is no `tailwind.config.js`:
+the whole configuration is the `@theme` block in `src/assets/main.css`. Styling
+is utility classes in templates, and no SFC carries a `<style>` block.
 
-# Runs the end-to-end tests
-npm run test:e2e
-# Runs the tests only on Chromium
-npm run test:e2e -- --project=chromium
-# Runs the tests of a specific file
-npm run test:e2e -- tests/example.spec.ts
-# Runs the tests in debug mode
-npm run test:e2e -- --debug
-```
+**Design direction:** clean modern minimal. Type-led, generous whitespace, one
+photograph, no decorative chrome. Concretely:
 
-### Lint with [ESLint](https://eslint.org/)
+- **Type** - Geist Variable, self-hosted via `@fontsource-variable/geist`. No
+  Google Fonts `<link>`, no runtime font request to a third party. Headings run
+  `font-medium tracking-tight`, not bold-and-huge.
+- **Palette** - two brand ramps plus one cool-grey neutral ramp:
 
-```sh
-npm run lint
-```
+  | Token                     | Colour | Used for                                    |
+  | ------------------------- | ------ | ------------------------------------------- |
+  | `brand-*`                 | blue   | primary actions, focus rings, avatar        |
+  | `accent-*`                | green  | the one highlighted word, eco/CO2 messaging |
+  | `ink`, `ink-soft`, `line` | slate  | text, secondary text, borders (light mode)  |
+  | `night*`                  | slate  | surfaces and text in dark mode              |
+
+  One accent, used the same way everywhere. Changing the palette means editing
+  those tokens in one place.
+
+- **Shape** - a single radius token (`rounded-card`, 12px) for every container,
+  input and button. Full-pill is reserved for the avatar chip.
+- **Dark mode** - follows `prefers-color-scheme` through Tailwind's `dark:`
+  variant. The whole page switches together; sections never invert
+  independently. No pure black, no pure white.
+- **Motion** - one primitive, the `.rise` class: a 600ms settle on first paint.
+  It collapses to nothing under `prefers-reduced-motion: reduce`. There is no
+  animation library and no scroll-driven animation.
+- **Images** - the landing photograph is stock (highway traffic, free under the
+  Unsplash License, served from `images.unsplash.com`). Swap the `src` in
+  `PromoPanel.vue` when real brand photography exists.
+
+The small `@layer components` block holds the patterns used by more than one
+component: `.btn`, `.btn-primary`, `.btn-ghost`, `.field`, `.rise`.
+
+### Layout
+
+`/` is a half-and-half split: the photographic hero on the left, the auth form
+on the right, separated by a real 1px divider (vertical from `lg` up, horizontal
+once it stacks). The hero carries three text elements only - wordmark, headline,
+one sentence - and fits the first viewport at every breakpoint.
+
+## Tests
+
+Unit tests (Vitest + jsdom) cover the auth seam end to end without a browser:
+
+| File                                         | Covers                                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `src/services/__tests__/mock.spec.ts`        | login, case-insensitive email, 401s, register, 409 on duplicate, logout                                 |
+| `src/stores/__tests__/auth.spec.ts`          | store session state, error mapping, token in `localStorage`                                             |
+| `src/router/__tests__/guards.spec.ts`        | `/app` and `/app/profile` redirect when logged out, `/` redirects when logged in, unknown path fallback |
+| `src/components/__tests__/AuthPanel.spec.ts` | tab switching, demo login navigating to `/app`, error rendering                                         |
+
+End-to-end tests (Playwright, `e2e/auth.spec.ts`) drive a real browser: landing
+page renders, unauthorized `/app` redirects, demo login and logout, registration,
+and session survival across a reload.
+
+When the real backend arrives, the unit tests keep passing against the mock
+(`VITE_USE_MOCK_API` stays true in test); point the e2e suite at the live API by
+setting `VITE_USE_MOCK_API=false` in the Playwright web-server env.
+
+## Plugging in the real backend
+
+1. Implement `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` and
+   `GET /auth/me` in `../shotgun-api`, returning the JSON shapes in
+   `src/types/index.ts`.
+2. Adjust paths/shapes in `src/services/http.ts` if the endpoints differ.
+3. Create `.env.local`:
+
+   ```sh
+   VITE_USE_MOCK_API=false
+   VITE_API_BASE_URL=http://localhost:8080
+   ```
+
+4. Delete `src/mock/` and `src/services/mock.ts` once nothing imports them
+   (the "Use demo account" button in `AuthPanel.vue` is the last consumer).
+
+The auth token is stored in `localStorage` under `shotgun.token` and sent as
+`Authorization: Bearer <token>`.
+
+## Recommended IDE setup
+
+[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar), with Vetur disabled.

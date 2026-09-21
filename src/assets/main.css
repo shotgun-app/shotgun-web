@@ -1,0 +1,127 @@
+/* Self-hosted variable font (font-display: swap comes from the package). */
+@import '@fontsource-variable/geist';
+@import 'tailwindcss';
+
+/*
+ * Design tokens. Tailwind v4 turns every entry here into utilities:
+ * `--color-brand-600` -> `bg-brand-600`, `text-brand-600`, `border-brand-600`, ...
+ *
+ * brand  = blue  (primary actions, links, focus)
+ * accent = green (confirmation, eco / CO2 messaging)
+ * Neutrals are a single cool-grey ramp; no second grey family anywhere.
+ */
+@theme {
+  --color-brand-50: #eff5ff;
+  --color-brand-100: #dbe8fe;
+  --color-brand-200: #bfd7fe;
+  --color-brand-400: #60a2fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-950: #101c3d;
+
+  --color-accent-100: #d1fae5;
+  --color-accent-400: #34d399;
+  --color-accent-500: #10b981;
+  --color-accent-600: #059669;
+  --color-accent-700: #047857;
+
+  --color-ink: #0f172a;
+  --color-ink-soft: #52607a;
+  --color-line: #e5e9f0;
+
+  /* Dark mode, same ramp logic. No pure black, no pure white. */
+  --color-night: #0b1120;
+  --color-night-raised: #121a2b;
+  --color-night-line: #1f293d;
+  --color-night-ink: #e6ebf4;
+  --color-night-ink-soft: #94a3bb;
+
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* One radius system: 12px containers, full-pill only for the avatar chip. */
+  --radius-card: 0.75rem;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white font-sans text-ink antialiased dark:bg-night dark:text-night-ink;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-600 dark:outline-brand-400;
+  }
+
+  ::selection {
+    @apply bg-brand-600 text-white;
+  }
+}
+
+/*
+ * Only patterns repeated across components live here. Anything used once stays
+ * inline in the template.
+ */
+@layer components {
+  .btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-card px-4 py-2.5
+      text-sm font-medium whitespace-nowrap transition-colors duration-200
+      active:translate-y-px disabled:cursor-progress disabled:opacity-60;
+  }
+
+  .btn-primary {
+    /* Dark mode flips to dark-on-light: white on brand-500 misses WCAG AA. */
+    @apply bg-brand-600 text-white hover:bg-brand-700
+      dark:bg-brand-400 dark:text-brand-950 dark:hover:bg-brand-500 dark:hover:text-white;
+  }
+
+  .btn-ghost {
+    @apply border border-line bg-white text-ink hover:border-brand-200 hover:bg-brand-50
+      dark:border-night-line dark:bg-night-raised dark:text-night-ink
+      dark:hover:border-brand-400/40 dark:hover:bg-brand-950;
+  }
+
+  .field {
+    @apply grid gap-1.5;
+  }
+
+  .field > span {
+    @apply text-[0.8125rem] font-medium text-ink-soft dark:text-night-ink-soft;
+  }
+
+  .field input {
+    @apply rounded-card border border-line bg-white px-3.5 py-2.5 text-sm transition-colors
+      duration-200 placeholder:text-slate-400 hover:border-slate-300
+      focus:border-brand-600 dark:border-night-line dark:bg-night-raised
+      dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-brand-400;
+  }
+
+  /* Single motion primitive: a short settle on first paint, off when unwanted. */
+  .rise {
+    @apply opacity-0;
+    animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rise {
+      animation: none;
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
