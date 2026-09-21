@@ -98,6 +98,20 @@ deliberate rather than generated.
 - Token lives in `localStorage` under `shotgun.token`, sent as
   `Authorization: Bearer <token>`. All storage access is wrapped in try/catch.
 
+## Tests
+
+- Unit tests live next to what they test in `__tests__/` folders. Four suites:
+  mock service, auth store, router guards, AuthPanel component.
+- A new store, service method or guarded route ships with a unit test. A new
+  user-visible flow ships with a Playwright test in `e2e/`.
+- Component tests mount with a real Pinia and a real memory router, and run
+  against the mock api rather than a stubbed service. Keep it that way: it
+  exercises the seam the backend will later replace.
+- The mock api has a built-in 350ms delay, so async component tests wait on a
+  real timeout before asserting.
+- `npm run test:unit` and `npm run test:e2e` must both pass before work is done.
+  Playwright needs `npx playwright install chromium` once.
+
 ## Scope
 
 Current sprint is **auth only**: register, login, logout, protected `/app`,

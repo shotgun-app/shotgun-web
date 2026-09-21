@@ -42,8 +42,8 @@ they are gone after a page reload.
 npm run dev          # dev server
 npm run build        # type-check + production build
 npm run preview      # serve the production build
-npm run test:unit    # Vitest
-npm run test:e2e     # Playwright (npx playwright install on first run)
+npm run test:unit    # Vitest (19 tests)
+npm run test:e2e     # Playwright (npx playwright install chromium on first run)
 npm run lint         # oxlint + eslint, both with --fix
 npm run format       # prettier
 ```
@@ -113,6 +113,25 @@ component: `.btn`, `.btn-primary`, `.btn-ghost`, `.field`, `.rise`.
 on the right, separated by a real 1px divider (vertical from `lg` up, horizontal
 once it stacks). The hero carries three text elements only - wordmark, headline,
 one sentence - and fits the first viewport at every breakpoint.
+
+## Tests
+
+Unit tests (Vitest + jsdom) cover the auth seam end to end without a browser:
+
+| File                                         | Covers                                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `src/services/__tests__/mock.spec.ts`        | login, case-insensitive email, 401s, register, 409 on duplicate, logout                                 |
+| `src/stores/__tests__/auth.spec.ts`          | store session state, error mapping, token in `localStorage`                                             |
+| `src/router/__tests__/guards.spec.ts`        | `/app` and `/app/profile` redirect when logged out, `/` redirects when logged in, unknown path fallback |
+| `src/components/__tests__/AuthPanel.spec.ts` | tab switching, demo login navigating to `/app`, error rendering                                         |
+
+End-to-end tests (Playwright, `e2e/auth.spec.ts`) drive a real browser: landing
+page renders, unauthorized `/app` redirects, demo login and logout, registration,
+and session survival across a reload.
+
+When the real backend arrives, the unit tests keep passing against the mock
+(`VITE_USE_MOCK_API` stays true in test); point the e2e suite at the live API by
+setting `VITE_USE_MOCK_API=false` in the Playwright web-server env.
 
 ## Plugging in the real backend
 
