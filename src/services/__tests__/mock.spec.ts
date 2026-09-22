@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { mockApi } from '../mock'
 import { ApiError } from '@/types'
-import { DEMO_CREDENTIALS } from '@/mock/data'
+import { DEMO_CREDENTIALS, getTodayDateString } from '@/mock/data'
 
 describe('mock auth api', () => {
   it('logs in a seeded account and returns a usable token', async () => {
@@ -62,5 +62,45 @@ describe('mock auth api', () => {
     // The token no longer maps to a live session, so only the encoded user id
     // could resolve it. A garbage token must still fail.
     await expect(mockApi.auth.me('not-a-token')).rejects.toMatchObject({ status: 401 })
+  })
+})
+
+describe('mock trips api', () => {
+  it('searches trips by origin and destination and attaches driver data', async () => {
+    const results = await mockApi.trips.search({
+      originCity: 'Gothenburg',
+      destinationCity: 'Stockholm',
+    })
+
+    expect(results.length).toBeGreaterThan(0)
+    for (const trip of results) {
+      expect(trip.origin).toBe('Gothenburg')
+      expect(trip.destination).toBe('Stockholm')
+      expect(trip.driver).toBeDefined()
+      expect(trip.driver.name).toBeTruthy()
+    }
+  })
+
+  it('filters by departure date when provided', async () => {
+    const today = getTodayDateString()
+    const results = await mockApi.trips.search({
+      originCity: 'Gothenburg',
+      destinationCity: 'Stockholm',
+      departureDate: today,
+    })
+
+    expect(results.length).toBeGreaterThan(0)
+    for (const trip of results) {
+      expect(trip.departureAt.startsWith(today)).toBe(true)
+    }
+  })
+
+  it('returns empty array when no routes match', async () => {
+    const results = await mockApi.trips.search({
+      originCity: 'Stockholm',
+      destinationCity: 'Rome',
+    })
+
+    expect(results).toEqual([])
   })
 })

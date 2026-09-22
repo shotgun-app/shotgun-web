@@ -4,8 +4,16 @@
  * It fakes network latency and token handling so the UI exercises the same
  * loading/error paths it will hit against the real Go backend.
  */
-import { ApiError, type Credentials, type RegisterPayload, type Session, type User } from '@/types'
-import { MOCK_ACCOUNTS, type MockAccount } from '@/mock/data'
+import {
+  ApiError,
+  type Credentials,
+  type RegisterPayload,
+  type Session,
+  type TripSearchParams,
+  type TripWithDriver,
+  type User,
+} from '@/types'
+import { MOCK_ACCOUNTS, MOCK_TRIPS, type MockAccount } from '@/mock/data'
 import type { Api } from './api'
 
 const LATENCY_MS = 350
@@ -74,6 +82,48 @@ export const mockApi: Api = {
         throw new ApiError('Session expired.', 401)
       }
       return { ...account.user }
+    },
+  },
+
+  trips: {
+    async search(params: TripSearchParams): Promise<TripWithDriver[]> {
+      await delay()
+
+      const origin = params.originCity.trim().toLowerCase()
+      const destination = params.destinationCity.trim().toLowerCase()
+
+      const matching = MOCK_TRIPS.filter((trip) => {
+        const matchesOrigin = trip.origin.toLowerCase() === origin
+        const matchesDestination = trip.destination.toLowerCase() === destination
+        if (!matchesOrigin || !matchesDestination) return false
+
+        if (params.departureDate) {
+          return trip.departureAt.startsWith(params.departureDate)
+        }
+        return true
+      })
+
+      return matching.map((trip) => {
+        const account = accounts.find((a) => a.user.id === trip.driverId)
+        const driver: User = account
+          ? { ...account.user }
+          : {
+              id: trip.driverId,
+              email: 'driver@shotgun.app',
+              name: 'Driver',
+              avatarUrl: null,
+              phone: null,
+              joinedAt: '2026-01-01T00:00:00Z',
+              rating: 5.0,
+              ratingCount: 1,
+              co2SavedKg: 50,
+            }
+
+        return {
+          ...trip,
+          driver,
+        }
+      })
     },
   },
 }

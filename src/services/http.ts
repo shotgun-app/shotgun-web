@@ -4,7 +4,15 @@
  * Unused while `USE_MOCK_API` is true - it exists so plugging the backend in is
  * a config flip plus filling in whatever the final endpoints turn out to be.
  */
-import { ApiError, type Credentials, type RegisterPayload, type Session, type User } from '@/types'
+import {
+  ApiError,
+  type Credentials,
+  type RegisterPayload,
+  type Session,
+  type TripSearchParams,
+  type TripWithDriver,
+  type User,
+} from '@/types'
 import type { Api } from './api'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
@@ -38,5 +46,16 @@ export const httpApi: Api = {
     logout: (token: string) => request<void>('/auth/logout', { method: 'POST' }, token),
 
     me: (token: string) => request<User>('/auth/me', {}, token),
+  },
+
+  trips: {
+    search: (params: TripSearchParams) => {
+      const query = new URLSearchParams({
+        origin: params.originCity,
+        destination: params.destinationCity,
+        ...(params.departureDate ? { date: params.departureDate } : {}),
+      })
+      return request<TripWithDriver[]>(`/trips?${query.toString()}`)
+    },
   },
 }
