@@ -5,7 +5,14 @@
  * mock; once ../shotgun-api serves the endpoints, set `VITE_USE_MOCK_API=false`
  * (or delete the branch) and the exact same calls go over HTTP.
  */
-import type { Credentials, RegisterPayload, Session, User } from '@/types'
+import type {
+  Credentials,
+  RegisterPayload,
+  Session,
+  TripSearchParams,
+  TripWithDriver,
+  User,
+} from '@/types'
 import { mockApi } from './mock'
 import { httpApi } from './http'
 
@@ -17,8 +24,13 @@ export interface AuthApi {
   me(token: string): Promise<User>
 }
 
+export interface TripsApi {
+  search(params: TripSearchParams): Promise<TripWithDriver[]>
+}
+
 export interface Api {
   auth: AuthApi
+  trips: TripsApi
 }
 
 /** Defaults to the mock: only an explicit "false" opts into the real backend. */

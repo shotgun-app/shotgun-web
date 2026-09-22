@@ -13,6 +13,16 @@ export interface MockAccount {
   user: User
 }
 
+export const EUROPEAN_LOCATIONS: Record<string, string[]> = {
+  Sweden: ['Gothenburg', 'Stockholm', 'Malmö', 'Uppsala'],
+  Germany: ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne'],
+  France: ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nice'],
+  Netherlands: ['Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht'],
+  Spain: ['Madrid', 'Barcelona', 'Valencia', 'Seville'],
+  'United Kingdom': ['London', 'Manchester', 'Birmingham', 'Edinburgh'],
+  Italy: ['Rome', 'Milan', 'Florence', 'Naples'],
+}
+
 export const MOCK_ACCOUNTS: MockAccount[] = [
   {
     password: 'password123',
@@ -42,6 +52,34 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
       co2SavedKg: 63.0,
     },
   },
+  {
+    password: 'password123',
+    user: {
+      id: 'usr_3',
+      email: 'clara@shotgun.app',
+      name: 'Clara Lindqvist',
+      avatarUrl: null,
+      phone: '+46 70 123 4567',
+      joinedAt: '2026-02-10T11:00:00Z',
+      rating: 4.9,
+      ratingCount: 32,
+      co2SavedKg: 195.2,
+    },
+  },
+  {
+    password: 'password123',
+    user: {
+      id: 'usr_4',
+      email: 'markus@shotgun.app',
+      name: 'Markus Schmidt',
+      avatarUrl: null,
+      phone: '+49 151 2345678',
+      joinedAt: '2026-02-18T14:30:00Z',
+      rating: 4.7,
+      ratingCount: 19,
+      co2SavedKg: 88.6,
+    },
+  },
 ]
 
 /** Account the login form is prefilled with, so the demo is one click away. */
@@ -50,42 +88,111 @@ export const DEMO_CREDENTIALS = {
   password: 'password123',
 }
 
+/** Helper to generate ISO departure timestamps relative to today */
+export function relativeDate(daysAhead: number, hours: number, minutes: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() + daysAhead)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const h = String(hours).padStart(2, '0')
+  const min = String(minutes).padStart(2, '0')
+  return `${y}-${m}-${day}T${h}:${min}:00Z`
+}
+
+export function getTodayDateString(daysOffset = 0): string {
+  const d = new Date()
+  d.setDate(d.getDate() + daysOffset)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 export const MOCK_TRIPS: Trip[] = [
   {
     id: 'trip_1',
     driverId: 'usr_1',
-    origin: 'San Francisco',
-    destination: 'Los Angeles',
-    departureAt: '2026-09-25T07:30:00Z',
+    origin: 'Gothenburg',
+    destination: 'Stockholm',
+    departureAt: relativeDate(0, 8, 30),
     seatsTotal: 3,
     seatsBooked: 1,
-    pricePerSeat: 9,
+    pricePerSeat: 25,
     currency: 'EUR',
-    notes: 'Golf VII, one medium bag per person. Meeting point: Caltrain station lot.',
+    notes: 'Volvo XC60. Plenty of trunk space for luggage. Meeting at Korsvägen.',
   },
   {
     id: 'trip_2',
-    driverId: 'usr_2',
-    origin: 'Los Angeles',
-    destination: 'San Francisco',
-    departureAt: '2026-09-25T16:00:00Z',
+    driverId: 'usr_3',
+    origin: 'Gothenburg',
+    destination: 'Stockholm',
+    departureAt: relativeDate(0, 14, 0),
     seatsTotal: 4,
-    seatsBooked: 4,
-    pricePerSeat: 8,
+    seatsBooked: 2,
+    pricePerSeat: 22,
     currency: 'EUR',
-    notes: 'Full. Non-smoking, no pets.',
+    notes: 'Polestar 2. Quiet electric ride, coffee stop along lake Vättern.',
   },
   {
     id: 'trip_3',
-    driverId: 'usr_1',
-    origin: 'San Francisco',
-    destination: 'Sacramento',
-    departureAt: '2026-09-27T06:00:00Z',
+    driverId: 'usr_2',
+    origin: 'Stockholm',
+    destination: 'Gothenburg',
+    departureAt: relativeDate(1, 9, 0),
     seatsTotal: 3,
     seatsBooked: 0,
-    pricePerSeat: 11,
+    pricePerSeat: 24,
     currency: 'EUR',
-    notes: 'Early start, coffee stop in Davis.',
+    notes: 'Volkswagen ID.4, non-smoking, friendly indie music playlist.',
+  },
+  {
+    id: 'trip_4',
+    driverId: 'usr_4',
+    origin: 'Berlin',
+    destination: 'Munich',
+    departureAt: relativeDate(0, 7, 0),
+    seatsTotal: 4,
+    seatsBooked: 1,
+    pricePerSeat: 35,
+    currency: 'EUR',
+    notes: 'BMW 3 Touring. Fast autobahn route, max 2 medium bags per person.',
+  },
+  {
+    id: 'trip_5',
+    driverId: 'usr_1',
+    origin: 'Berlin',
+    destination: 'Munich',
+    departureAt: relativeDate(0, 15, 30),
+    seatsTotal: 3,
+    seatsBooked: 0,
+    pricePerSeat: 32,
+    currency: 'EUR',
+    notes: 'Golf VIII, picking up right outside Berlin Hauptbahnhof.',
+  },
+  {
+    id: 'trip_6',
+    driverId: 'usr_2',
+    origin: 'Paris',
+    destination: 'Lyon',
+    departureAt: relativeDate(0, 10, 0),
+    seatsTotal: 3,
+    seatsBooked: 1,
+    pricePerSeat: 28,
+    currency: 'EUR',
+    notes: 'Peugeot 308. Drop-off near Lyon Part-Dieu station.',
+  },
+  {
+    id: 'trip_7',
+    driverId: 'usr_3',
+    origin: 'Amsterdam',
+    destination: 'Rotterdam',
+    departureAt: relativeDate(0, 9, 0),
+    seatsTotal: 4,
+    seatsBooked: 1,
+    pricePerSeat: 12,
+    currency: 'EUR',
+    notes: 'Daily morning commute, quick and direct via A4.',
   },
 ]
 
