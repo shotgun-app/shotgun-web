@@ -93,7 +93,8 @@
     @apply text-[0.8125rem] font-medium text-ink-soft dark:text-night-ink-soft;
   }
 
-  .field input {
+  .field input,
+  .field select {
     @apply rounded-card border border-line bg-white px-3.5 py-2.5 text-sm transition-colors
       duration-200 placeholder:text-slate-400 hover:border-slate-300
       focus:border-brand-600 dark:border-night-line dark:bg-night-raised
