@@ -34,6 +34,17 @@ export interface Trip {
   notes: string
 }
 
+export interface TripWithDriver extends Trip {
+  driver: User
+}
+
+export interface TripSearchParams {
+  originCity: string
+  destinationCity: string
+  departureDate?: string
+  departureTime?: string
+}
+
 export type BookingStatus = 'confirmed' | 'cancelled'
 
 export interface Booking {
