@@ -11,6 +11,7 @@ import {
   type Session,
   type TripSearchParams,
   type TripWithDriver,
+  type UpdateProfilePayload,
   type User,
 } from '@/types'
 import { MOCK_ACCOUNTS, MOCK_TRIPS, type MockAccount } from '@/mock/data'
@@ -81,6 +82,26 @@ export const mockApi: Api = {
       if (!account) {
         throw new ApiError('Session expired.', 401)
       }
+      return { ...account.user }
+    },
+
+    async updateProfile(token: string, payload: UpdateProfilePayload): Promise<User> {
+      await delay()
+      const userId = sessions.get(token) ?? token.split('.')[1]
+      const account = userId && accounts.find((a) => a.user.id === userId)
+      if (!account) {
+        throw new ApiError('Session expired.', 401)
+      }
+      // Guard against taking another user's email.
+      const conflict = accounts.find(
+        (a) => a.user.email.toLowerCase() === payload.email.trim().toLowerCase() &&
+               a.user.id !== account.user.id,
+      )
+      if (conflict) {
+        throw new ApiError('An account with that email already exists.', 409)
+      }
+      account.user.name = payload.name.trim()
+      account.user.email = payload.email.trim()
       return { ...account.user }
     },
   },

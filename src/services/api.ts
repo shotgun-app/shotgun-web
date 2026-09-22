@@ -11,6 +11,7 @@ import type {
   Session,
   TripSearchParams,
   TripWithDriver,
+  UpdateProfilePayload,
   User,
 } from '@/types'
 import { mockApi } from './mock'
@@ -22,6 +23,8 @@ export interface AuthApi {
   logout(token: string): Promise<void>
   /** Resolves the user behind a stored token, or throws ApiError(401). */
   me(token: string): Promise<User>
+  /** Updates name and/or email for the authenticated user. */
+  updateProfile(token: string, payload: UpdateProfilePayload): Promise<User>
 }
 
 export interface TripsApi {

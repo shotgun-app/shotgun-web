@@ -11,6 +11,7 @@ import {
   type Session,
   type TripSearchParams,
   type TripWithDriver,
+  type UpdateProfilePayload,
   type User,
 } from '@/types'
 import type { Api } from './api'
@@ -46,6 +47,9 @@ export const httpApi: Api = {
     logout: (token: string) => request<void>('/auth/logout', { method: 'POST' }, token),
 
     me: (token: string) => request<User>('/auth/me', {}, token),
+
+    updateProfile: (token: string, payload: UpdateProfilePayload) =>
+      request<User>('/auth/me', { method: 'PATCH', body: JSON.stringify(payload) }, token),
   },
 
   trips: {
