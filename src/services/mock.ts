@@ -104,6 +104,20 @@ export const mockApi: Api = {
       account.user.email = payload.email.trim()
       return { ...account.user }
     },
+
+    async deleteAccount(token: string): Promise<void> {
+      await delay()
+      const userId = sessions.get(token) ?? token.split('.')[1]
+      const index = userId ? accounts.findIndex((a) => a.user.id === userId) : -1
+      if (index === -1) {
+        throw new ApiError('Session expired.', 401)
+      }
+      // Remove all active sessions for this user, then delete the account.
+      for (const [t, uid] of sessions.entries()) {
+        if (uid === userId) sessions.delete(t)
+      }
+      accounts.splice(index, 1)
+    },
   },
 
   trips: {

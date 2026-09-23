@@ -234,3 +234,124 @@ describe('auth store – updateProfile', () => {
     )
   })
 })
+
+// ── Delete-account flow ───────────────────────────────────────────────────────
+
+describe('ProfileView – delete account', () => {
+  let router: Router
+
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+
+    router = buildRouter()
+    await router.push('/app/profile')
+    await router.isReady()
+
+    const auth = useAuthStore()
+    // Use Ben's account — email is unaffected by the updateProfile describe block above.
+    await auth.login({ email: 'ben@shotgun.app', password: 'password123' })
+  })
+
+  it('does not show the delete button in view mode', async () => {
+    const wrapper = await mountProfile(router)
+    expect(wrapper.find('#profile-delete-btn').exists()).toBe(false)
+  })
+
+  it('shows the delete button after entering edit mode', async () => {
+    const wrapper = await mountProfile(router)
+    await wrapper.find('#profile-edit-btn').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('#profile-delete-btn').exists()).toBe(true)
+    // Confirmation step is not yet shown
+    expect(wrapper.find('#profile-delete-confirm-btn').exists()).toBe(false)
+  })
+
+  it('reveals confirmation step after clicking "Delete my account"', async () => {
+    const wrapper = await mountProfile(router)
+    await wrapper.find('#profile-edit-btn').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('#profile-delete-btn').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('#profile-delete-confirm-btn').exists()).toBe(true)
+    expect(wrapper.find('#profile-delete-cancel-btn').exists()).toBe(true)
+    // Initial delete button is gone
+    expect(wrapper.find('#profile-delete-btn').exists()).toBe(false)
+  })
+
+  it('"Keep my account" hides the confirmation and restores the initial delete button', async () => {
+    const wrapper = await mountProfile(router)
+    await wrapper.find('#profile-edit-btn').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('#profile-delete-btn').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('#profile-delete-cancel-btn').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('#profile-delete-btn').exists()).toBe(true)
+    expect(wrapper.find('#profile-delete-confirm-btn').exists()).toBe(false)
+  })
+
+  it('confirming deletion logs out and navigates to landing', async () => {
+    // Register a fresh throwaway account so this test is isolated from seed-data mutations.
+    const auth = useAuthStore()
+    await auth.register({ name: 'Delete Me', email: 'delete-view@test.app', password: 'password123' })
+
+    const wrapper = await mountProfile(router)
+
+    await wrapper.find('#profile-edit-btn').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('#profile-delete-btn').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('#profile-delete-confirm-btn').trigger('click')
+    await new Promise((r) => setTimeout(r, 500))
+    await wrapper.vm.$nextTick()
+
+    expect(auth.isAuthenticated).toBe(false)
+    expect(router.currentRoute.value.name).toBe('landing')
+  })
+})
+
+describe('auth store – deleteAccount', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+  })
+
+  it('clears the session and returns true on success', async () => {
+    const auth = useAuthStore()
+    // Register a fresh throwaway account so this test is isolated from seed-data mutations.
+    await auth.register({ name: 'Delete Me', email: 'delete-store-1@test.app', password: 'password123' })
+
+    const ok = await auth.deleteAccount()
+
+    expect(ok).toBe(true)
+    expect(auth.isAuthenticated).toBe(false)
+    expect(auth.user).toBeNull()
+    expect(localStorage.getItem('shotgun.token')).toBeNull()
+  })
+
+  it('makes the account unreachable after deletion', async () => {
+    const auth = useAuthStore()
+    // Register a fresh throwaway account so this test is isolated from seed-data mutations.
+    const throwawayCredentials = { email: 'delete-store-2@test.app', password: 'password123' }
+    await auth.register({ name: 'Delete Me 2', ...throwawayCredentials })
+
+    await auth.deleteAccount()
+
+    // A fresh login attempt with the old credentials should now fail.
+    setActivePinia(createPinia())
+    const freshAuth = useAuthStore()
+    const ok = await freshAuth.login(throwawayCredentials)
+    expect(ok).toBe(false)
+  })
+})
+
+

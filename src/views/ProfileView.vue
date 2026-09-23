@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
+const router = useRouter()
 
 // ── View / edit toggle ─────────────────────────────────────────────────────
 const editing = ref(false)
@@ -34,18 +36,39 @@ function validate(): boolean {
 watch(() => form.name, () => { nameError.value = null })
 watch(() => form.email, () => { emailError.value = null })
 
+// ── Delete-account state ───────────────────────────────────────────────────
+/** Two-step confirmation: first click reveals the real delete button. */
+const confirmingDelete = ref(false)
+
+function requestDelete() {
+  confirmingDelete.value = true
+}
+
+function cancelDelete() {
+  confirmingDelete.value = false
+}
+
+async function confirmDelete() {
+  const ok = await auth.deleteAccount()
+  if (ok) {
+    await router.push({ name: 'landing' })
+  }
+}
+
 // ── Actions ────────────────────────────────────────────────────────────────
 function startEditing() {
   form.name = auth.user?.name ?? ''
   form.email = auth.user?.email ?? ''
   nameError.value = null
   emailError.value = null
+  confirmingDelete.value = false
   auth.error = null
   editing.value = true
 }
 
 function cancel() {
   editing.value = false
+  confirmingDelete.value = false
   auth.error = null
 }
 
@@ -174,7 +197,7 @@ const initials = computed(() =>
           {{ auth.error }}
         </p>
 
-        <!-- Actions -->
+        <!-- Save / Cancel -->
         <div class="flex items-center gap-3">
           <button
             id="profile-save-btn"
@@ -193,6 +216,56 @@ const initials = computed(() =>
           >
             Cancel
           </button>
+        </div>
+
+        <!-- ── Danger zone ──────────────────────────────────────────────── -->
+        <div class="mt-4 border-t border-line pt-6 dark:border-night-line">
+          <p class="text-xs font-medium uppercase tracking-widest text-ink-soft dark:text-night-ink-soft">
+            Danger zone
+          </p>
+
+          <!-- Step 1: initial prompt -->
+          <template v-if="!confirmingDelete">
+            <p class="mt-2 text-sm text-ink-soft dark:text-night-ink-soft">
+              Permanently remove your account and all associated data.
+            </p>
+            <button
+              id="profile-delete-btn"
+              type="button"
+              class="btn mt-4 border border-red-200 bg-white text-red-600 hover:border-red-300 hover:bg-red-50 dark:border-red-900/60 dark:bg-night-raised dark:text-red-400 dark:hover:border-red-800 dark:hover:bg-red-950/40"
+              :disabled="auth.pending"
+              @click="requestDelete"
+            >
+              Delete my account
+            </button>
+          </template>
+
+          <!-- Step 2: confirmation -->
+          <template v-else>
+            <p class="mt-2 text-sm font-medium text-red-600 dark:text-red-400">
+              Are you sure? This cannot be undone.
+            </p>
+            <div class="mt-4 flex items-center gap-3">
+              <button
+                id="profile-delete-confirm-btn"
+                type="button"
+                class="btn bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
+                :disabled="auth.pending"
+                @click="confirmDelete"
+              >
+                {{ auth.pending ? 'Deleting…' : 'Yes, delete my account' }}
+              </button>
+              <button
+                id="profile-delete-cancel-btn"
+                type="button"
+                class="btn btn-ghost"
+                :disabled="auth.pending"
+                @click="cancelDelete"
+              >
+                Keep my account
+              </button>
+            </div>
+          </template>
         </div>
       </form>
     </template>

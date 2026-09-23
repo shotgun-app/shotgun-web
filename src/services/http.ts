@@ -50,6 +50,9 @@ export const httpApi: Api = {
 
     updateProfile: (token: string, payload: UpdateProfilePayload) =>
       request<User>('/auth/me', { method: 'PATCH', body: JSON.stringify(payload) }, token),
+
+    deleteAccount: (token: string) =>
+      request<void>('/auth/me', { method: 'DELETE' }, token),
   },
 
   trips: {

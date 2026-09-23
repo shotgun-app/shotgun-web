@@ -25,6 +25,8 @@ export interface AuthApi {
   me(token: string): Promise<User>
   /** Updates name and/or email for the authenticated user. */
   updateProfile(token: string, payload: UpdateProfilePayload): Promise<User>
+  /** Permanently removes the account. The caller is responsible for clearing the session. */
+  deleteAccount(token: string): Promise<void>
 }
 
 export interface TripsApi {

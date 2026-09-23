@@ -106,6 +106,16 @@ export const useAuthStore = defineStore('auth', () => {
     return true
   }
 
+  /** Deletes the account on the backend then wipes the local session. */
+  async function deleteAccount(): Promise<boolean> {
+    if (!token.value) return false
+    await run(() => api.auth.deleteAccount(token.value!))
+    // run() sets error.value on failure and leaves it null on success.
+    if (error.value) return false
+    clearSession()
+    return true
+  }
+
   return {
     user,
     token,
@@ -117,5 +127,6 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     restore,
     updateProfile,
+    deleteAccount,
   }
 })
