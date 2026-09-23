@@ -71,8 +71,10 @@ deliberate rather than generated.
 - **Shape, locked.** One radius: `rounded-card` (12px) for containers, inputs
   and buttons. Full-pill only for the avatar chip.
 - **Dark mode is mandatory** on every new surface. Tailwind `dark:` variant,
-  driven by `prefers-color-scheme`. The page switches as a whole; a section must
-  never invert on its own. No pure black, no pure white.
+  driven by the `.dark` class on `<html>`: with no stored pick the theme store
+  follows `prefers-color-scheme`, and the toggle in the nav / on the landing
+  page pins light or dark (stored under `shotgun.theme`). The page switches as a
+  whole; a section must never invert on its own. No pure black, no pure white.
 - **Motion is one primitive.** The `.rise` class, a 600ms settle on first paint,
   staggered with inline `animation-delay` when several elements enter together.
   It is disabled under `prefers-reduced-motion`. Do not add an animation
@@ -86,8 +88,9 @@ deliberate rather than generated.
 - **Copy rules.** No em-dashes anywhere visible (use a hyphen or two sentences).
   No eyebrow labels above every heading, no scroll cues, no decorative status
   dots, no invented precise statistics.
-- **Icons:** none are used yet. If one is needed, install a real icon library
-  (Phosphor or Tabler) rather than pasting SVG paths, and use one family.
+- **Icons:** Phosphor (`@phosphor-icons/vue`), one family only, introduced with
+  the theme toggle (Sun / Moon). New icons must come from the same library
+  rather than hand-pasted SVG paths.
 
 ## Routing and auth
 
@@ -100,8 +103,8 @@ deliberate rather than generated.
 
 ## Tests
 
-- Unit tests live next to what they test in `__tests__/` folders. Four suites:
-  mock service, auth store, router guards, AuthPanel component.
+- Unit tests live next to what they test in `__tests__/` folders: mock service,
+  stores (auth, rides, trips, theme), router guards, and component suites.
 - A new store, service method or guarded route ships with a unit test. A new
   user-visible flow ships with a Playwright test in `e2e/`.
 - Component tests mount with a real Pinia and a real memory router, and run

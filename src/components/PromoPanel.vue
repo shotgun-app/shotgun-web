@@ -20,7 +20,7 @@
       class="absolute inset-0 -z-10 size-full object-cover"
     />
     <div
-      class="absolute inset-0 -z-10 bg-gradient-to-t from-brand-950 via-brand-950/80 to-brand-950/35"
+      class="absolute inset-0 -z-10 bg-linear-to-t from-brand-950 via-brand-950/80 to-brand-950/35"
     ></div>
 
     <div class="w-full max-w-xl p-8 sm:p-12 lg:p-16">
@@ -30,8 +30,9 @@
         class="rise mt-6 text-balance text-4xl font-medium leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl"
         style="animation-delay: 80ms"
       >
-        Nobody drives that route
-        <span class="text-accent-400">alone</span>.
+        Ride together.
+        Reduce traffic.
+        <span class="text-accent-400">Save the planet.</span>
       </h1>
 
       <p

@@ -11,6 +11,24 @@
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b1120" media="(prefers-color-scheme: dark)" />
     <title>Shotgun - carpooling</title>
+    <script>
+      // Mirrors src/stores/theme.ts and runs before the stylesheet paints, so a
+      // stored dark theme never flashes white while the bundle loads.
+      (() => {
+        let mode = null
+        try {
+          mode = localStorage.getItem('shotgun.theme')
+        } catch {
+          // Storage blocked: fall back to the OS preference.
+        }
+        const dark =
+          mode === 'dark' ||
+          (mode !== 'light' &&
+            typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches)
+        if (dark) document.documentElement.classList.add('dark')
+      })()
+    </script>
   </head>
   <body>
     <div id="app"></div>
