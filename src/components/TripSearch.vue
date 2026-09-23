@@ -141,24 +141,20 @@ async function fillDemoRoute(route: 'sweden' | 'germany') {
     </div>
 
     <!-- SEARCH FORM -->
-    <form
-      class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-      @submit.prevent="handleSearch"
-    >
-      <!-- FROM + SWAP + TO combined (spans 2 cols on lg) -->
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-2 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
-
+    <form class="grid gap-6" @submit.prevent="handleSearch">
+      <!-- ROUTE: From, swap, To — one visual group -->
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
         <!-- From -->
-        <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
           <label class="field">
-            <span>From Country</span>
+            <span>From country</span>
             <select v-model="fromCountry" required>
               <option value="" disabled>Select country</option>
               <option v-for="c in countries" :key="c" :value="c">{{ c }}</option>
             </select>
           </label>
           <label class="field">
-            <span>From City</span>
+            <span>From city</span>
             <select v-model="fromCity" :disabled="!fromCountry" required>
               <option value="" disabled>
                 {{ fromCountry ? 'Select city' : 'Pick country first' }}
@@ -168,8 +164,8 @@ async function fillDemoRoute(route: 'sweden' | 'germany') {
           </label>
         </div>
 
-        <!-- Swap button (centered between the two columns on lg) -->
-        <div class="flex justify-center lg:pt-6">
+        <!-- Swap button, centered between From and To -->
+        <div class="flex justify-center sm:pt-6">
           <button
             type="button"
             class="cursor-pointer rounded-full border border-line p-2 text-ink hover:bg-slate-50 dark:border-night-line dark:text-night-ink dark:hover:bg-night"
@@ -177,27 +173,36 @@ async function fillDemoRoute(route: 'sweden' | 'germany') {
             aria-label="Swap origin and destination"
             title="Swap origin and destination"
           >
-            <!-- Simple up/down arrows icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" class="h-4 w-4">
-              <path d="M7 16V4" /><path d="m3 8 4-4 4 4" />
-              <path d="M17 8v12" /><path d="m21 16-4 4-4-4" />
+            <!-- Simple left/right arrows icon -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="h-4 w-4 rotate-90"
+            >
+              <path d="M7 16V4" />
+              <path d="m3 8 4-4 4 4" />
+              <path d="M17 8v12" />
+              <path d="m21 16-4 4-4-4" />
             </svg>
           </button>
         </div>
 
         <!-- To -->
-        <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
           <label class="field">
-            <span>To Country</span>
+            <span>To country</span>
             <select v-model="toCountry" required>
               <option value="" disabled>Select country</option>
               <option v-for="c in countries" :key="c" :value="c">{{ c }}</option>
             </select>
           </label>
           <label class="field">
-            <span>To City</span>
+            <span>To city</span>
             <select v-model="toCity" :disabled="!toCountry" required>
               <option value="" disabled>
                 {{ toCountry ? 'Select city' : 'Pick country first' }}
@@ -207,25 +212,22 @@ async function fillDemoRoute(route: 'sweden' | 'germany') {
           </label>
         </div>
       </div>
-      
-      <!-- 3. DATE & TIME -->
-      <div class="space-y-3">
+
+      <!-- WHEN + ACTION -->
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
         <label class="field">
-          <span>Departure Date</span>
+          <span>Departure date</span>
           <input v-model="departureDate" type="date" required />
         </label>
 
         <label class="field">
-          <span>Preferred Time (Optional)</span>
+          <span>Preferred time (optional)</span>
           <input v-model="departureTime" type="time" />
         </label>
-      </div>
 
-      <!-- 4. SUBMIT ACTION -->
-      <div class="flex flex-col justify-end">
         <button
           type="submit"
-          class="btn btn-primary w-full h-[42px]"
+          class="btn btn-primary h-[42px] w-full sm:w-auto"
           :disabled="trips.pending || !fromCity || !toCity"
         >
           <span v-if="trips.pending">Searching...</span>

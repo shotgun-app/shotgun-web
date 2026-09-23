@@ -8,13 +8,15 @@ import {
   ApiError,
   type Credentials,
   type RegisterPayload,
+  type RidePayload,
   type Session,
+  type Trip,
   type TripSearchParams,
   type TripWithDriver,
   type UpdateProfilePayload,
   type User,
 } from '@/types'
-import { MOCK_ACCOUNTS, MOCK_TRIPS, type MockAccount } from '@/mock/data'
+import { MOCK_ACCOUNTS, MOCK_BOOKINGS, MOCK_TRIPS, type MockAccount } from '@/mock/data'
 import type { Api } from './api'
 
 const LATENCY_MS = 350
@@ -35,6 +37,44 @@ function issueToken(user: User): string {
 
 function findByEmail(email: string): MockAccount | undefined {
   return accounts.find((a) => a.user.email.toLowerCase() === email.trim().toLowerCase())
+}
+
+/** Resolves the userId a token stands for. Falls back to the id encoded in the
+ * token itself, since a page reload clears the in-memory session map. */
+function resolveUserId(token: string): string | undefined {
+  return sessions.get(token) ?? token.split('.')[1]
+}
+
+function requireAccount(token: string): MockAccount {
+  const userId = resolveUserId(token)
+  const account = userId && accounts.find((a) => a.user.id === userId)
+  if (!account) {
+    throw new ApiError('Session expired.', 401)
+  }
+  return account
+}
+
+function nextId(prefix: string): string {
+  return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+}
+
+const MAX_SEATS = 15
+
+function assertValidRide(payload: RidePayload, minSeats: number): void {
+  if (!payload.origin.trim() || !payload.destination.trim() || !payload.departureAt) {
+    throw new ApiError('Start, end and date are required.', 400)
+  }
+  if (!Number.isInteger(payload.seatsTotal) || payload.seatsTotal < minSeats) {
+    throw new ApiError(
+      minSeats > 1
+        ? `Free seats can't be less than the ${minSeats} already booked.`
+        : 'Free seats must be at least 1.',
+      400,
+    )
+  }
+  if (payload.seatsTotal > MAX_SEATS) {
+    throw new ApiError(`Free seats can't be more than ${MAX_SEATS}.`, 400)
+  }
 }
 
 export const mockApi: Api = {
@@ -75,27 +115,18 @@ export const mockApi: Api = {
 
     async me(token: string): Promise<User> {
       await delay(120)
-      // After a page reload the in-memory session map is empty, so fall back to
-      // the user id encoded in the token. The real backend just validates the JWT.
-      const userId = sessions.get(token) ?? token.split('.')[1]
-      const account = userId && accounts.find((a) => a.user.id === userId)
-      if (!account) {
-        throw new ApiError('Session expired.', 401)
-      }
+      const account = requireAccount(token)
       return { ...account.user }
     },
 
     async updateProfile(token: string, payload: UpdateProfilePayload): Promise<User> {
       await delay()
-      const userId = sessions.get(token) ?? token.split('.')[1]
-      const account = userId && accounts.find((a) => a.user.id === userId)
-      if (!account) {
-        throw new ApiError('Session expired.', 401)
-      }
+      const account = requireAccount(token)
       // Guard against taking another user's email.
       const conflict = accounts.find(
-        (a) => a.user.email.toLowerCase() === payload.email.trim().toLowerCase() &&
-               a.user.id !== account.user.id,
+        (a) =>
+          a.user.email.toLowerCase() === payload.email.trim().toLowerCase() &&
+          a.user.id !== account.user.id,
       )
       if (conflict) {
         throw new ApiError('An account with that email already exists.', 409)
@@ -107,11 +138,9 @@ export const mockApi: Api = {
 
     async deleteAccount(token: string): Promise<void> {
       await delay()
-      const userId = sessions.get(token) ?? token.split('.')[1]
-      const index = userId ? accounts.findIndex((a) => a.user.id === userId) : -1
-      if (index === -1) {
-        throw new ApiError('Session expired.', 401)
-      }
+      const account = requireAccount(token)
+      const userId = account.user.id
+      const index = accounts.findIndex((a) => a.user.id === userId)
       // Remove all active sessions for this user, then delete the account.
       for (const [t, uid] of sessions.entries()) {
         if (uid === userId) sessions.delete(t)
@@ -159,6 +188,65 @@ export const mockApi: Api = {
           driver,
         }
       })
+    },
+
+    async listMine(token: string): Promise<Trip[]> {
+      await delay()
+      const account = requireAccount(token)
+      return MOCK_TRIPS.filter((trip) => trip.driverId === account.user.id)
+        .slice()
+        .sort((a, b) => a.departureAt.localeCompare(b.departureAt))
+    },
+
+    async create(token: string, payload: RidePayload): Promise<Trip> {
+      await delay()
+      const account = requireAccount(token)
+      assertValidRide(payload, 1)
+
+      const trip: Trip = {
+        id: nextId('trip'),
+        driverId: account.user.id,
+        origin: payload.origin.trim(),
+        destination: payload.destination.trim(),
+        departureAt: payload.departureAt,
+        seatsTotal: payload.seatsTotal,
+        seatsBooked: 0,
+        pricePerSeat: 0,
+        currency: 'EUR',
+        notes: '',
+      }
+      MOCK_TRIPS.push(trip)
+      return { ...trip }
+    },
+
+    async update(token: string, tripId: string, payload: RidePayload): Promise<Trip> {
+      await delay()
+      const account = requireAccount(token)
+      const trip = MOCK_TRIPS.find((t) => t.id === tripId && t.driverId === account.user.id)
+      if (!trip) {
+        throw new ApiError('Ride not found.', 404)
+      }
+      assertValidRide(payload, Math.max(1, trip.seatsBooked))
+
+      trip.origin = payload.origin.trim()
+      trip.destination = payload.destination.trim()
+      trip.departureAt = payload.departureAt
+      trip.seatsTotal = payload.seatsTotal
+      return { ...trip }
+    },
+
+    async remove(token: string, tripId: string): Promise<void> {
+      await delay()
+      const account = requireAccount(token)
+      const index = MOCK_TRIPS.findIndex((t) => t.id === tripId && t.driverId === account.user.id)
+      if (index === -1) {
+        throw new ApiError('Ride not found.', 404)
+      }
+      MOCK_TRIPS.splice(index, 1)
+      // Bookings only ever reference a trip, so clean them up alongside it.
+      for (let i = MOCK_BOOKINGS.length - 1; i >= 0; i--) {
+        if (MOCK_BOOKINGS[i]!.tripId === tripId) MOCK_BOOKINGS.splice(i, 1)
+      }
     },
   },
 }

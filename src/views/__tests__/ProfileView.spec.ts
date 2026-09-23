@@ -300,7 +300,11 @@ describe('ProfileView – delete account', () => {
   it('confirming deletion logs out and navigates to landing', async () => {
     // Register a fresh throwaway account so this test is isolated from seed-data mutations.
     const auth = useAuthStore()
-    await auth.register({ name: 'Delete Me', email: 'delete-view@test.app', password: 'password123' })
+    await auth.register({
+      name: 'Delete Me',
+      email: 'delete-view@test.app',
+      password: 'password123',
+    })
 
     const wrapper = await mountProfile(router)
 
@@ -328,7 +332,11 @@ describe('auth store – deleteAccount', () => {
   it('clears the session and returns true on success', async () => {
     const auth = useAuthStore()
     // Register a fresh throwaway account so this test is isolated from seed-data mutations.
-    await auth.register({ name: 'Delete Me', email: 'delete-store-1@test.app', password: 'password123' })
+    await auth.register({
+      name: 'Delete Me',
+      email: 'delete-store-1@test.app',
+      password: 'password123',
+    })
 
     const ok = await auth.deleteAccount()
 
@@ -353,5 +361,3 @@ describe('auth store – deleteAccount', () => {
     expect(ok).toBe(false)
   })
 })
-
-

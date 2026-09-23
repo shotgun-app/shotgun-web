@@ -8,7 +8,9 @@
 import type {
   Credentials,
   RegisterPayload,
+  RidePayload,
   Session,
+  Trip,
   TripSearchParams,
   TripWithDriver,
   UpdateProfilePayload,
@@ -31,6 +33,13 @@ export interface AuthApi {
 
 export interface TripsApi {
   search(params: TripSearchParams): Promise<TripWithDriver[]>
+  /** Rides the authenticated user is driving, soonest first. */
+  listMine(token: string): Promise<Trip[]>
+  create(token: string, payload: RidePayload): Promise<Trip>
+  /** Free seats can't be set below the seats already booked; the seam enforces this. */
+  update(token: string, tripId: string, payload: RidePayload): Promise<Trip>
+  /** Deletes the ride and its bookings. */
+  remove(token: string, tripId: string): Promise<void>
 }
 
 export interface Api {

@@ -124,7 +124,7 @@ const driverInitials = computed(() => {
         {{ trip.notes }}
       </p>
     </div>
-    
+
     <!-- RESERVE ACTION -->
     <div class="mt-4 border-t border-line/60 pt-4 dark:border-night-line/60">
       <button
@@ -136,6 +136,5 @@ const driverInitials = computed(() => {
         {{ seatsLeft > 0 ? 'Reserve Ride' : 'Fully Booked' }}
       </button>
     </div>
-
   </article>
 </template>
