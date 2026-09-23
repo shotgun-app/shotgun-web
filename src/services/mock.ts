@@ -11,6 +11,7 @@ import {
   type Session,
   type TripSearchParams,
   type TripWithDriver,
+  type UpdateProfilePayload,
   type User,
 } from '@/types'
 import { MOCK_ACCOUNTS, MOCK_TRIPS, type MockAccount } from '@/mock/data'
@@ -82,6 +83,40 @@ export const mockApi: Api = {
         throw new ApiError('Session expired.', 401)
       }
       return { ...account.user }
+    },
+
+    async updateProfile(token: string, payload: UpdateProfilePayload): Promise<User> {
+      await delay()
+      const userId = sessions.get(token) ?? token.split('.')[1]
+      const account = userId && accounts.find((a) => a.user.id === userId)
+      if (!account) {
+        throw new ApiError('Session expired.', 401)
+      }
+      // Guard against taking another user's email.
+      const conflict = accounts.find(
+        (a) => a.user.email.toLowerCase() === payload.email.trim().toLowerCase() &&
+               a.user.id !== account.user.id,
+      )
+      if (conflict) {
+        throw new ApiError('An account with that email already exists.', 409)
+      }
+      account.user.name = payload.name.trim()
+      account.user.email = payload.email.trim()
+      return { ...account.user }
+    },
+
+    async deleteAccount(token: string): Promise<void> {
+      await delay()
+      const userId = sessions.get(token) ?? token.split('.')[1]
+      const index = userId ? accounts.findIndex((a) => a.user.id === userId) : -1
+      if (index === -1) {
+        throw new ApiError('Session expired.', 401)
+      }
+      // Remove all active sessions for this user, then delete the account.
+      for (const [t, uid] of sessions.entries()) {
+        if (uid === userId) sessions.delete(t)
+      }
+      accounts.splice(index, 1)
     },
   },
 

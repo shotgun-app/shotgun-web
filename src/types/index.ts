@@ -70,6 +70,11 @@ export interface RegisterPayload extends Credentials {
   name: string
 }
 
+export interface UpdateProfilePayload {
+  name: string
+  email: string
+}
+
 /** The shape every service error takes, so the UI never cares about transport. */
 export class ApiError extends Error {
   constructor(

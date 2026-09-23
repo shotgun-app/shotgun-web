@@ -5,7 +5,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/services/api'
-import { ApiError, type Credentials, type RegisterPayload, type User } from '@/types'
+import { ApiError, type Credentials, type RegisterPayload, type UpdateProfilePayload, type User } from '@/types'
 
 const TOKEN_KEY = 'shotgun.token'
 
@@ -94,6 +94,28 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function updateProfile(payload: UpdateProfilePayload): Promise<boolean> {
+    if (!token.value) return false
+    const updated = await run(() => api.auth.updateProfile(token.value!, payload))
+    if (!updated) return false
+    // Mutate in place so all reactive consumers (TopNav, etc.) update instantly.
+    if (user.value) {
+      user.value.name = updated.name
+      user.value.email = updated.email
+    }
+    return true
+  }
+
+  /** Deletes the account on the backend then wipes the local session. */
+  async function deleteAccount(): Promise<boolean> {
+    if (!token.value) return false
+    await run(() => api.auth.deleteAccount(token.value!))
+    // run() sets error.value on failure and leaves it null on success.
+    if (error.value) return false
+    clearSession()
+    return true
+  }
+
   return {
     user,
     token,
@@ -104,5 +126,7 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     logout,
     restore,
+    updateProfile,
+    deleteAccount,
   }
 })
