@@ -1,5 +1,6 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/shotgun-app/.github/main/content/logo.svg" alt="Shotgun App logo" height="70" />
+  <img src=https://raw.githubusercontent.com/shotgun-app/.github/main/content/logo.svg
+  alt="Shotgun App logo" height="70" />
   <h1 align="center">shotgun-web</h1>
 </div>
 
