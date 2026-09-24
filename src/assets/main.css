@@ -3,6 +3,13 @@
 @import 'tailwindcss';
 
 /*
+ * `dark:` matches the `.dark` class on <html> instead of the OS setting, so the
+ * theme toggle can override it. Until the user picks light or dark, the store
+ * writes the class straight from prefers-color-scheme.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
  * Design tokens. Tailwind v4 turns every entry here into utilities:
  * `--color-brand-600` -> `bg-brand-600`, `text-brand-600`, `border-brand-600`, ...
  *
@@ -47,6 +54,12 @@
   html {
     -webkit-font-smoothing: antialiased;
     scroll-behavior: smooth;
+    color-scheme: light;
+  }
+
+  /* Keeps native form controls and scrollbars on the same theme. */
+  html.dark {
+    color-scheme: dark;
   }
 
   body {

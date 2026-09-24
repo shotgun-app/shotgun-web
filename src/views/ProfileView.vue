@@ -33,8 +33,18 @@ function validate(): boolean {
 }
 
 // Clear per-field errors as the user types.
-watch(() => form.name, () => { nameError.value = null })
-watch(() => form.email, () => { emailError.value = null })
+watch(
+  () => form.name,
+  () => {
+    nameError.value = null
+  },
+)
+watch(
+  () => form.email,
+  () => {
+    emailError.value = null
+  },
+)
 
 // ── Delete-account state ───────────────────────────────────────────────────
 /** Two-step confirmation: first click reveals the real delete button. */
@@ -82,9 +92,11 @@ async function save() {
 const memberSince = computed(() => {
   const raw = auth.user?.joinedAt
   if (!raw) return '—'
-  return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric' }).format(
-    new Date(raw),
-  )
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(new Date(raw))
 })
 
 const initials = computed(() =>
@@ -220,7 +232,9 @@ const initials = computed(() =>
 
         <!-- ── Danger zone ──────────────────────────────────────────────── -->
         <div class="mt-4 border-t border-line pt-6 dark:border-night-line">
-          <p class="text-xs font-medium uppercase tracking-widest text-ink-soft dark:text-night-ink-soft">
+          <p
+            class="text-xs font-medium uppercase tracking-widest text-ink-soft dark:text-night-ink-soft"
+          >
             Danger zone
           </p>
 

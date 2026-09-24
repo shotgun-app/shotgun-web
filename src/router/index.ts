@@ -18,6 +18,7 @@ const router = createRouter({
       children: [
         { path: '', name: 'app', component: () => import('@/views/HomeView.vue') },
         { path: 'profile', name: 'profile', component: () => import('@/views/ProfileView.vue') },
+        { path: 'rides', name: 'rides', component: () => import('@/views/RidesView.vue') },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },

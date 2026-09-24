@@ -25,6 +25,20 @@ describe('router guards', () => {
     expect(router.currentRoute.value.name).toBe('landing')
   })
 
+  it('protects the rides route too', async () => {
+    await router.push('/app/rides')
+
+    expect(router.currentRoute.value.name).toBe('landing')
+  })
+
+  it('lets an authenticated user into /app/rides', async () => {
+    await useAuthStore().login(DEMO_CREDENTIALS)
+
+    await router.push('/app/rides')
+
+    expect(router.currentRoute.value.name).toBe('rides')
+  })
+
   it('lets an authenticated user into /app', async () => {
     await useAuthStore().login(DEMO_CREDENTIALS)
 

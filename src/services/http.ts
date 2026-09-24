@@ -8,7 +8,9 @@ import {
   ApiError,
   type Credentials,
   type RegisterPayload,
+  type RidePayload,
   type Session,
+  type Trip,
   type TripSearchParams,
   type TripWithDriver,
   type UpdateProfilePayload,
@@ -51,8 +53,7 @@ export const httpApi: Api = {
     updateProfile: (token: string, payload: UpdateProfilePayload) =>
       request<User>('/auth/me', { method: 'PATCH', body: JSON.stringify(payload) }, token),
 
-    deleteAccount: (token: string) =>
-      request<void>('/auth/me', { method: 'DELETE' }, token),
+    deleteAccount: (token: string) => request<void>('/auth/me', { method: 'DELETE' }, token),
   },
 
   trips: {
@@ -61,8 +62,20 @@ export const httpApi: Api = {
         origin: params.originCity,
         destination: params.destinationCity,
         ...(params.departureDate ? { date: params.departureDate } : {}),
+        ...(params.departureTime ? { time: params.departureTime } : {}),
       })
       return request<TripWithDriver[]>(`/trips?${query.toString()}`)
     },
+
+    listMine: (token: string) => request<Trip[]>('/rides/mine', {}, token),
+
+    create: (token: string, payload: RidePayload) =>
+      request<Trip>('/rides', { method: 'POST', body: JSON.stringify(payload) }, token),
+
+    update: (token: string, tripId: string, payload: RidePayload) =>
+      request<Trip>(`/rides/${tripId}`, { method: 'PATCH', body: JSON.stringify(payload) }, token),
+
+    remove: (token: string, tripId: string) =>
+      request<void>(`/rides/${tripId}`, { method: 'DELETE' }, token),
   },
 }

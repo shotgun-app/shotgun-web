@@ -5,7 +5,13 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/services/api'
-import { ApiError, type Credentials, type RegisterPayload, type UpdateProfilePayload, type User } from '@/types'
+import {
+  ApiError,
+  type Credentials,
+  type RegisterPayload,
+  type UpdateProfilePayload,
+  type User,
+} from '@/types'
 
 const TOKEN_KEY = 'shotgun.token'
 

@@ -75,6 +75,14 @@ export interface UpdateProfilePayload {
   email: string
 }
 
+/** Fields a driver sets when offering or editing a ride. */
+export interface RidePayload {
+  origin: string
+  destination: string
+  departureAt: string
+  seatsTotal: number
+}
+
 /** The shape every service error takes, so the UI never cares about transport. */
 export class ApiError extends Error {
   constructor(
