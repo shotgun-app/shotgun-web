@@ -161,8 +161,11 @@ export const mockApi: Api = {
         const matchesDestination = trip.destination.toLowerCase() === destination
         if (!matchesOrigin || !matchesDestination) return false
 
-        if (params.departureDate) {
-          return trip.departureAt.startsWith(params.departureDate)
+        if (params.departureDate && !trip.departureAt.startsWith(params.departureDate)) {
+          return false
+        }
+        if (params.departureTime && trip.departureAt.slice(11, 16) !== params.departureTime) {
+          return false
         }
         return true
       })

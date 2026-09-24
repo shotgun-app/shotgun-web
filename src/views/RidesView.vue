@@ -27,6 +27,7 @@ const form = reactive({
   toCountry: '',
   toCity: '',
   date: getTodayDateString(),
+  time: '09:00',
   seatsTotal: 1,
 })
 
@@ -66,6 +67,7 @@ function resetForm() {
   form.toCountry = ''
   form.toCity = ''
   form.date = getTodayDateString()
+  form.time = '09:00'
   form.seatsTotal = 1
   formError.value = null
 }
@@ -82,6 +84,7 @@ function openEdit(ride: Trip) {
   form.toCountry = countryOf(ride.destination)
   form.toCity = ride.destination
   form.date = ride.departureAt.slice(0, 10)
+  form.time = ride.departureAt.slice(11, 16)
   form.seatsTotal = ride.seatsTotal
   formTarget.value = ride.id
 }
@@ -94,7 +97,14 @@ function closeForm() {
 async function submitForm() {
   formError.value = null
 
-  if (!form.fromCountry || !form.fromCity || !form.toCountry || !form.toCity || !form.date) {
+  if (
+    !form.fromCountry ||
+    !form.fromCity ||
+    !form.toCountry ||
+    !form.toCity ||
+    !form.date ||
+    !form.time
+  ) {
     formError.value = 'All fields are required.'
     return
   }
@@ -113,7 +123,7 @@ async function submitForm() {
   const payload: RidePayload = {
     origin: form.fromCity,
     destination: form.toCity,
-    departureAt: `${form.date}T09:00:00Z`,
+    departureAt: `${form.date}T${form.time}:00Z`,
     seatsTotal: form.seatsTotal,
   }
 
@@ -240,6 +250,10 @@ function formattedDate(iso: string): string {
         <label class="field">
           <span>Date</span>
           <input id="ride-form-date" v-model="form.date" type="date" required />
+        </label>
+        <label class="field">
+          <span>Hour</span>
+          <input id="ride-form-time" v-model="form.time" type="time" required />
         </label>
         <label class="field">
           <span>Free seats</span>

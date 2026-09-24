@@ -62,6 +62,7 @@ export const httpApi: Api = {
         origin: params.originCity,
         destination: params.destinationCity,
         ...(params.departureDate ? { date: params.departureDate } : {}),
+        ...(params.departureTime ? { time: params.departureTime } : {}),
       })
       return request<TripWithDriver[]>(`/trips?${query.toString()}`)
     },
