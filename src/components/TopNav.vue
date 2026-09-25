@@ -94,6 +94,16 @@ async function logout() {
             <li role="none">
               <RouterLink
                 role="menuitem"
+                :to="{ name: 'bookings' }"
+                class="block rounded-[0.5rem] px-3 py-2 text-sm transition-colors duration-150 hover:bg-slate-100 dark:hover:bg-brand-950"
+                @click="close"
+              >
+                My bookings
+              </RouterLink>
+            </li>
+            <li role="none">
+              <RouterLink
+                role="menuitem"
                 :to="{ name: 'rides' }"
                 class="block rounded-[0.5rem] px-3 py-2 text-sm transition-colors duration-150 hover:bg-slate-100 dark:hover:bg-brand-950"
                 @click="close"

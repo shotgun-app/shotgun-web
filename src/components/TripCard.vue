@@ -6,8 +6,10 @@
  * 1. defineProps: Receiving typed data from a parent component.
  * 2. computed(): Creating lightweight derived state (e.g. available seats, formatted dates).
  */
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { TripWithDriver } from '@/types'
+import { useBookingsStore } from '@/stores/bookings'
+import { useAuthStore } from '@/stores/auth'
 
 // defineProps is a Vue compiler macro (no need to import it).
 // It defines what data this child component expects from its parent.
@@ -19,7 +21,17 @@ const props = defineProps<{
 // A parent (or future handler) can listen with @reserve="onReserve".
 const emit = defineEmits<{
   (e: 'reserve', trip: TripWithDriver): void
+  (e: 'booked'): void
 }>()
+
+const bookingsStore = useBookingsStore()
+const auth = useAuthStore()
+
+// ── Inline booking widget state ───────────────────────────────────────────
+/** null = collapsed, 'form' = seat picker, 'done' = success confirmation */
+const bookingState = ref<null | 'form' | 'done'>(null)
+const seatCount = ref(1)
+const bookingError = ref<string | null>(null)
 
 // Computed property: automatically updates if props.trip changes
 const seatsLeft = computed(() => props.trip.seatsTotal - props.trip.seatsBooked)
@@ -50,6 +62,28 @@ const driverInitials = computed(() => {
   }
   return props.trip.driver.name.slice(0, 2).toUpperCase() || 'DR'
 })
+
+function openBooking() {
+  seatCount.value = 1
+  bookingError.value = null
+  bookingState.value = 'form'
+}
+
+function closeBooking() {
+  bookingState.value = null
+  bookingError.value = null
+}
+
+async function submitBooking() {
+  bookingError.value = null
+  const result = await bookingsStore.create(props.trip.id, { seats: seatCount.value })
+  if (result) {
+    bookingState.value = 'done'
+    emit('booked')
+  } else {
+    bookingError.value = bookingsStore.error
+  }
+}
 </script>
 
 <template>
@@ -125,16 +159,87 @@ const driverInitials = computed(() => {
       </p>
     </div>
 
-    <!-- RESERVE ACTION -->
+    <!-- BOOKING WIDGET -->
     <div class="mt-4 border-t border-line/60 pt-4 dark:border-night-line/60">
-      <button
-        type="button"
-        class="btn btn-primary w-full"
-        :disabled="seatsLeft <= 0"
-        @click="emit('reserve', trip)"
-      >
-        {{ seatsLeft > 0 ? 'Reserve Ride' : 'Fully Booked' }}
-      </button>
+      <!-- Logged-out: keep original reserve emit -->
+      <template v-if="!auth.isAuthenticated">
+        <button
+          type="button"
+          class="btn btn-primary w-full"
+          :disabled="seatsLeft <= 0"
+          @click="emit('reserve', trip)"
+        >
+          {{ seatsLeft > 0 ? 'Reserve Ride' : 'Fully Booked' }}
+        </button>
+      </template>
+
+      <!-- Success confirmation -->
+      <template v-else-if="bookingState === 'done'">
+        <p
+          id="trip-card-booking-success"
+          class="rounded-card bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+        >
+          ✓ Booked! Check <router-link :to="{ name: 'bookings' }" class="underline">My bookings</router-link> to manage it.
+        </p>
+      </template>
+
+      <!-- Seat picker form -->
+      <template v-else-if="bookingState === 'form'">
+        <div class="flex flex-col gap-3">
+          <label class="field">
+            <span>Seats to book</span>
+            <input
+              id="trip-card-seat-input"
+              v-model.number="seatCount"
+              type="number"
+              min="1"
+              :max="seatsLeft"
+            />
+          </label>
+
+          <p
+            v-if="bookingError"
+            class="rounded-card bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
+            role="alert"
+          >
+            {{ bookingError }}
+          </p>
+
+          <div class="flex gap-3">
+            <button
+              id="trip-card-book-confirm-btn"
+              type="button"
+              class="btn btn-primary flex-1"
+              :disabled="bookingsStore.pending"
+              @click="submitBooking"
+            >
+              {{ bookingsStore.pending ? 'Booking…' : `Book ${seatCount} seat${seatCount === 1 ? '' : 's'}` }}
+            </button>
+            <button
+              id="trip-card-book-cancel-btn"
+              type="button"
+              class="btn btn-ghost"
+              :disabled="bookingsStore.pending"
+              @click="closeBooking"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <!-- Default: "Book a seat" button -->
+      <template v-else>
+        <button
+          id="trip-card-book-btn"
+          type="button"
+          class="btn btn-primary w-full"
+          :disabled="seatsLeft <= 0"
+          @click="openBooking"
+        >
+          {{ seatsLeft > 0 ? 'Book a seat' : 'Fully Booked' }}
+        </button>
+      </template>
     </div>
   </article>
 </template>

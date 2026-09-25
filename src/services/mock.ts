@@ -6,6 +6,9 @@
  */
 import {
   ApiError,
+  type Booking,
+  type BookingPayload,
+  type BookingWithTrip,
   type Credentials,
   type RegisterPayload,
   type RidePayload,
@@ -25,6 +28,9 @@ const delay = (ms = LATENCY_MS) => new Promise((resolve) => setTimeout(resolve, 
 
 /** Copy of the seed data, so a registration in one session does not leak into the next reload. */
 const accounts: MockAccount[] = MOCK_ACCOUNTS.map((a) => ({ ...a, user: { ...a.user } }))
+
+/** Mutable in-memory bookings list (deep copy of seed data). */
+const bookings: Booking[] = MOCK_BOOKINGS.map((b) => ({ ...b }))
 
 /** token -> userId. Stands in for the backend's session/JWT store. */
 const sessions = new Map<string, string>()
@@ -247,9 +253,98 @@ export const mockApi: Api = {
       }
       MOCK_TRIPS.splice(index, 1)
       // Bookings only ever reference a trip, so clean them up alongside it.
-      for (let i = MOCK_BOOKINGS.length - 1; i >= 0; i--) {
-        if (MOCK_BOOKINGS[i]!.tripId === tripId) MOCK_BOOKINGS.splice(i, 1)
+      for (let i = bookings.length - 1; i >= 0; i--) {
+        if (bookings[i]!.tripId === tripId) bookings.splice(i, 1)
       }
+    },
+  },
+
+  bookings: {
+    async listMine(token: string): Promise<BookingWithTrip[]> {
+      await delay()
+      const account = requireAccount(token)
+      const userId = account.user.id
+      return bookings
+        .filter((b) => b.passengerId === userId && b.status === 'confirmed')
+        .sort((a, b) => {
+          const tripA = MOCK_TRIPS.find((t) => t.id === a.tripId)
+          const tripB = MOCK_TRIPS.find((t) => t.id === b.tripId)
+          return (tripA?.departureAt ?? '').localeCompare(tripB?.departureAt ?? '')
+        })
+        .map((b) => {
+          const trip = MOCK_TRIPS.find((t) => t.id === b.tripId)
+          if (!trip) throw new ApiError('Trip not found.', 404)
+          return { ...b, trip: { ...trip } }
+        })
+    },
+
+    async create(token: string, tripId: string, payload: BookingPayload): Promise<Booking> {
+      await delay()
+      const account = requireAccount(token)
+      const trip = MOCK_TRIPS.find((t) => t.id === tripId)
+      if (!trip) throw new ApiError('Trip not found.', 404)
+      if (!Number.isInteger(payload.seats) || payload.seats < 1) {
+        throw new ApiError('You must book at least 1 seat.', 400)
+      }
+      const freeSeats = trip.seatsTotal - trip.seatsBooked
+      if (payload.seats > freeSeats) {
+        throw new ApiError(
+          freeSeats === 0
+            ? 'This trip is fully booked.'
+            : `Only ${freeSeats} seat${freeSeats === 1 ? '' : 's'} left.`,
+          409,
+        )
+      }
+      // A passenger may only have one active booking per trip.
+      const existing = bookings.find(
+        (b) => b.tripId === tripId && b.passengerId === account.user.id && b.status === 'confirmed',
+      )
+      if (existing) throw new ApiError('You already have a booking on this trip.', 409)
+
+      const booking: Booking = {
+        id: nextId('bkg'),
+        tripId,
+        passengerId: account.user.id,
+        seats: payload.seats,
+        status: 'confirmed',
+        createdAt: new Date().toISOString(),
+      }
+      bookings.push(booking)
+      trip.seatsBooked += payload.seats
+      return { ...booking }
+    },
+
+    async update(token: string, bookingId: string, payload: BookingPayload): Promise<Booking> {
+      await delay()
+      const account = requireAccount(token)
+      const booking = bookings.find(
+        (b) => b.id === bookingId && b.passengerId === account.user.id && b.status === 'confirmed',
+      )
+      if (!booking) throw new ApiError('Booking not found.', 404)
+      const trip = MOCK_TRIPS.find((t) => t.id === booking.tripId)
+      if (!trip) throw new ApiError('Trip not found.', 404)
+      if (!Number.isInteger(payload.seats) || payload.seats < 1) {
+        throw new ApiError('You must book at least 1 seat.', 400)
+      }
+      const freeSeats = trip.seatsTotal - trip.seatsBooked + booking.seats
+      if (payload.seats > freeSeats) {
+        throw new ApiError(`Only ${freeSeats} seat${freeSeats === 1 ? '' : 's'} available.`, 409)
+      }
+      trip.seatsBooked += payload.seats - booking.seats
+      booking.seats = payload.seats
+      return { ...booking }
+    },
+
+    async cancel(token: string, bookingId: string): Promise<void> {
+      await delay()
+      const account = requireAccount(token)
+      const booking = bookings.find(
+        (b) => b.id === bookingId && b.passengerId === account.user.id && b.status === 'confirmed',
+      )
+      if (!booking) throw new ApiError('Booking not found.', 404)
+      const trip = MOCK_TRIPS.find((t) => t.id === booking.tripId)
+      if (trip) trip.seatsBooked = Math.max(0, trip.seatsBooked - booking.seats)
+      booking.status = 'cancelled'
     },
   },
 }

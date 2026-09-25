@@ -56,6 +56,16 @@ export interface Booking {
   createdAt: string
 }
 
+/** Payload for creating or updating a booking. */
+export interface BookingPayload {
+  seats: number
+}
+
+/** A confirmed booking together with a snapshot of the trip it belongs to. */
+export interface BookingWithTrip extends Booking {
+  trip: Trip
+}
+
 export interface Session {
   token: string
   user: User

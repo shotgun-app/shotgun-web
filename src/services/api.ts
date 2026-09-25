@@ -6,6 +6,9 @@
  * (or delete the branch) and the exact same calls go over HTTP.
  */
 import type {
+  Booking,
+  BookingPayload,
+  BookingWithTrip,
   Credentials,
   RegisterPayload,
   RidePayload,
@@ -42,9 +45,21 @@ export interface TripsApi {
   remove(token: string, tripId: string): Promise<void>
 }
 
+export interface BookingsApi {
+  /** Confirmed bookings for the authenticated passenger, soonest-departing first. */
+  listMine(token: string): Promise<BookingWithTrip[]>
+  /** Book seats on a trip; returns the new booking. */
+  create(token: string, tripId: string, payload: BookingPayload): Promise<Booking>
+  /** Change the seat count on an existing confirmed booking. */
+  update(token: string, bookingId: string, payload: BookingPayload): Promise<Booking>
+  /** Cancel a confirmed booking; freed seats are returned to the trip. */
+  cancel(token: string, bookingId: string): Promise<void>
+}
+
 export interface Api {
   auth: AuthApi
   trips: TripsApi
+  bookings: BookingsApi
 }
 
 /** Defaults to the mock: only an explicit "false" opts into the real backend. */

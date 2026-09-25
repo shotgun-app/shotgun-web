@@ -6,6 +6,9 @@
  */
 import {
   ApiError,
+  type Booking,
+  type BookingPayload,
+  type BookingWithTrip,
   type Credentials,
   type RegisterPayload,
   type RidePayload,
@@ -77,5 +80,19 @@ export const httpApi: Api = {
 
     remove: (token: string, tripId: string) =>
       request<void>(`/rides/${tripId}`, { method: 'DELETE' }, token),
+  },
+
+  bookings: {
+    listMine: (token: string) =>
+      request<BookingWithTrip[]>('/bookings/mine', {}, token),
+
+    create: (token: string, tripId: string, payload: BookingPayload) =>
+      request<Booking>('/bookings', { method: 'POST', body: JSON.stringify({ tripId, ...payload }) }, token),
+
+    update: (token: string, bookingId: string, payload: BookingPayload) =>
+      request<Booking>(`/bookings/${bookingId}`, { method: 'PATCH', body: JSON.stringify(payload) }, token),
+
+    cancel: (token: string, bookingId: string) =>
+      request<void>(`/bookings/${bookingId}`, { method: 'DELETE' }, token),
   },
 }
