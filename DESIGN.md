@@ -132,7 +132,7 @@ dimmed and show a not-allowed cursor. Disabled buttons dim to 60% and show a pro
   `btn-primary`, Cancel is `btn-ghost`. Show `Saving…` while pending and disable both buttons.
 - **States:** loading is a `.meta` line ("Loading your rides…") or the centered spinner card
   on Home; empty is `.empty`; errors are `.alert-error`. Every list view has all three.
-- **Auth screen:** no tabs. One form with a "New to Shotgun? Create an account" / "Already
+- **Auth screen:** below `lg` the photo is a full-screen background (darkened), the headline sits on it and the form is a white card; from `lg` up it is a half / half split (photo left, form right). No tabs. One form with a "New to Shotgun? Create an account" / "Already
   have an account? Log in" text switch below it.
 
 ## Motion

@@ -1,29 +1,14 @@
 <script setup lang="ts">
 /**
- * Landing hero: one photograph, the value proposition, nothing else.
+ * Landing hero copy: the value proposition, nothing else. The photograph is in LandingView.
  * Copy is static marketing text, not app data.
  */
 </script>
 
 <template>
-  <section class="relative isolate flex min-h-[42dvh] items-end overflow-hidden lg:min-h-dvh">
-    <!--
-      Stock photo of highway traffic, free under the Unsplash License.
-      Swap the src once real brand photography exists.
-    -->
-    <img
-      src="https://images.unsplash.com/photo-1754373218908-108881f8541f?auto=format&fit=crop&crop=entropy&w=1200&h=1600&q=70"
-      alt=""
-      width="1200"
-      height="1600"
-      fetchpriority="high"
-      class="absolute inset-0 -z-10 size-full object-cover"
-    />
-    <div
-      class="absolute inset-0 -z-10 bg-linear-to-t from-brand-950 via-brand-950/80 to-brand-950/35"
-    ></div>
-
-    <div class="w-full max-w-xl p-8 sm:p-12 lg:p-16">
+  <!-- The photo itself lives in LandingView, so on small screens it can sit behind the form too. -->
+  <section class="flex items-end lg:min-h-dvh">
+    <div class="w-full max-w-xl px-6 pt-14 pb-8 sm:px-12 lg:p-16">
       <h1
         class="rise text-balance text-4xl font-medium leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl"
         style="animation-delay: 80ms"
