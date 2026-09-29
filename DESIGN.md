@@ -9,8 +9,7 @@ generous space, short copy.
 
 ## Logo and icons
 
-- App mark: `public/logo.png` (blue rounded square, white car with three
-  passengers, green leaf). Used next to the "Shotgun" wordmark in the top nav
+- App mark: `public/logo.png` (blue rounded square with a white "S" mark). Used next to the "Shotgun" wordmark in the top nav
   (`size-8`) and on the landing hero (`size-10`), always with `alt=""` because
   the wordmark is right beside it.
 - Favicons, Apple touch icon and web manifest icons are in `public/`

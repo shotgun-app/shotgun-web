@@ -100,9 +100,9 @@ async function handleSearch() {
     <!-- SEARCH FORM -->
     <form class="grid gap-6" @submit.prevent="handleSearch">
       <!-- ROUTE: From, swap, To — one visual group -->
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+      <div class="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
         <!-- From -->
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label class="field">
             <span>From country</span>
             <select v-model="fromCountry" required>
@@ -122,7 +122,7 @@ async function handleSearch() {
         </div>
 
         <!-- Swap button, centered between From and To -->
-        <div class="flex justify-center sm:pt-6">
+        <div class="flex justify-center lg:pt-6">
           <button
             type="button"
             class="btn btn-ghost size-9 rounded-full p-0"
@@ -130,12 +130,12 @@ async function handleSearch() {
             title="Swap origin and destination"
             @click="swapLocations"
           >
-            <PhArrowsLeftRight :size="16" class="rotate-90 sm:rotate-0" aria-hidden="true" />
+            <PhArrowsLeftRight :size="16" class="rotate-90 lg:rotate-0" aria-hidden="true" />
           </button>
         </div>
 
         <!-- To -->
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label class="field">
             <span>To country</span>
             <select v-model="toCountry" required>

@@ -110,7 +110,7 @@
   }
 
   .field {
-    @apply grid gap-1.5;
+    @apply grid min-w-0 gap-1.5;
   }
 
   .field > span {
@@ -121,7 +121,7 @@
   .input,
   .field input,
   .field select {
-    @apply rounded-card border border-line bg-white px-3.5 py-2.5 text-sm transition-colors
+    @apply w-full min-w-0 rounded-card border border-line bg-white px-3.5 py-2.5 text-sm transition-colors
       duration-200 placeholder:text-slate-400 hover:border-slate-300
       focus:border-brand-600 dark:border-night-line dark:bg-night-raised
       dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-brand-400;
