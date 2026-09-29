@@ -24,7 +24,7 @@ const visible = ref(false)
       :placeholder="placeholder"
       :minlength="minlength"
       :required="required"
-      class="w-full pr-11"
+      class="input w-full pr-11"
     />
     <button
       type="button"

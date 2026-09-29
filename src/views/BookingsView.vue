@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useBookingsStore } from '@/stores/bookings'
+import RouteLine from '@/components/RouteLine.vue'
+import { formatDeparture } from '@/utils/format'
 import type { BookingWithTrip } from '@/types'
 
 const bookings = useBookingsStore()
@@ -57,21 +59,6 @@ async function confirmCancel(id: string) {
 }
 
 // ── Display helpers ────────────────────────────────────────────────────────
-function formattedDate(iso: string): string {
-  try {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).format(new Date(iso))
-  } catch {
-    return iso
-  }
-}
-
 function seatsLeft(b: BookingWithTrip): number {
   return b.trip.seatsTotal - b.trip.seatsBooked + b.seats
 }
@@ -81,39 +68,28 @@ function seatsLeft(b: BookingWithTrip): number {
   <section class="rise max-w-2xl">
     <!-- ── Page header ────────────────────────────────────────────────── -->
     <div>
-      <h1 class="text-3xl font-medium tracking-tight text-ink dark:text-night-ink">My bookings</h1>
-      <p class="mt-2 text-sm text-ink-soft dark:text-night-ink-soft">
-        Rides you've booked as a passenger.
-      </p>
+      <h1 class="page-title">My bookings</h1>
+      <p class="page-lead">Rides you've booked as a passenger.</p>
     </div>
 
     <!-- ── API error ──────────────────────────────────────────────────── -->
     <p
       v-if="bookings.error && editingId === null && confirmingCancelId === null"
-      class="mt-8 rounded-card bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
+      class="alert alert-error mt-8"
       role="alert"
     >
       {{ bookings.error }}
     </p>
 
     <!-- ── Loading state ──────────────────────────────────────────────── -->
-    <p
-      v-if="bookings.pending && bookings.bookings.length === 0"
-      class="mt-10 text-sm text-ink-soft dark:text-night-ink-soft"
-    >
+    <p v-if="bookings.pending && bookings.bookings.length === 0" class="meta mt-10 text-sm">
       Loading your bookings…
     </p>
 
     <!-- ── Empty state ────────────────────────────────────────────────── -->
-    <div
-      v-else-if="bookings.bookings.length === 0"
-      id="bookings-empty"
-      class="mt-10 flex flex-col items-start gap-4"
-    >
-      <p class="text-sm text-ink-soft dark:text-night-ink-soft">You have no bookings yet.</p>
-      <RouterLink :to="{ name: 'app' }" class="btn btn-primary">
-        Search for a ride
-      </RouterLink>
+    <div v-else-if="bookings.bookings.length === 0" id="bookings-empty" class="empty mt-10">
+      <p class="meta mt-1.5 text-sm">You have no bookings yet.</p>
+      <RouterLink :to="{ name: 'app' }" class="btn btn-primary mt-5">Search for a ride</RouterLink>
     </div>
 
     <!-- ── Booking list ───────────────────────────────────────────────── -->
@@ -122,22 +98,16 @@ function seatsLeft(b: BookingWithTrip): number {
         v-for="booking in bookings.bookings"
         :id="`booking-card-${booking.id}`"
         :key="booking.id"
-        class="rounded-card border border-line bg-white p-5 dark:border-night-line dark:bg-night-raised"
+        class="card"
       >
         <!-- Trip summary row -->
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div class="flex items-center gap-2 font-medium text-ink dark:text-night-ink">
-              <span>{{ booking.trip.origin }}</span>
-              <span class="text-brand-600 dark:text-brand-400">→</span>
-              <span>{{ booking.trip.destination }}</span>
-            </div>
-            <p class="mt-1 text-xs text-ink-soft dark:text-night-ink-soft">
-              Departing {{ formattedDate(booking.trip.departureAt) }}
-            </p>
-            <p class="mt-0.5 text-xs text-ink-soft dark:text-night-ink-soft">
-              {{ booking.seats }} seat{{ booking.seats === 1 ? '' : 's' }} booked
-              · {{ booking.trip.pricePerSeat }} {{ booking.trip.currency }} / seat
+            <RouteLine :origin="booking.trip.origin" :destination="booking.trip.destination" />
+            <p class="meta mt-1">Departing {{ formatDeparture(booking.trip.departureAt) }}</p>
+            <p class="meta mt-0.5">
+              {{ booking.seats }} seat{{ booking.seats === 1 ? '' : 's' }} booked ·
+              {{ booking.trip.pricePerSeat }} {{ booking.trip.currency }} / seat
             </p>
           </div>
 
@@ -157,7 +127,7 @@ function seatsLeft(b: BookingWithTrip): number {
             <button
               :id="`booking-cancel-btn-${booking.id}`"
               type="button"
-              class="btn border border-red-200 bg-white text-red-600 hover:border-red-300 hover:bg-red-50 dark:border-red-900/60 dark:bg-night-raised dark:text-red-400 dark:hover:border-red-800 dark:hover:bg-red-950/40"
+              class="btn btn-danger"
               @click="requestCancel(booking.id)"
             >
               Cancel booking
@@ -186,11 +156,7 @@ function seatsLeft(b: BookingWithTrip): number {
                 required
               />
             </label>
-            <p
-              v-if="editError"
-              class="rounded-card bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
-              role="alert"
-            >
+            <p v-if="editError" class="alert alert-error" role="alert">
               {{ editError }}
             </p>
             <div class="flex gap-3">
@@ -226,7 +192,7 @@ function seatsLeft(b: BookingWithTrip): number {
           <button
             :id="`booking-cancel-confirm-btn-${booking.id}`"
             type="button"
-            class="btn bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
+            class="btn btn-danger-solid"
             :disabled="bookings.pending"
             @click="confirmCancel(booking.id)"
           >

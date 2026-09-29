@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import UserAvatar from '@/components/UserAvatar.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const auth = useAuthStore()
@@ -9,15 +10,6 @@ const router = useRouter()
 
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
-
-const initials = computed(() =>
-  (auth.user?.name ?? '?')
-    .split(' ')
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase(),
-)
 
 function close() {
   open.value = false
@@ -72,11 +64,7 @@ async function logout() {
             aria-haspopup="menu"
             @click="open = !open"
           >
-            <span
-              class="grid size-7 place-items-center rounded-full bg-brand-600 text-[0.6875rem] font-medium text-white"
-            >
-              {{ initials }}
-            </span>
+            <UserAvatar :name="auth.user?.name" size="sm" />
             <span class="hidden text-sm sm:inline">{{ auth.user?.name }}</span>
           </button>
 
@@ -89,7 +77,7 @@ async function logout() {
               <RouterLink
                 role="menuitem"
                 :to="{ name: 'profile' }"
-                class="block rounded-lg px-3 py-2 text-sm transition-colors duration-150 hover:bg-slate-100 dark:hover:bg-brand-950"
+                class="block rounded-lg px-3 py-2 text-sm transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-brand-950"
                 @click="close"
               >
                 My profile
@@ -99,7 +87,7 @@ async function logout() {
               <RouterLink
                 role="menuitem"
                 :to="{ name: 'bookings' }"
-                class="block rounded-lg px-3 py-2 text-sm transition-colors duration-150 hover:bg-slate-100 dark:hover:bg-brand-950"
+                class="block rounded-lg px-3 py-2 text-sm transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-brand-950"
                 @click="close"
               >
                 My bookings
@@ -109,7 +97,7 @@ async function logout() {
               <RouterLink
                 role="menuitem"
                 :to="{ name: 'rides' }"
-                class="block rounded-lg px-3 py-2 text-sm transition-colors duration-150 hover:bg-slate-100 dark:hover:bg-brand-950"
+                class="block rounded-lg px-3 py-2 text-sm transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-brand-950"
                 @click="close"
               >
                 My rides
@@ -120,7 +108,7 @@ async function logout() {
               <button
                 role="menuitem"
                 type="button"
-                class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left text-sm text-red-600 transition-colors duration-150 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left text-sm text-red-600 transition-colors duration-200 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
                 @click="logout"
               >
                 Log out

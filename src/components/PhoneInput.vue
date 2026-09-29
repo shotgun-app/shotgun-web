@@ -25,11 +25,7 @@ watch(model, (value) => {
 
 <template>
   <div class="grid grid-cols-[minmax(0,9.5rem)_1fr] gap-2">
-    <select
-      v-model="country"
-      class="rounded-card border border-line bg-white px-3 py-2.5 text-sm transition-colors duration-200 hover:border-slate-300 focus:border-brand-600 dark:border-night-line dark:bg-night-raised dark:hover:border-slate-600 dark:focus:border-brand-400"
-      aria-label="Country code"
-    >
+    <select v-model="country" class="input px-3" aria-label="Country code">
       <option v-for="c in DIAL_CODES" :key="c.country" :value="c.country">
         {{ c.country }} (+{{ c.dial }})
       </option>
@@ -37,6 +33,7 @@ watch(model, (value) => {
     <input
       :id="id"
       v-model="national"
+      class="input"
       type="tel"
       inputmode="tel"
       autocomplete="tel-national"

@@ -2,6 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import UserAvatar from '@/components/UserAvatar.vue'
 import PasswordInput from '@/components/PasswordInput.vue'
 import PhoneInput from '@/components/PhoneInput.vue'
 import { formatPhone } from '@/utils/dialCodes'
@@ -148,15 +149,6 @@ const memberSince = computed(() => {
     day: 'numeric',
   }).format(new Date(raw))
 })
-
-const initials = computed(() =>
-  (auth.user?.name ?? '?')
-    .split(' ')
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase(),
-)
 </script>
 
 <template>
@@ -164,19 +156,11 @@ const initials = computed(() =>
     <!-- ── Page header ─────────────────────────────────────────────────── -->
     <div class="flex items-start justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-medium tracking-tight text-ink dark:text-night-ink">My profile</h1>
-        <p class="mt-2 text-sm text-ink-soft dark:text-night-ink-soft">
-          Your public details visible to drivers and fellow passengers.
-        </p>
+        <h1 class="page-title">My profile</h1>
+        <p class="page-lead">Your public details visible to drivers and fellow passengers.</p>
       </div>
 
-      <!-- Avatar bubble -->
-      <span
-        class="grid size-14 shrink-0 place-items-center rounded-full bg-brand-600 text-xl font-semibold text-white"
-        aria-hidden="true"
-      >
-        {{ initials }}
-      </span>
+      <UserAvatar :name="auth.user?.name" size="lg" />
     </div>
 
     <!-- ── VIEW MODE ──────────────────────────────────────────────────────── -->
@@ -210,12 +194,12 @@ const initials = computed(() =>
 
       <!-- ── Change password ──────────────────────────────────────────── -->
       <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
-        <h2 class="text-lg font-medium tracking-tight text-ink dark:text-night-ink">Password</h2>
+        <h2 class="section-title">Password</h2>
 
         <p
           v-if="passwordChanged"
           id="profile-password-success"
-          class="mt-3 rounded-card bg-green-50 px-3.5 py-2.5 text-sm text-green-700 dark:bg-green-950/40 dark:text-green-300"
+          class="alert alert-success mt-3"
           role="status"
         >
           Password changed. Your other devices were logged out.
@@ -267,11 +251,7 @@ const initials = computed(() =>
             />
           </label>
 
-          <p
-            v-if="passwordError || auth.error"
-            class="rounded-card bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
-            role="alert"
-          >
+          <p v-if="passwordError || auth.error" class="alert alert-error" role="alert">
             {{ passwordError ?? auth.error }}
           </p>
 
@@ -296,23 +276,17 @@ const initials = computed(() =>
         </form>
       </div>
 
-      <!-- ── Danger zone ──────────────────────────────────────────────── -->
+      <!-- ── Delete account ──────────────────────────────────────────────── -->
       <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
-        <p
-          class="text-xs font-medium uppercase tracking-widest text-ink-soft dark:text-night-ink-soft"
-        >
-          Danger zone
-        </p>
+        <h2 class="section-title">Delete account</h2>
 
         <!-- Step 1: initial prompt -->
         <template v-if="!confirmingDelete">
-          <p class="mt-2 text-sm text-ink-soft dark:text-night-ink-soft">
-            Permanently remove your account and all associated data.
-          </p>
+          <p class="meta mt-2 text-sm">Permanently remove your account and all associated data.</p>
           <button
             id="profile-delete-btn"
             type="button"
-            class="btn mt-4 border border-red-200 bg-white text-red-600 hover:border-red-300 hover:bg-red-50 dark:border-red-900/60 dark:bg-night-raised dark:text-red-400 dark:hover:border-red-800 dark:hover:bg-red-950/40"
+            class="btn btn-danger mt-4"
             :disabled="auth.pending"
             @click="requestDelete"
           >
@@ -329,7 +303,7 @@ const initials = computed(() =>
             <button
               id="profile-delete-confirm-btn"
               type="button"
-              class="btn bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
+              class="btn btn-danger-solid"
               :disabled="auth.pending"
               @click="confirmDelete"
             >
@@ -403,11 +377,7 @@ const initials = computed(() =>
         </div>
 
         <!-- API-level error (e.g. email already taken) -->
-        <p
-          v-if="auth.error"
-          class="rounded-card bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
-          role="alert"
-        >
+        <p v-if="auth.error" class="alert alert-error" role="alert">
           {{ auth.error }}
         </p>
 

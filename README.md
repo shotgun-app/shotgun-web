@@ -54,12 +54,12 @@ src/
     api.ts            the Api interface; `api` is the HTTP client
     http.ts           fetch client for ../shotgun-api (sends the session cookie)
   test/               test-only fake api + seed data (installed by vitest setup)
-  utils/locations.ts  countries/cities and date helpers for the forms
-  assets/main.css     Tailwind import, @theme design tokens, shared .btn/.field
+  utils/              locations, greeting, dial codes, date/initials formatting
+  assets/main.css     Tailwind import, @theme design tokens, shared classes (see DESIGN.md)
   stores/auth.ts      Pinia store: the only owner of "who is logged in"
   router/index.ts     routes + the requiresAuth / guestOnly guard
-  views/              LandingView, AppLayout, HomeView, ProfileView
-  components/         PromoPanel, AuthPanel, TopNav
+  views/              LandingView, AppLayout, HomeView, ProfileView, RidesView, BookingsView
+  components/         AuthPanel, TopNav, TripCard, TripSearch, UserAvatar, RouteLine, ...
   types/index.ts      domain types shared by http and UI
 ```
 
@@ -72,38 +72,15 @@ Tailwind CSS v4 through `@tailwindcss/vite`. There is no `tailwind.config.js`:
 the whole configuration is the `@theme` block in `src/assets/main.css`. Styling
 is utility classes in templates, and no SFC carries a `<style>` block.
 
-**Design direction:** clean modern minimal. Type-led, generous whitespace, one
-photograph, no decorative chrome. Concretely:
+**Design direction:** clean modern minimal. The full design system - colour
+tokens, typography, shape and spacing, shared classes (`.btn-*`, `.card`,
+`.alert-*`, `.badge-*`, `.empty`, ...), components, patterns and a checklist for
+new UI - is in [`DESIGN.md`](DESIGN.md). Read it before adding or changing any
+screen, and keep it in step with `src/assets/main.css`.
 
-- **Type** - Geist Variable, self-hosted via `@fontsource-variable/geist`. No
-  Google Fonts `<link>`, no runtime font request to a third party. Headings run
-  `font-medium tracking-tight`, not bold-and-huge.
-- **Palette** - two brand ramps plus one cool-grey neutral ramp:
-
-  | Token                     | Colour | Used for                                    |
-  | ------------------------- | ------ | ------------------------------------------- |
-  | `brand-*`                 | blue   | primary actions, focus rings, avatar        |
-  | `accent-*`                | green  | the one highlighted word, eco/CO2 messaging |
-  | `ink`, `ink-soft`, `line` | slate  | text, secondary text, borders (light mode)  |
-  | `night*`                  | slate  | surfaces and text in dark mode              |
-
-  One accent, used the same way everywhere. Changing the palette means editing
-  those tokens in one place.
-
-- **Shape** - a single radius token (`rounded-card`, 12px) for every container,
-  input and button. Full-pill is reserved for the avatar chip.
-- **Dark mode** - follows `prefers-color-scheme` through Tailwind's `dark:`
-  variant. The whole page switches together; sections never invert
-  independently. No pure black, no pure white.
-- **Motion** - one primitive, the `.rise` class: a 600ms settle on first paint.
-  It collapses to nothing under `prefers-reduced-motion: reduce`. There is no
-  animation library and no scroll-driven animation.
 - **Images** - the landing photograph is stock (highway traffic, free under the
   Unsplash License, served from `images.unsplash.com`). Swap the `src` in
   `PromoPanel.vue` when real brand photography exists.
-
-The small `@layer components` block holds the patterns used by more than one
-component: `.btn`, `.btn-primary`, `.btn-ghost`, `.field`, `.rise`.
 
 ### Layout
 

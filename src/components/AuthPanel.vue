@@ -75,11 +75,7 @@ async function submit() {
         />
       </label>
 
-      <p
-        v-if="auth.error"
-        class="rounded-card bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
-        role="alert"
-      >
+      <p v-if="auth.error" class="alert alert-error" role="alert">
         {{ auth.error }}
       </p>
 
