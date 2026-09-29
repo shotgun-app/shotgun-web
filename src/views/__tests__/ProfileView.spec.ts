@@ -306,6 +306,7 @@ describe('ProfileView – delete account', () => {
       name: 'Delete Me',
       email: 'delete-view@test.app',
       password: 'password123',
+      phone: '+38640123456',
     })
 
     const wrapper = await mountProfile(router)
@@ -337,6 +338,7 @@ describe('auth store – deleteAccount', () => {
       name: 'Delete Me',
       email: 'delete-store-1@test.app',
       password: 'password123',
+      phone: '+38640123456',
     })
 
     const ok = await auth.deleteAccount()
@@ -350,7 +352,11 @@ describe('auth store – deleteAccount', () => {
     const auth = useAuthStore()
     // Register a fresh throwaway account so this test is isolated from seed-data mutations.
     const throwawayCredentials = { email: 'delete-store-2@test.app', password: 'password123' }
-    await auth.register({ name: 'Delete Me 2', ...throwawayCredentials })
+    await auth.register({
+      name: 'Delete Me 2',
+      phone: '+38640123456',
+      ...throwawayCredentials,
+    })
 
     await auth.deleteAccount()
 

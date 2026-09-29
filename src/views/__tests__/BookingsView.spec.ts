@@ -46,7 +46,7 @@ async function freshPassenger() {
     email: `passenger-${Date.now()}-${Math.random().toString(36).slice(2)}@test.app`,
     password: 'password123',
   }
-  await auth.register({ name: 'Test Passenger', ...passenger })
+  await auth.register({ name: 'Test Passenger', phone: '+38640123456', ...passenger })
   return auth
 }
 
@@ -60,6 +60,7 @@ async function tripBy(name: string, payload: RidePayload) {
     name,
     email: `driver-${Date.now()}-${Math.random().toString(36).slice(2)}@test.app`,
     password: 'password123',
+    phone: '+38640123456',
   })
   const trip = await api.trips.create(payload)
   await api.auth.login(passenger)

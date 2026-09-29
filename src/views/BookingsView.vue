@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useBookingsStore } from '@/stores/bookings'
+import SeatStepper from '@/components/SeatStepper.vue'
 import RouteLine from '@/components/RouteLine.vue'
 import { formatDeparture } from '@/utils/format'
 import type { BookingWithTrip } from '@/types'
@@ -145,17 +146,19 @@ function seatsLeft(b: BookingWithTrip): number {
             class="flex flex-col gap-3"
             @submit.prevent="submitEdit(booking.id)"
           >
-            <label class="field">
+            <div class="field">
               <span>Number of seats</span>
-              <input
-                :id="`booking-edit-seats-${booking.id}`"
-                v-model.number="editSeats"
-                type="number"
-                min="1"
-                :max="seatsLeft(booking)"
-                required
-              />
-            </label>
+              <div class="flex items-center gap-3">
+                <SeatStepper
+                  :id="`booking-edit-seats-${booking.id}`"
+                  v-model="editSeats"
+                  label="Number of seats"
+                  :min="1"
+                  :max="seatsLeft(booking)"
+                />
+                <span class="meta">of {{ seatsLeft(booking) }} available</span>
+              </div>
+            </div>
             <p v-if="editError" class="alert alert-error" role="alert">
               {{ editError }}
             </p>

@@ -10,7 +10,7 @@ generous space, short copy.
 ## Logo and icons
 
 - App mark: `public/logo.png` (blue rounded square with a white "S" mark). Used next to the "Shotgun" wordmark in the top nav
-  (`size-8`) and on the landing hero (`size-10`), always with `alt=""` because
+  (`size-8`) and above the form on the auth screen (`size-10`; the photo hero carries no logo), always with `alt=""` because
   the wordmark is right beside it.
 - Favicons, Apple touch icon and web manifest icons are in `public/`
   (`favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png`,
@@ -111,7 +111,11 @@ dimmed and show a not-allowed cursor. Disabled buttons dim to 60% and show a pro
 - `UserAvatar` - initials on `brand-600`. Sizes `sm` (nav), `md` (trip card), `lg` (profile).
 - `RouteLine` - "Origin → Destination", the arrow in brand blue. Used on every trip row.
 - `PasswordInput` - password field with a show/hide eye button (Phosphor `PhEye`/`PhEyeSlash`).
-- `PhoneInput` - country-code select plus number, `v-model` is E.164.
+- `PhoneInput` - country-code select plus number, `v-model` is E.164. Phone is required on
+  register and in the profile.
+- `SeatStepper` - minus / number / plus for seat counts (trip booking, booking edit, free
+  seats on a ride). Buttons clamp to `min`/`max`; typing still works so forms can report errors.
+  Wrap it in `div.field`, not `label.field` (a label would trigger the first button).
 - `ThemeToggle` - borderless, transparent icon button (moon in light, sun in dark).
 - `TripCard`, `TripSearch` - built only from the shared classes above.
 - `src/utils/format.ts` - `formatDeparture` (the one date format) and `initialsOf`.

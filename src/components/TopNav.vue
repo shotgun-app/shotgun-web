@@ -42,9 +42,9 @@ async function logout() {
 
 <template>
   <header
-    class="sticky top-0 z-20 border-b border-line bg-white/80 backdrop-blur-md dark:border-night-line dark:bg-night/80"
+    class="sticky top-0 z-20  bg-white/80 backdrop-blur-md dark:border-night-line dark:bg-night/80"
   >
-    <div class="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-6">
+    <div class="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4">
       <RouterLink
         :to="{ name: 'app' }"
         class="flex items-center gap-2.5 text-xl font-medium tracking-tight"
@@ -59,7 +59,7 @@ async function logout() {
         <div ref="root" class="relative">
           <button
             type="button"
-            class="flex cursor-pointer items-center gap-2.5 rounded-full border border-line py-1 pr-3 pl-1 transition-colors duration-200 hover:border-slate-300 dark:border-night-line dark:hover:border-slate-600"
+            class="flex cursor-pointer items-center gap-2.5 rounded-full py-1.5 px-2 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-night-raised"
             :aria-expanded="open"
             aria-haspopup="menu"
             @click="open = !open"

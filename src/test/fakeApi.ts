@@ -84,7 +84,7 @@ export const fakeApi: Api = {
       return { ...account.user }
     },
 
-    async register({ email, password, name }: RegisterPayload): Promise<User> {
+    async register({ email, password, name, phone }: RegisterPayload): Promise<User> {
       if (findByEmail(email)) {
         throw new ApiError('An account with that email already exists.', 409)
       }
@@ -92,7 +92,7 @@ export const fakeApi: Api = {
         id: `usr_${accounts.length + 1}`,
         email: email.trim(),
         name: name.trim(),
-        phone: null,
+        phone,
         joinedAt: new Date().toISOString(),
       }
       accounts.push({ password, user })

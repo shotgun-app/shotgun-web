@@ -4,7 +4,7 @@ import { DIAL_CODES, joinPhone, splitPhone } from '@/utils/dialCodes'
 
 /** v-model is E.164 ("+38640123456") or '' when empty. */
 const model = defineModel<string>({ required: true })
-defineProps<{ id?: string }>()
+defineProps<{ id?: string; required?: boolean }>()
 
 const initial = splitPhone(model.value)
 const country = ref(initial.country)
@@ -34,6 +34,7 @@ watch(model, (value) => {
       :id="id"
       v-model="national"
       class="input"
+      :required="required"
       type="tel"
       inputmode="tel"
       autocomplete="tel-national"

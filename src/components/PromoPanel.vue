@@ -24,13 +24,8 @@
     ></div>
 
     <div class="w-full max-w-xl p-8 sm:p-12 lg:p-16">
-      <p class="rise flex items-center gap-3 text-xl font-medium tracking-tight text-white/90">
-        <img src="/logo.png" alt="" class="size-10" width="40" height="40" />
-        Shotgun
-      </p>
-
       <h1
-        class="rise mt-4 text-balance text-4xl font-medium leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl"
+        class="rise text-balance text-4xl font-medium leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl"
         style="animation-delay: 80ms"
       >
         Ride together. Reduce traffic.

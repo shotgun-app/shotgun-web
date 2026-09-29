@@ -10,6 +10,7 @@ import { computed, ref } from 'vue'
 import type { TripWithDriver } from '@/types'
 import { useBookingsStore } from '@/stores/bookings'
 import { useAuthStore } from '@/stores/auth'
+import SeatStepper from '@/components/SeatStepper.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import RouteLine from '@/components/RouteLine.vue'
 import { formatDeparture } from '@/utils/format'
@@ -38,6 +39,13 @@ const bookingError = ref<string | null>(null)
 
 // Computed property: automatically updates if props.trip changes
 const seatsLeft = computed(() => props.trip.seatsTotal - props.trip.seatsBooked)
+
+/** "2 of 4 seats left": shows the car's capacity as well as what is free. */
+const seatsLabel = computed(() =>
+  seatsLeft.value > 0
+    ? `${seatsLeft.value} of ${props.trip.seatsTotal} seat${props.trip.seatsTotal === 1 ? '' : 's'} left`
+    : 'Fully booked',
+)
 
 const formattedDate = computed(() => formatDeparture(props.trip.departureAt))
 
@@ -96,7 +104,7 @@ async function submitBooking() {
         </div>
 
         <span class="badge" :class="seatsLeft > 0 ? 'badge-success' : 'badge-danger'">
-          {{ seatsLeft > 0 ? `${seatsLeft} seats left` : 'Fully booked' }}
+          {{ seatsLabel }}
         </span>
       </div>
     </div>
@@ -140,16 +148,19 @@ async function submitBooking() {
       <!-- Seat picker form -->
       <template v-else-if="bookingState === 'form'">
         <div class="flex flex-col gap-3">
-          <label class="field">
+          <div class="field">
             <span>Seats to book</span>
-            <input
-              id="trip-card-seat-input"
-              v-model.number="seatCount"
-              type="number"
-              min="1"
-              :max="seatsLeft"
-            />
-          </label>
+            <div class="flex items-center gap-3">
+              <SeatStepper
+                id="trip-card-seat-input"
+                v-model="seatCount"
+                label="Seats to book"
+                :min="1"
+                :max="seatsLeft"
+              />
+              <span class="meta">of {{ seatsLeft }} available</span>
+            </div>
+          </div>
 
           <p v-if="bookingError" class="alert alert-error" role="alert">
             {{ bookingError }}

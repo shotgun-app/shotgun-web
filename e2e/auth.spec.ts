@@ -14,6 +14,7 @@ async function register(page: Page, name: string, email: string) {
   await page.getByLabel('Name').fill(name)
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
+  await page.getByLabel('Phone number').fill('40 123 456')
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL('/app')
 }
@@ -36,6 +37,18 @@ test('unauthorized /app visit redirects to landing', async ({ page }) => {
   await expect(page).toHaveURL('/')
 })
 
+test('registering without a phone number is blocked', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Create an account' }).click()
+  await page.getByLabel('Name').fill('No Phone')
+  await page.getByLabel('Email').fill(uniqueEmail())
+  await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
+  await page.getByRole('button', { name: 'Create account' }).click()
+  // The browser's own required-field check stops the submit and focuses the phone field
+  await expect(page.getByLabel('Phone number')).toBeFocused()
+  await expect(page).toHaveURL('/')
+})
+
 test('registering a new account lands in the app', async ({ page }) => {
   await register(page, 'Mira Solberg', uniqueEmail())
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Mira Solberg')
@@ -50,6 +63,7 @@ test('registering with a taken email shows an error', async ({ page }) => {
   await page.getByLabel('Name').fill('Second Person')
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
+  await page.getByLabel('Phone number').fill('40 123 456')
   await page.getByRole('button', { name: 'Create account' }).click()
 
   await expect(page.getByRole('alert')).toContainText('already exists')
@@ -107,6 +121,7 @@ test('password eye toggle, phone number and password change work end to end', as
   await expect(page.getByLabel('Password', { exact: true })).toHaveAttribute('type', 'text')
   await page.getByLabel('Name').fill('Vera Phone')
   await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Phone number').fill('40 123 456')
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL('/app')
 

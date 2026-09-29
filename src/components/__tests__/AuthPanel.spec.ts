@@ -47,11 +47,25 @@ describe('AuthPanel', () => {
     expect(wrapper.find('input[autocomplete="name"]').exists()).toBe(true)
   })
 
+  it('requires a phone number to register', async () => {
+    const wrapper = mountPanel(router)
+    await wrapper.get('form + p button').trigger('click')
+    await wrapper.get('input[autocomplete="name"]').setValue('No Phone')
+    await wrapper.get('input[type="email"]').setValue('nophone@test.app')
+    await wrapper.get('input[type="password"]').setValue('password123')
+    await wrapper.get('form').trigger('submit')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.get('[role="alert"]').text()).toBe('Enter your phone number.')
+    expect(router.currentRoute.value.name).toBe('landing')
+  })
+
   it('switches back to login and clears a previous error', async () => {
     const wrapper = mountPanel(router)
     await wrapper.get('form + p button').trigger('click')
     await wrapper.get('input[autocomplete="name"]').setValue('New Person')
     await wrapper.get('input[type="email"]').setValue(DEMO_CREDENTIALS.email)
+    await wrapper.get('input[type="tel"]').setValue('40 123 456')
     await wrapper.get('input[type="password"]').setValue('password123')
     await wrapper.get('form').trigger('submit')
     await new Promise((resolve) => setTimeout(resolve, 50))

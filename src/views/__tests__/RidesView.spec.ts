@@ -50,6 +50,7 @@ describe('RidesView', () => {
       name: 'Test Driver',
       email: `driver-${Date.now()}-${Math.random().toString(36).slice(2)}@test.app`,
       password: 'password123',
+      phone: '+38640123456',
     })
   })
 

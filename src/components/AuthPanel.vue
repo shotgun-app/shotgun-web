@@ -3,6 +3,7 @@ import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import PasswordInput from './PasswordInput.vue'
+import PhoneInput from './PhoneInput.vue'
 
 type Mode = 'login' | 'register'
 
@@ -10,7 +11,7 @@ const auth = useAuthStore()
 const router = useRouter()
 
 const mode = ref<Mode>('login')
-const form = reactive({ name: '', email: '', password: '' })
+const form = reactive({ name: '', email: '', phone: '', password: '' })
 
 const isLogin = computed(() => mode.value === 'login')
 
@@ -20,9 +21,18 @@ function toggleMode() {
 }
 
 async function submit() {
+  if (!isLogin.value && !form.phone) {
+    auth.error = 'Enter your phone number.'
+    return
+  }
   const ok = isLogin.value
     ? await auth.login({ email: form.email, password: form.password })
-    : await auth.register({ name: form.name, email: form.email, password: form.password })
+    : await auth.register({
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+      })
 
   if (ok) await router.push({ name: 'app' })
 }
@@ -30,10 +40,15 @@ async function submit() {
 
 <template>
   <div class="w-full max-w-sm">
-    <h2 class="text-3xl font-medium tracking-tight">
+    <p class="flex items-center gap-3 text-xl font-medium tracking-tight">
+      <img src="/logo.png" alt="" class="size-10" width="40" height="40" />
+      Shotgun
+    </p>
+
+    <h2 class="mt-8 text-3xl font-medium tracking-tight">
       {{ isLogin ? 'Welcome back' : 'Create your account' }}
     </h2>
-    <p class="mt-3 text-sm text-ink-soft dark:text-night-ink-soft">
+    <p class="mt-2 text-sm text-ink-soft dark:text-night-ink-soft">
       {{
         isLogin
           ? 'Log in to find a seat or publish the trip you are already driving.'
@@ -41,7 +56,7 @@ async function submit() {
       }}
     </p>
 
-    <form class="mt-10 grid gap-5" @submit.prevent="submit">
+    <form class="mt-6 grid gap-5" @submit.prevent="submit">
       <label v-if="!isLogin" class="field">
         <span>Name</span>
         <input
@@ -63,6 +78,11 @@ async function submit() {
           required
         />
       </label>
+
+      <div v-if="!isLogin" class="field">
+        <span>Phone</span>
+        <PhoneInput id="register-phone" v-model="form.phone" required />
+      </div>
 
       <label class="field">
         <span>Password</span>

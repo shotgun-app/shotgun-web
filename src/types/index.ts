@@ -74,6 +74,8 @@ export interface Credentials {
 
 export interface RegisterPayload extends Credentials {
   name: string
+  /** E.164 ("+38640123456"), required. */
+  phone: string
 }
 
 export interface UpdateProfilePayload {

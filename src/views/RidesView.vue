@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import SeatStepper from '@/components/SeatStepper.vue'
 import RouteLine from '@/components/RouteLine.vue'
 import { formatDeparture } from '@/utils/format'
 import { EUROPEAN_LOCATIONS, getTodayDateString } from '@/utils/locations'
@@ -240,17 +241,16 @@ function seatsLeft(ride: Trip): number {
           <span>Hour</span>
           <input id="ride-form-time" v-model="form.time" type="time" required />
         </label>
-        <label class="field">
+        <div class="field">
           <span>Free seats</span>
-          <input
+          <SeatStepper
             id="ride-form-seats"
-            v-model.number="form.seatsTotal"
-            type="number"
+            v-model="form.seatsTotal"
+            label="Free seats"
             :min="minSeats"
             :max="MAX_SEATS"
-            required
           />
-        </label>
+        </div>
       </div>
 
       <p v-if="formError" class="alert alert-error" role="alert">

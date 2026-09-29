@@ -17,12 +17,14 @@ const editing = ref(false)
 const form = reactive({ name: '', email: '', phone: '' })
 const nameError = ref<string | null>(null)
 const emailError = ref<string | null>(null)
+const phoneError = ref<string | null>(null)
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function validate(): boolean {
   nameError.value = null
   emailError.value = null
+  phoneError.value = null
 
   if (!form.name.trim()) {
     nameError.value = 'Name is required.'
@@ -33,7 +35,11 @@ function validate(): boolean {
     emailError.value = 'Enter a valid email address.'
   }
 
-  return !nameError.value && !emailError.value
+  if (!form.phone) {
+    phoneError.value = 'Phone number is required.'
+  }
+
+  return !nameError.value && !emailError.value && !phoneError.value
 }
 
 // Clear per-field errors as the user types.
@@ -41,6 +47,12 @@ watch(
   () => form.name,
   () => {
     nameError.value = null
+  },
+)
+watch(
+  () => form.phone,
+  () => {
+    phoneError.value = null
   },
 )
 watch(
@@ -76,6 +88,7 @@ function startEditing() {
   form.phone = auth.user?.phone ?? ''
   nameError.value = null
   emailError.value = null
+  phoneError.value = null
   confirmingDelete.value = false
   auth.error = null
   editing.value = true
@@ -372,8 +385,16 @@ const memberSince = computed(() => {
 
         <!-- Phone field -->
         <div class="field">
-          <span>Phone (optional)</span>
-          <PhoneInput id="profile-phone-input" v-model="form.phone" />
+          <span>Phone</span>
+          <PhoneInput id="profile-phone-input" v-model="form.phone" required />
+          <p
+            v-if="phoneError"
+            id="profile-phone-error"
+            class="mt-0.5 text-xs text-red-600 dark:text-red-400"
+            role="alert"
+          >
+            {{ phoneError }}
+          </p>
         </div>
 
         <!-- API-level error (e.g. email already taken) -->
