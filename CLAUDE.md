@@ -6,8 +6,9 @@ Guidance for Claude Code working in this repo.
 
 `shotgun-web` - the Vue 3 front end of Shotgun, a carpooling app (drivers publish
 trips, passengers book empty seats). The Go backend is a sibling repo at
-`../shotgun-api` and is not implemented yet; this app runs against an in-memory
-mock.
+`../shotgun-api`. Auth (register, login, logout, profile, password) is real,
+using an HttpOnly session cookie. Trips, rides and bookings have no backend
+endpoints yet, so those screens show errors until the API has them.
 
 ## Stack
 
@@ -117,10 +118,9 @@ deliberate rather than generated.
 
 ## Scope
 
-Current sprint is **auth only**: register, login, logout, protected `/app`,
-placeholder profile. Trip search, trip creation, bookings, ratings and CO2
-stats are later tickets - the types and seed data exist, the screens do not.
-Don't build them unasked; ask first.
+Auth and profile are done and talk to the real API. The trip search, rides and
+bookings screens exist but wait for their backend endpoints. Ratings and CO2
+stats are later tickets. Don't build them unasked; ask first.
 
 ## Conventions
 

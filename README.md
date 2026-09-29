@@ -14,14 +14,13 @@ This repo is the Vue 3 front end. The backend lives in a sibling repo,
 
 ## Status
 
-Sprint scope is authentication only:
+Auth and profile use the real API:
 
 - `/` - public landing page: photographic hero on the left, login/register on the right.
-- `/app` - protected area; visiting it logged out redirects to `/`.
-- `/app/profile` - placeholder profile page.
-- Top nav with a user dropdown (My profile, Log out).
-
-Trip search, trip creation and bookings are separate tickets.
+- `/app` - protected area; visiting it logged out redirects to `/`. Home shows a time-based greeting and trip search.
+- `/app/profile` - name, email, phone (with country code), change password, delete account.
+- `/app/rides` and `/app/bookings` - screens exist, but the API has no ride or booking endpoints yet.
+- Top nav with a user dropdown (profile, bookings, rides, log out).
 
 ## Setup
 
