@@ -110,10 +110,10 @@ async function submitBooking() {
           <div class="flex items-center gap-2">
             <h3 class="font-medium text-ink dark:text-night-ink">{{ trip.driver.name }}</h3>
             <span
-              v-if="trip.driver.rating > 0"
+              v-if="(trip.driver.rating ?? 0) > 0"
               class="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-ink-soft dark:bg-night dark:text-night-ink-soft"
             >
-              ★ {{ trip.driver.rating.toFixed(1) }}
+              ★ {{ (trip.driver.rating ?? 0).toFixed(1) }}
               <span class="text-[0.6875rem]">({{ trip.driver.ratingCount }})</span>
             </span>
           </div>
@@ -179,7 +179,9 @@ async function submitBooking() {
           id="trip-card-booking-success"
           class="rounded-card bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
         >
-          ✓ Booked! Check <router-link :to="{ name: 'bookings' }" class="underline">My bookings</router-link> to manage it.
+          ✓ Booked! Check
+          <router-link :to="{ name: 'bookings' }" class="underline">My bookings</router-link> to
+          manage it.
         </p>
       </template>
 
@@ -213,7 +215,11 @@ async function submitBooking() {
               :disabled="bookingsStore.pending"
               @click="submitBooking"
             >
-              {{ bookingsStore.pending ? 'Booking…' : `Book ${seatCount} seat${seatCount === 1 ? '' : 's'}` }}
+              {{
+                bookingsStore.pending
+                  ? 'Booking…'
+                  : `Book ${seatCount} seat${seatCount === 1 ? '' : 's'}`
+              }}
             </button>
             <button
               id="trip-card-book-cancel-btn"

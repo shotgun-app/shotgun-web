@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { resetFakeApi } from '@/test/fakeApi'
 
 import router from '../index'
 import { useAuthStore } from '@/stores/auth'
-import { DEMO_CREDENTIALS } from '@/mock/data'
+import { DEMO_CREDENTIALS } from '@/test/seed'
 
 describe('router guards', () => {
   beforeEach(async () => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
     await router.replace('/')
     await router.isReady()
   })

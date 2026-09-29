@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { EUROPEAN_LOCATIONS, getTodayDateString } from '@/mock/data'
+import { EUROPEAN_LOCATIONS, getTodayDateString } from '@/utils/locations'
 import { useRidesStore } from '@/stores/rides'
 import type { RidePayload, Trip } from '@/types'
 

@@ -2,8 +2,6 @@
 import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { DEMO_CREDENTIALS } from '@/mock/data'
-import { USE_MOCK_API } from '@/services/api'
 
 type Mode = 'login' | 'register'
 
@@ -24,12 +22,6 @@ async function submit() {
       : await auth.register({ name: form.name, email: form.email, password: form.password })
 
   if (ok) await router.push({ name: 'app' })
-}
-
-/** Mock-only convenience: fill the seeded account so the demo is one click. */
-function fillDemo() {
-  form.email = DEMO_CREDENTIALS.email
-  form.password = DEMO_CREDENTIALS.password
 }
 </script>
 
@@ -71,7 +63,7 @@ function fillDemo() {
     <form class="mt-6 grid gap-5" @submit.prevent="submit">
       <label v-if="mode === 'register'" class="field">
         <span>Name</span>
-        <input v-model="form.name" type="text" autocomplete="name" placeholder="Alice" required />
+        <input v-model="form.name" type="text" autocomplete="name" placeholder="Your name" required />
       </label>
 
       <label class="field">
@@ -108,16 +100,6 @@ function fillDemo() {
       <button class="btn btn-primary" type="submit" :disabled="auth.pending">
         {{ auth.pending ? 'Working' : mode === 'login' ? 'Log in' : 'Create account' }}
       </button>
-
-      <template v-if="USE_MOCK_API">
-        <div class="flex items-center gap-4 text-xs text-ink-soft dark:text-night-ink-soft">
-          <span class="h-px flex-1 bg-line dark:bg-night-line"></span>
-          or
-          <span class="h-px flex-1 bg-line dark:bg-night-line"></span>
-        </div>
-
-        <button class="btn btn-ghost" type="button" @click="fillDemo">Use demo account</button>
-      </template>
     </form>
   </div>
 </template>

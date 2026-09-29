@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
+import { resetFakeApi } from '@/test/fakeApi'
 
 import AuthPanel from '../AuthPanel.vue'
-import { DEMO_CREDENTIALS } from '@/mock/data'
+import { DEMO_CREDENTIALS } from '@/test/seed'
 
 const blank = { template: '<div />' }
 
@@ -17,7 +18,7 @@ describe('AuthPanel', () => {
 
   beforeEach(async () => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
     router = createRouter({
       history: createMemoryHistory(),
       routes: [

@@ -28,12 +28,12 @@ npm run format
 
 ## Architecture rules
 
-- **All fake data lives in `src/mock/data.ts`.** One file. Never hardcode users,
-  trips or bookings anywhere else - import them from there.
+- **No fake data in the app.** Seed data and the in-memory fake api exist only
+  under `src/test/` for unit tests. Never hardcode users, trips or bookings in
+  app code.
 - **`src/services/api.ts` is the only backend seam.** It exports the `Api`
-  interface and picks `mock.ts` or `http.ts` based on `VITE_USE_MOCK_API`.
-  Adding an endpoint means: add it to the interface, then to _both_
-  implementations.
+  interface and `api` (the `http.ts` client). Adding an endpoint means: add it to
+  the interface, then to `http.ts` and to `src/test/fakeApi.ts`.
 - **Components never call services.** UI → Pinia store → `api`. Today that is
   `src/stores/auth.ts`; follow the same shape for new stores.
 - **Errors** are always `ApiError` (`src/types/index.ts`). Stores turn them into
@@ -98,20 +98,20 @@ deliberate rather than generated.
   paths redirect to `/`.
 - The guard in `src/router/index.ts` calls `auth.restore()` once, then enforces
   the route meta. Don't duplicate auth checks inside components.
-- Token lives in `localStorage` under `shotgun.token`, sent as
-  `Authorization: Bearer <token>`. All storage access is wrapped in try/catch.
+- Session is an HttpOnly cookie set by the API; requests use
+  `credentials: 'include'`. The frontend never handles the token. All
+  `localStorage` access (theme) is wrapped in try/catch.
 
 ## Tests
 
-- Unit tests live next to what they test in `__tests__/` folders: mock service,
-  stores (auth, rides, trips, theme), router guards, and component suites.
+- Unit tests live next to what they test in `__tests__/` folders: stores (auth, rides, trips, theme), router guards, and component suites.
 - A new store, service method or guarded route ships with a unit test. A new
   user-visible flow ships with a Playwright test in `e2e/`.
-- Component tests mount with a real Pinia and a real memory router, and run
-  against the mock api rather than a stubbed service. Keep it that way: it
-  exercises the seam the backend will later replace.
-- The mock api has a built-in 350ms delay, so async component tests wait on a
-  real timeout before asserting.
+- Component tests mount with a real Pinia and a real memory router. The api is
+  swapped for `src/test/fakeApi.ts` by `src/test/setup.ts`; call `resetFakeApi()`
+  in `beforeEach`. The fake has no latency.
+- Playwright tests run against the real API + database (`docker compose up -d
+--build` in `../shotgun-api` first).
 - `npm run test:unit` and `npm run test:e2e` must both pass before work is done.
   Playwright needs `npx playwright install chromium` once.
 

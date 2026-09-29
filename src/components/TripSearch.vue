@@ -10,7 +10,7 @@
  * 5. @submit.prevent: Event handling that intercepts HTML form submission.
  */
 import { computed, nextTick, ref, watch } from 'vue'
-import { EUROPEAN_LOCATIONS, getTodayDateString } from '@/mock/data'
+import { EUROPEAN_LOCATIONS, getTodayDateString } from '@/utils/locations'
 import { useTripsStore } from '@/stores/trips'
 
 const trips = useTripsStore()

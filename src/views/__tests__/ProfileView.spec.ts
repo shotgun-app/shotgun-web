@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
+import { resetFakeApi } from '@/test/fakeApi'
 
 import ProfileView from '../ProfileView.vue'
 import { useAuthStore } from '@/stores/auth'
-import { DEMO_CREDENTIALS } from '@/mock/data'
+import { DEMO_CREDENTIALS } from '@/test/seed'
 
 const blank = { template: '<div />' }
 
@@ -34,7 +35,7 @@ describe('ProfileView', () => {
 
   beforeEach(async () => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
 
     router = buildRouter()
     await router.push('/app/profile')
@@ -184,7 +185,7 @@ describe('ProfileView', () => {
 describe('auth store – updateProfile', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
   })
 
   it('updates name and email in the store', async () => {
@@ -216,15 +217,12 @@ describe('auth store – updateProfile', () => {
   it('persists the update so me() returns the new values', async () => {
     const auth = useAuthStore()
     await auth.login({ email: 'markus@shotgun.app', password: 'password123' })
-    // Capture token before we replace the Pinia instance.
-    const token = auth.token!
-
     await auth.updateProfile({ name: 'Persisted Name', email: 'persisted@shotgun.app' })
 
     // Create a fresh store instance and verify the mock layer kept the mutation.
     setActivePinia(createPinia())
     const freshAuth = useAuthStore()
-    const user = await import('@/services/api').then(({ api }) => api.auth.me(token))
+    const user = await import('@/services/api').then(({ api }) => api.auth.me())
 
     expect(user.name).toBe('Persisted Name')
     expect(user.email).toBe('persisted@shotgun.app')
@@ -242,7 +240,7 @@ describe('ProfileView – delete account', () => {
 
   beforeEach(async () => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
 
     router = buildRouter()
     await router.push('/app/profile')
@@ -326,7 +324,7 @@ describe('ProfileView – delete account', () => {
 describe('auth store – deleteAccount', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
   })
 
   it('clears the session and returns true on success', async () => {
@@ -343,7 +341,6 @@ describe('auth store – deleteAccount', () => {
     expect(ok).toBe(true)
     expect(auth.isAuthenticated).toBe(false)
     expect(auth.user).toBeNull()
-    expect(localStorage.getItem('shotgun.token')).toBeNull()
   })
 
   it('makes the account unreachable after deletion', async () => {

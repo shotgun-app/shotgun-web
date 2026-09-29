@@ -2,9 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 
 const toggle = (page: Page) => page.getByRole('button', { name: /Switch to/ })
 
-test('theme toggle flips between light and dark, starting from the OS theme', async ({
-  page,
-}) => {
+test('theme toggle flips between light and dark, starting from the OS theme', async ({ page }) => {
   await page.goto('/')
 
   const html = page.locator('html')
@@ -36,8 +34,11 @@ test('the chosen theme survives a reload', async ({ page }) => {
 
 test('the app nav carries the same toggle', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Use demo account' }).click()
-  await page.getByRole('button', { name: 'Log in', exact: true }).click()
+  await page.getByRole('tab', { name: 'Register' }).click()
+  await page.getByLabel('Name').fill('Theme Tester')
+  await page.getByLabel('Email').fill(`theme-${Date.now()}@shotgun.app`)
+  await page.getByLabel('Password').fill('password123')
+  await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL('/app')
 
   await toggle(page).click()

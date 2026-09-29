@@ -10,8 +10,7 @@ Web client for **Shotgun**, a carpooling app: drivers publish trips they are
 driving anyway, passengers book the empty seats.
 
 This repo is the Vue 3 front end. The backend lives in a sibling repo,
-[`../shotgun-api`](../shotgun-api) (Go), and is **not wired up yet** - the front
-end currently runs against an in-memory mock.
+[`../shotgun-api`](../shotgun-api) (Go).
 
 ## Status
 
@@ -22,25 +21,20 @@ Sprint scope is authentication only:
 - `/app/profile` - placeholder profile page.
 - Top nav with a user dropdown (My profile, Log out).
 
-Trip search, trip creation and bookings are separate tickets. Their domain types
-and seed data already exist so those screens have something to read.
+Trip search, trip creation and bookings are separate tickets.
 
 ## Setup
+
+Start the API and database first (see [`../shotgun-api`](../shotgun-api)):
+`docker compose up -d --build` there, it listens on http://localhost:8080.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173. On the landing page, **Use demo account** fills the
-seeded credentials:
-
-| Email               | Password      |
-| ------------------- | ------------- |
-| `alice@shotgun.app` | `password123` |
-
-Registering a new account works too, but the mock keeps accounts in memory only -
-they are gone after a page reload.
+Open http://localhost:5173 and register an account. The API base URL defaults to
+`http://localhost:8080`; override it with `VITE_API_BASE_URL` in `.env.local`.
 
 ## Scripts
 
@@ -48,8 +42,8 @@ they are gone after a page reload.
 npm run dev          # dev server
 npm run build        # type-check + production build
 npm run preview      # serve the production build
-npm run test:unit    # Vitest (19 tests)
-npm run test:e2e     # Playwright (npx playwright install chromium on first run)
+npm run test:unit    # Vitest
+npm run test:e2e     # Playwright, needs the API running (npx playwright install chromium first)
 npm run lint         # oxlint + eslint, both with --fix
 npm run format       # prettier
 ```
@@ -58,17 +52,17 @@ npm run format       # prettier
 
 ```
 src/
-  mock/data.ts        all hardcoded data (users, trips, bookings) - one file
   services/
-    api.ts            the Api interface + which implementation is active
-    mock.ts           in-memory implementation, reads mock/data.ts
-    http.ts           fetch implementation against ../shotgun-api (not active)
+    api.ts            the Api interface; `api` is the HTTP client
+    http.ts           fetch client for ../shotgun-api (sends the session cookie)
+  test/               test-only fake api + seed data (installed by vitest setup)
+  utils/locations.ts  countries/cities and date helpers for the forms
   assets/main.css     Tailwind import, @theme design tokens, shared .btn/.field
   stores/auth.ts      Pinia store: the only owner of "who is logged in"
   router/index.ts     routes + the requiresAuth / guestOnly guard
   views/              LandingView, AppLayout, HomeView, ProfileView
   components/         PromoPanel, AuthPanel, TopNav
-  types/index.ts      domain types shared by mock, http and UI
+  types/index.ts      domain types shared by http and UI
 ```
 
 Components never call a service directly - they go through a Pinia store, which
@@ -122,41 +116,24 @@ one sentence - and fits the first viewport at every breakpoint.
 
 ## Tests
 
-Unit tests (Vitest + jsdom) cover the auth seam end to end without a browser:
+Unit tests (Vitest + jsdom) run against an in-memory fake of the `Api` interface
+(`src/test/fakeApi.ts`, installed in `src/test/setup.ts`), so they need no
+backend. Call `resetFakeApi()` in `beforeEach`. The fake keeps one "current user",
+like the browser's session cookie.
 
-| File                                         | Covers                                                                                                  |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `src/services/__tests__/mock.spec.ts`        | login, case-insensitive email, 401s, register, 409 on duplicate, logout                                 |
-| `src/stores/__tests__/auth.spec.ts`          | store session state, error mapping, token in `localStorage`                                             |
-| `src/router/__tests__/guards.spec.ts`        | `/app` and `/app/profile` redirect when logged out, `/` redirects when logged in, unknown path fallback |
-| `src/components/__tests__/AuthPanel.spec.ts` | tab switching, demo login navigating to `/app`, error rendering                                         |
+End-to-end tests (Playwright, `e2e/`) drive a real browser against the **real API
+and database**: start `docker compose up -d --build` in `../shotgun-api` first.
+They cover registration, login, logout, duplicate email, wrong password, session
+survival across a reload and the profile page.
 
-End-to-end tests (Playwright, `e2e/auth.spec.ts`) drive a real browser: landing
-page renders, unauthorized `/app` redirects, demo login and logout, registration,
-and session survival across a reload.
+## Authentication
 
-When the real backend arrives, the unit tests keep passing against the mock
-(`VITE_USE_MOCK_API` stays true in test); point the e2e suite at the live API by
-setting `VITE_USE_MOCK_API=false` in the Playwright web-server env.
-
-## Plugging in the real backend
-
-1. Implement `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` and
-   `GET /auth/me` in `../shotgun-api`, returning the JSON shapes in
-   `src/types/index.ts`.
-2. Adjust paths/shapes in `src/services/http.ts` if the endpoints differ.
-3. Create `.env.local`:
-
-   ```sh
-   VITE_USE_MOCK_API=false
-   VITE_API_BASE_URL=http://localhost:8080
-   ```
-
-4. Delete `src/mock/` and `src/services/mock.ts` once nothing imports them
-   (the "Use demo account" button in `AuthPanel.vue` is the last consumer).
-
-The auth token is stored in `localStorage` under `shotgun.token` and sent as
-`Authorization: Bearer <token>`.
+Login and register make the API set an HttpOnly `session` cookie (random token,
+stored in the `sessions` table). The browser sends it on every request
+(`credentials: 'include'`); JavaScript never sees the token. Logout deletes the
+session row and clears the cookie. The router guard calls `GET /auth/me` once on
+boot to restore the session. The API must allow this origin with credentials
+(`ALLOWED_ORIGIN`, default `http://localhost:5173`).
 
 ## Recommended IDE setup
 

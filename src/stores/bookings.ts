@@ -32,16 +32,16 @@ export const useBookingsStore = defineStore('bookings', () => {
 
   async function fetchMine(): Promise<void> {
     const auth = useAuthStore()
-    if (!auth.token) return
-    const list = await run(() => api.bookings.listMine(auth.token!))
+    if (!auth.user) return
+    const list = await run(() => api.bookings.listMine())
     if (list) bookings.value = list
   }
 
   /** Books seats on a trip and adds the resulting booking to the local list. */
   async function create(tripId: string, payload: BookingPayload): Promise<Booking | null> {
     const auth = useAuthStore()
-    if (!auth.token) return null
-    const booking = await run(() => api.bookings.create(auth.token!, tripId, payload))
+    if (!auth.user) return null
+    const booking = await run(() => api.bookings.create(tripId, payload))
     if (!booking) return null
     // Re-fetch so the embedded trip snapshot is up to date.
     await fetchMine()
@@ -51,8 +51,8 @@ export const useBookingsStore = defineStore('bookings', () => {
   /** Updates the seat count on an existing booking. */
   async function update(bookingId: string, payload: BookingPayload): Promise<boolean> {
     const auth = useAuthStore()
-    if (!auth.token) return false
-    const updated = await run(() => api.bookings.update(auth.token!, bookingId, payload))
+    if (!auth.user) return false
+    const updated = await run(() => api.bookings.update(bookingId, payload))
     if (!updated) return false
     bookings.value = bookings.value
       .map((b) => (b.id === bookingId ? { ...b, seats: updated.seats } : b))
@@ -63,11 +63,11 @@ export const useBookingsStore = defineStore('bookings', () => {
   /** Cancels a booking and removes it from the local list. */
   async function cancel(bookingId: string): Promise<boolean> {
     const auth = useAuthStore()
-    if (!auth.token) return false
+    if (!auth.user) return false
     pending.value = true
     error.value = null
     try {
-      await api.bookings.cancel(auth.token, bookingId)
+      await api.bookings.cancel(bookingId)
       bookings.value = bookings.value.filter((b) => b.id !== bookingId)
       return true
     } catch (e) {

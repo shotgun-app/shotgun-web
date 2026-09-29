@@ -1,8 +1,8 @@
 /**
- * In-memory implementation of `Api`, backed by `src/mock/data.ts`.
+ * Test-only in-memory stand-in for the real API, installed by src/test/setup.ts.
  *
- * It fakes network latency and token handling so the UI exercises the same
- * loading/error paths it will hit against the real Go backend.
+ * Auth is a single "cookie": whoever logged in last is the current user, like the
+ * browser session cookie against the Go backend. Call `resetFakeApi()` in beforeEach.
  */
 import {
   ApiError,
@@ -12,51 +12,40 @@ import {
   type Credentials,
   type RegisterPayload,
   type RidePayload,
-  type Session,
   type Trip,
   type TripSearchParams,
   type TripWithDriver,
   type UpdateProfilePayload,
   type User,
 } from '@/types'
-import { MOCK_ACCOUNTS, MOCK_BOOKINGS, MOCK_TRIPS, type MockAccount } from '@/mock/data'
-import type { Api } from './api'
+import type { Api } from '@/services/api'
+import { MOCK_ACCOUNTS, MOCK_BOOKINGS, MOCK_TRIPS, type MockAccount } from './seed'
 
-const LATENCY_MS = 350
+let accounts: MockAccount[] = []
+let bookings: Booking[] = []
+let trips: Trip[] = []
+let currentUserId: string | null = null
 
-const delay = (ms = LATENCY_MS) => new Promise((resolve) => setTimeout(resolve, ms))
+export function resetFakeApi(): void {
+  accounts = MOCK_ACCOUNTS.map((a) => ({ ...a, user: { ...a.user } }))
+  bookings = MOCK_BOOKINGS.map((b) => ({ ...b }))
+  trips = MOCK_TRIPS.map((t) => ({ ...t }))
+  currentUserId = null
+}
+resetFakeApi()
 
-/** Copy of the seed data, so a registration in one session does not leak into the next reload. */
-const accounts: MockAccount[] = MOCK_ACCOUNTS.map((a) => ({ ...a, user: { ...a.user } }))
-
-/** Mutable in-memory bookings list (deep copy of seed data). */
-const bookings: Booking[] = MOCK_BOOKINGS.map((b) => ({ ...b }))
-
-/** token -> userId. Stands in for the backend's session/JWT store. */
-const sessions = new Map<string, string>()
-
-function issueToken(user: User): string {
-  const token = `mock.${user.id}.${Date.now().toString(36)}`
-  sessions.set(token, user.id)
-  return token
+/** Live trips, for specs that assert on server-side state such as seatsBooked. */
+export function getFakeTrips(): Trip[] {
+  return trips
 }
 
 function findByEmail(email: string): MockAccount | undefined {
   return accounts.find((a) => a.user.email.toLowerCase() === email.trim().toLowerCase())
 }
 
-/** Resolves the userId a token stands for. Falls back to the id encoded in the
- * token itself, since a page reload clears the in-memory session map. */
-function resolveUserId(token: string): string | undefined {
-  return sessions.get(token) ?? token.split('.')[1]
-}
-
-function requireAccount(token: string): MockAccount {
-  const userId = resolveUserId(token)
-  const account = userId && accounts.find((a) => a.user.id === userId)
-  if (!account) {
-    throw new ApiError('Session expired.', 401)
-  }
+function requireAccount(): MockAccount {
+  const account = currentUserId && accounts.find((a) => a.user.id === currentUserId)
+  if (!account) throw new ApiError('Not signed in.', 401)
   return account
 }
 
@@ -83,19 +72,18 @@ function assertValidRide(payload: RidePayload, minSeats: number): void {
   }
 }
 
-export const mockApi: Api = {
+export const fakeApi: Api = {
   auth: {
-    async login({ email, password }: Credentials): Promise<Session> {
-      await delay()
+    async login({ email, password }: Credentials): Promise<User> {
       const account = findByEmail(email)
       if (!account || account.password !== password) {
         throw new ApiError('Wrong email or password.', 401)
       }
-      return { token: issueToken(account.user), user: { ...account.user } }
+      currentUserId = account.user.id
+      return { ...account.user }
     },
 
-    async register({ email, password, name }: RegisterPayload): Promise<Session> {
-      await delay()
+    async register({ email, password, name }: RegisterPayload): Promise<User> {
       if (findByEmail(email)) {
         throw new ApiError('An account with that email already exists.', 409)
       }
@@ -103,66 +91,48 @@ export const mockApi: Api = {
         id: `usr_${accounts.length + 1}`,
         email: email.trim(),
         name: name.trim(),
-        avatarUrl: null,
         phone: null,
         joinedAt: new Date().toISOString(),
-        rating: 0,
-        ratingCount: 0,
-        co2SavedKg: 0,
       }
       accounts.push({ password, user })
-      return { token: issueToken(user), user: { ...user } }
+      currentUserId = user.id
+      return { ...user }
     },
 
-    async logout(token: string): Promise<void> {
-      await delay(120)
-      sessions.delete(token)
+    async logout(): Promise<void> {
+      currentUserId = null
     },
 
-    async me(token: string): Promise<User> {
-      await delay(120)
-      const account = requireAccount(token)
-      return { ...account.user }
+    async me(): Promise<User> {
+      return { ...requireAccount().user }
     },
 
-    async updateProfile(token: string, payload: UpdateProfilePayload): Promise<User> {
-      await delay()
-      const account = requireAccount(token)
-      // Guard against taking another user's email.
+    async updateProfile(payload: UpdateProfilePayload): Promise<User> {
+      const account = requireAccount()
       const conflict = accounts.find(
         (a) =>
           a.user.email.toLowerCase() === payload.email.trim().toLowerCase() &&
           a.user.id !== account.user.id,
       )
-      if (conflict) {
-        throw new ApiError('An account with that email already exists.', 409)
-      }
+      if (conflict) throw new ApiError('An account with that email already exists.', 409)
       account.user.name = payload.name.trim()
       account.user.email = payload.email.trim()
       return { ...account.user }
     },
 
-    async deleteAccount(token: string): Promise<void> {
-      await delay()
-      const account = requireAccount(token)
-      const userId = account.user.id
-      const index = accounts.findIndex((a) => a.user.id === userId)
-      // Remove all active sessions for this user, then delete the account.
-      for (const [t, uid] of sessions.entries()) {
-        if (uid === userId) sessions.delete(t)
-      }
-      accounts.splice(index, 1)
+    async deleteAccount(): Promise<void> {
+      const account = requireAccount()
+      accounts = accounts.filter((a) => a !== account)
+      currentUserId = null
     },
   },
 
   trips: {
     async search(params: TripSearchParams): Promise<TripWithDriver[]> {
-      await delay()
-
       const origin = params.originCity.trim().toLowerCase()
       const destination = params.destinationCity.trim().toLowerCase()
 
-      const matching = MOCK_TRIPS.filter((trip) => {
+      const matching = trips.filter((trip) => {
         const matchesOrigin = trip.origin.toLowerCase() === origin
         const matchesDestination = trip.destination.toLowerCase() === destination
         if (!matchesOrigin || !matchesDestination) return false
@@ -199,17 +169,16 @@ export const mockApi: Api = {
       })
     },
 
-    async listMine(token: string): Promise<Trip[]> {
-      await delay()
-      const account = requireAccount(token)
-      return MOCK_TRIPS.filter((trip) => trip.driverId === account.user.id)
+    async listMine(): Promise<Trip[]> {
+      const account = requireAccount()
+      return trips
+        .filter((trip) => trip.driverId === account.user.id)
         .slice()
         .sort((a, b) => a.departureAt.localeCompare(b.departureAt))
     },
 
-    async create(token: string, payload: RidePayload): Promise<Trip> {
-      await delay()
-      const account = requireAccount(token)
+    async create(payload: RidePayload): Promise<Trip> {
+      const account = requireAccount()
       assertValidRide(payload, 1)
 
       const trip: Trip = {
@@ -224,14 +193,13 @@ export const mockApi: Api = {
         currency: 'EUR',
         notes: '',
       }
-      MOCK_TRIPS.push(trip)
+      trips.push(trip)
       return { ...trip }
     },
 
-    async update(token: string, tripId: string, payload: RidePayload): Promise<Trip> {
-      await delay()
-      const account = requireAccount(token)
-      const trip = MOCK_TRIPS.find((t) => t.id === tripId && t.driverId === account.user.id)
+    async update(tripId: string, payload: RidePayload): Promise<Trip> {
+      const account = requireAccount()
+      const trip = trips.find((t) => t.id === tripId && t.driverId === account.user.id)
       if (!trip) {
         throw new ApiError('Ride not found.', 404)
       }
@@ -244,14 +212,13 @@ export const mockApi: Api = {
       return { ...trip }
     },
 
-    async remove(token: string, tripId: string): Promise<void> {
-      await delay()
-      const account = requireAccount(token)
-      const index = MOCK_TRIPS.findIndex((t) => t.id === tripId && t.driverId === account.user.id)
+    async remove(tripId: string): Promise<void> {
+      const account = requireAccount()
+      const index = trips.findIndex((t) => t.id === tripId && t.driverId === account.user.id)
       if (index === -1) {
         throw new ApiError('Ride not found.', 404)
       }
-      MOCK_TRIPS.splice(index, 1)
+      trips.splice(index, 1)
       // Bookings only ever reference a trip, so clean them up alongside it.
       for (let i = bookings.length - 1; i >= 0; i--) {
         if (bookings[i]!.tripId === tripId) bookings.splice(i, 1)
@@ -260,28 +227,26 @@ export const mockApi: Api = {
   },
 
   bookings: {
-    async listMine(token: string): Promise<BookingWithTrip[]> {
-      await delay()
-      const account = requireAccount(token)
+    async listMine(): Promise<BookingWithTrip[]> {
+      const account = requireAccount()
       const userId = account.user.id
       return bookings
         .filter((b) => b.passengerId === userId && b.status === 'confirmed')
         .sort((a, b) => {
-          const tripA = MOCK_TRIPS.find((t) => t.id === a.tripId)
-          const tripB = MOCK_TRIPS.find((t) => t.id === b.tripId)
+          const tripA = trips.find((t) => t.id === a.tripId)
+          const tripB = trips.find((t) => t.id === b.tripId)
           return (tripA?.departureAt ?? '').localeCompare(tripB?.departureAt ?? '')
         })
         .map((b) => {
-          const trip = MOCK_TRIPS.find((t) => t.id === b.tripId)
+          const trip = trips.find((t) => t.id === b.tripId)
           if (!trip) throw new ApiError('Trip not found.', 404)
           return { ...b, trip: { ...trip } }
         })
     },
 
-    async create(token: string, tripId: string, payload: BookingPayload): Promise<Booking> {
-      await delay()
-      const account = requireAccount(token)
-      const trip = MOCK_TRIPS.find((t) => t.id === tripId)
+    async create(tripId: string, payload: BookingPayload): Promise<Booking> {
+      const account = requireAccount()
+      const trip = trips.find((t) => t.id === tripId)
       if (!trip) throw new ApiError('Trip not found.', 404)
       if (!Number.isInteger(payload.seats) || payload.seats < 1) {
         throw new ApiError('You must book at least 1 seat.', 400)
@@ -314,14 +279,13 @@ export const mockApi: Api = {
       return { ...booking }
     },
 
-    async update(token: string, bookingId: string, payload: BookingPayload): Promise<Booking> {
-      await delay()
-      const account = requireAccount(token)
+    async update(bookingId: string, payload: BookingPayload): Promise<Booking> {
+      const account = requireAccount()
       const booking = bookings.find(
         (b) => b.id === bookingId && b.passengerId === account.user.id && b.status === 'confirmed',
       )
       if (!booking) throw new ApiError('Booking not found.', 404)
-      const trip = MOCK_TRIPS.find((t) => t.id === booking.tripId)
+      const trip = trips.find((t) => t.id === booking.tripId)
       if (!trip) throw new ApiError('Trip not found.', 404)
       if (!Number.isInteger(payload.seats) || payload.seats < 1) {
         throw new ApiError('You must book at least 1 seat.', 400)
@@ -335,14 +299,13 @@ export const mockApi: Api = {
       return { ...booking }
     },
 
-    async cancel(token: string, bookingId: string): Promise<void> {
-      await delay()
-      const account = requireAccount(token)
+    async cancel(bookingId: string): Promise<void> {
+      const account = requireAccount()
       const booking = bookings.find(
         (b) => b.id === bookingId && b.passengerId === account.user.id && b.status === 'confirmed',
       )
       if (!booking) throw new ApiError('Booking not found.', 404)
-      const trip = MOCK_TRIPS.find((t) => t.id === booking.tripId)
+      const trip = trips.find((t) => t.id === booking.tripId)
       if (trip) trip.seatsBooked = Math.max(0, trip.seatsBooked - booking.seats)
       booking.status = 'cancelled'
     },

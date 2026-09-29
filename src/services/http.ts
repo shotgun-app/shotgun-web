@@ -1,8 +1,6 @@
 /**
- * Real implementation against the Go backend in ../shotgun-api.
- *
- * Unused while `USE_MOCK_API` is true - it exists so plugging the backend in is
- * a config flip plus filling in whatever the final endpoints turn out to be.
+ * Client for the Go backend in ../shotgun-api. Auth is the HttpOnly `session` cookie the
+ * backend sets, so every request sends `credentials: 'include'` and no token is handled here.
  */
 import {
   ApiError,
@@ -12,7 +10,6 @@ import {
   type Credentials,
   type RegisterPayload,
   type RidePayload,
-  type Session,
   type Trip,
   type TripSearchParams,
   type TripWithDriver,
@@ -23,12 +20,12 @@ import type { Api } from './api'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 
-async function request<T>(path: string, init: RequestInit = {}, token?: string): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
     ...init,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init.headers,
     },
   })
@@ -43,20 +40,35 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
 
 export const httpApi: Api = {
   auth: {
-    login: (credentials: Credentials) =>
-      request<Session>('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
+    login: async (credentials: Credentials) =>
+      (
+        await request<{ user: User }>('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify(credentials),
+        })
+      ).user,
 
-    register: (payload: RegisterPayload) =>
-      request<Session>('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
+    register: async (payload: RegisterPayload) =>
+      (
+        await request<{ user: User }>('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        })
+      ).user,
 
-    logout: (token: string) => request<void>('/auth/logout', { method: 'POST' }, token),
+    logout: () => request<void>('/auth/logout', { method: 'POST' }),
 
-    me: (token: string) => request<User>('/auth/me', {}, token),
+    me: async () => (await request<{ user: User }>('/auth/me')).user,
 
-    updateProfile: (token: string, payload: UpdateProfilePayload) =>
-      request<User>('/auth/me', { method: 'PATCH', body: JSON.stringify(payload) }, token),
+    updateProfile: async (payload: UpdateProfilePayload) =>
+      (
+        await request<{ user: User }>('/auth/me', {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        })
+      ).user,
 
-    deleteAccount: (token: string) => request<void>('/auth/me', { method: 'DELETE' }, token),
+    deleteAccount: () => request<void>('/auth/me', { method: 'DELETE' }),
   },
 
   trips: {
@@ -70,29 +82,32 @@ export const httpApi: Api = {
       return request<TripWithDriver[]>(`/trips?${query.toString()}`)
     },
 
-    listMine: (token: string) => request<Trip[]>('/rides/mine', {}, token),
+    listMine: () => request<Trip[]>('/rides/mine'),
 
-    create: (token: string, payload: RidePayload) =>
-      request<Trip>('/rides', { method: 'POST', body: JSON.stringify(payload) }, token),
+    create: (payload: RidePayload) =>
+      request<Trip>('/rides', { method: 'POST', body: JSON.stringify(payload) }),
 
-    update: (token: string, tripId: string, payload: RidePayload) =>
-      request<Trip>(`/rides/${tripId}`, { method: 'PATCH', body: JSON.stringify(payload) }, token),
+    update: (tripId: string, payload: RidePayload) =>
+      request<Trip>(`/rides/${tripId}`, { method: 'PATCH', body: JSON.stringify(payload) }),
 
-    remove: (token: string, tripId: string) =>
-      request<void>(`/rides/${tripId}`, { method: 'DELETE' }, token),
+    remove: (tripId: string) => request<void>(`/rides/${tripId}`, { method: 'DELETE' }),
   },
 
   bookings: {
-    listMine: (token: string) =>
-      request<BookingWithTrip[]>('/bookings/mine', {}, token),
+    listMine: () => request<BookingWithTrip[]>('/bookings/mine'),
 
-    create: (token: string, tripId: string, payload: BookingPayload) =>
-      request<Booking>('/bookings', { method: 'POST', body: JSON.stringify({ tripId, ...payload }) }, token),
+    create: (tripId: string, payload: BookingPayload) =>
+      request<Booking>('/bookings', {
+        method: 'POST',
+        body: JSON.stringify({ tripId, ...payload }),
+      }),
 
-    update: (token: string, bookingId: string, payload: BookingPayload) =>
-      request<Booking>(`/bookings/${bookingId}`, { method: 'PATCH', body: JSON.stringify(payload) }, token),
+    update: (bookingId: string, payload: BookingPayload) =>
+      request<Booking>(`/bookings/${bookingId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      }),
 
-    cancel: (token: string, bookingId: string) =>
-      request<void>(`/bookings/${bookingId}`, { method: 'DELETE' }, token),
+    cancel: (bookingId: string) => request<void>(`/bookings/${bookingId}`, { method: 'DELETE' }),
   },
 }
