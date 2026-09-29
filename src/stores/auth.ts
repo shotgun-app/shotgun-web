@@ -7,6 +7,7 @@ import { defineStore } from 'pinia'
 import { api } from '@/services/api'
 import {
   ApiError,
+  type ChangePasswordPayload,
   type Credentials,
   type RegisterPayload,
   type UpdateProfilePayload,
@@ -75,8 +76,15 @@ export const useAuthStore = defineStore('auth', () => {
     if (user.value) {
       user.value.name = updated.name
       user.value.email = updated.email
+      user.value.phone = updated.phone
     }
     return true
+  }
+
+  async function changePassword(payload: ChangePasswordPayload): Promise<boolean> {
+    if (!user.value) return false
+    await run(() => api.auth.changePassword(payload))
+    return !error.value
   }
 
   /** Deletes the account on the backend (which also ends the session) then clears local state. */
@@ -99,6 +107,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     restore,
     updateProfile,
+    changePassword,
     deleteAccount,
   }
 })

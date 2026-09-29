@@ -79,6 +79,13 @@ export interface RegisterPayload extends Credentials {
 export interface UpdateProfilePayload {
   name: string
   email: string
+  /** E.164 ("+38640123456"), or '' to remove the number. */
+  phone: string
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string
+  newPassword: string
 }
 
 /** Fields a driver sets when offering or editing a ride. */

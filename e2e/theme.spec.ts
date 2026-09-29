@@ -37,7 +37,7 @@ test('the app nav carries the same toggle', async ({ page }) => {
   await page.getByRole('tab', { name: 'Register' }).click()
   await page.getByLabel('Name').fill('Theme Tester')
   await page.getByLabel('Email').fill(`theme-${Date.now()}@shotgun.app`)
-  await page.getByLabel('Password').fill('password123')
+  await page.getByLabel('Password', { exact: true }).fill('password123')
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL('/app')
 

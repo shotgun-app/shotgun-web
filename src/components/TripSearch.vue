@@ -85,27 +85,6 @@ async function handleSearch() {
     departureTime: departureTime.value || undefined,
   })
 }
-
-/** Convenience demo helper: prefill a route that has matching mock drivers */
-async function fillDemoRoute(route: 'sweden' | 'germany') {
-  if (route === 'sweden') {
-    fromCountry.value = 'Sweden'
-    toCountry.value = 'Sweden'
-    await nextTick()
-    fromCity.value = 'Gothenburg'
-    toCity.value = 'Stockholm'
-    //departureDate.value = '2026-09-25'
-    departureDate.value = getTodayDateString()
-  } else {
-    fromCountry.value = 'Germany'
-    toCountry.value = 'Germany'
-    await nextTick()
-    fromCity.value = 'Berlin'
-    toCity.value = 'Munich'
-    //departureDate.value = '2026-09-25'
-    departureDate.value = getTodayDateString()
-  }
-}
 </script>
 
 <template>
@@ -118,25 +97,6 @@ async function fillDemoRoute(route: 'sweden' | 'germany') {
         <p class="mt-1 text-sm text-ink-soft dark:text-night-ink-soft">
           Select origin, destination, and travel date across Europe.
         </p>
-      </div>
-
-      <!-- Quick demo autofill buttons -->
-      <div class="flex items-center gap-2 text-xs">
-        <span class="text-ink-soft dark:text-night-ink-soft">Try demo:</span>
-        <button
-          type="button"
-          class="cursor-pointer rounded-md border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-slate-50 dark:border-night-line dark:text-night-ink dark:hover:bg-night"
-          @click="fillDemoRoute('sweden')"
-        >
-          Gothenburg → Stockholm
-        </button>
-        <button
-          type="button"
-          class="cursor-pointer rounded-md border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-slate-50 dark:border-night-line dark:text-night-ink dark:hover:bg-night"
-          @click="fillDemoRoute('germany')"
-        >
-          Berlin → Munich
-        </button>
       </div>
     </div>
 
@@ -227,7 +187,7 @@ async function fillDemoRoute(route: 'sweden' | 'germany') {
 
         <button
           type="submit"
-          class="btn btn-primary h-[42px] w-full sm:w-auto"
+          class="btn btn-primary h-10.5 w-full sm:w-auto"
           :disabled="trips.pending || !fromCity || !toCity"
         >
           <span v-if="trips.pending">Searching...</span>

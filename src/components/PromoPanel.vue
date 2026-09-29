@@ -24,10 +24,10 @@
     ></div>
 
     <div class="w-full max-w-xl p-8 sm:p-12 lg:p-16">
-      <p class="rise text-sm font-medium tracking-tight text-white/70">Shotgun</p>
+      <p class="rise text-md font-medium tracking-tight text-white/70">Shotgun</p>
 
       <h1
-        class="rise mt-6 text-balance text-4xl font-medium leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl"
+        class="rise mt-4 text-balance text-4xl font-medium leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl"
         style="animation-delay: 80ms"
       >
         Ride together.

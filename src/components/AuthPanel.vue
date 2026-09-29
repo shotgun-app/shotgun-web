@@ -2,6 +2,7 @@
 import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import PasswordInput from './PasswordInput.vue'
 
 type Mode = 'login' | 'register'
 
@@ -63,7 +64,13 @@ async function submit() {
     <form class="mt-6 grid gap-5" @submit.prevent="submit">
       <label v-if="mode === 'register'" class="field">
         <span>Name</span>
-        <input v-model="form.name" type="text" autocomplete="name" placeholder="Your name" required />
+        <input
+          v-model="form.name"
+          type="text"
+          autocomplete="name"
+          placeholder="Your name"
+          required
+        />
       </label>
 
       <label class="field">
@@ -79,12 +86,11 @@ async function submit() {
 
       <label class="field">
         <span>Password</span>
-        <input
+        <PasswordInput
           v-model="form.password"
-          type="password"
           :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
           placeholder="At least 8 characters"
-          minlength="8"
+          :minlength="8"
           required
         />
       </label>

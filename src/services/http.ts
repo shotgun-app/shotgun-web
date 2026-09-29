@@ -5,6 +5,7 @@
 import {
   ApiError,
   type Booking,
+  type ChangePasswordPayload,
   type BookingPayload,
   type BookingWithTrip,
   type Credentials,
@@ -67,6 +68,9 @@ export const httpApi: Api = {
           body: JSON.stringify(payload),
         })
       ).user,
+
+    changePassword: (payload: ChangePasswordPayload) =>
+      request<void>('/auth/password', { method: 'POST', body: JSON.stringify(payload) }),
 
     deleteAccount: () => request<void>('/auth/me', { method: 'DELETE' }),
   },

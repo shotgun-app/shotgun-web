@@ -7,6 +7,7 @@
 import {
   ApiError,
   type Booking,
+  type ChangePasswordPayload,
   type BookingPayload,
   type BookingWithTrip,
   type Credentials,
@@ -117,7 +118,19 @@ export const fakeApi: Api = {
       if (conflict) throw new ApiError('An account with that email already exists.', 409)
       account.user.name = payload.name.trim()
       account.user.email = payload.email.trim()
+      account.user.phone = payload.phone.trim() || null
       return { ...account.user }
+    },
+
+    async changePassword(payload: ChangePasswordPayload): Promise<void> {
+      const account = requireAccount()
+      if (account.password !== payload.currentPassword) {
+        throw new ApiError('Current password is incorrect.', 401)
+      }
+      if (payload.newPassword.length < 8) {
+        throw new ApiError('Password must be at least 8 characters.', 400)
+      }
+      account.password = payload.newPassword
     },
 
     async deleteAccount(): Promise<void> {

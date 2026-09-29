@@ -8,13 +8,18 @@
  * 3. Conditional rendering: `v-if`, `v-else-if`, `v-else` to toggle between loading, empty state, and results.
  * 4. List rendering: `v-for="trip in trips.results" :key="trip.id"` to display rows of drivers.
  */
+import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useTripsStore } from '@/stores/trips'
 import TripSearch from '@/components/TripSearch.vue'
 import TripCard from '@/components/TripCard.vue'
+import { greetingFor } from '@/utils/greeting'
 
 const auth = useAuthStore()
 const trips = useTripsStore()
+
+/** One of three greetings, picked from the user's local time when the page opens. */
+const greeting = computed(() => greetingFor(new Date()))
 </script>
 
 <template>
@@ -22,7 +27,7 @@ const trips = useTripsStore()
     <!-- PAGE HEADER -->
     <header class="rise">
       <h1 class="text-3xl font-medium tracking-tight text-ink dark:text-night-ink">
-        Hi {{ auth.user?.name ?? 'there' }}.
+        {{ greeting }}, {{ auth.user?.name ?? 'there' }}
       </h1>
       <p class="mt-2 text-ink-soft dark:text-night-ink-soft">
         Where are you heading? Search carpool rides and connect with verified drivers across Europe.

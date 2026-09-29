@@ -13,7 +13,7 @@ async function register(page: Page, name: string, email: string) {
   await page.getByRole('tab', { name: 'Register' }).click()
   await page.getByLabel('Name').fill(name)
   await page.getByLabel('Email').fill(email)
-  await page.getByLabel('Password').fill(PASSWORD)
+  await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL('/app')
 }
@@ -49,7 +49,7 @@ test('registering with a taken email shows an error', async ({ page }) => {
   await page.getByRole('tab', { name: 'Register' }).click()
   await page.getByLabel('Name').fill('Second Person')
   await page.getByLabel('Email').fill(email)
-  await page.getByLabel('Password').fill(PASSWORD)
+  await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
   await page.getByRole('button', { name: 'Create account' }).click()
 
   await expect(page.getByRole('alert')).toContainText('already exists')
@@ -62,7 +62,7 @@ test('logs in after registering, then logs out and is locked out of /app', async
   await logout(page, 'Nina')
 
   await page.getByLabel('Email').fill(email)
-  await page.getByLabel('Password').fill(PASSWORD)
+  await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
   await page.getByRole('button', { name: 'Log in', exact: true }).click()
   await expect(page).toHaveURL('/app')
 
@@ -77,7 +77,7 @@ test('wrong password shows an error', async ({ page }) => {
   await logout(page, 'Wrong')
 
   await page.getByLabel('Email').fill(email)
-  await page.getByLabel('Password').fill('not-the-password')
+  await page.getByLabel('Password', { exact: true }).fill('not-the-password')
   await page.getByRole('button', { name: 'Log in', exact: true }).click()
 
   await expect(page.getByRole('alert')).toContainText('Wrong email or password')
@@ -95,4 +95,42 @@ test('session survives a reload and the profile shows the real account', async (
 
   await expect(page).toHaveURL('/app/profile')
   await expect(page.getByText(email)).toBeVisible()
+})
+
+test('password eye toggle, phone number and password change work end to end', async ({ page }) => {
+  const email = uniqueEmail()
+  await page.goto('/')
+  await page.getByRole('tab', { name: 'Register' }).click()
+  await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
+  await expect(page.getByLabel('Password', { exact: true })).toHaveAttribute('type', 'password')
+  await page.getByRole('button', { name: 'Show password' }).click()
+  await expect(page.getByLabel('Password', { exact: true })).toHaveAttribute('type', 'text')
+  await page.getByLabel('Name').fill('Vera Phone')
+  await page.getByLabel('Email').fill(email)
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL('/app')
+
+  await page.getByRole('button', { name: /Vera/ }).click()
+  await page.getByRole('menuitem', { name: 'My profile' }).click()
+
+  await page.getByRole('button', { name: 'Edit profile' }).click()
+  await page.getByLabel('Country code').selectOption({ label: 'Germany (+49)' })
+  await page.getByLabel('Phone number').fill('151 2345678')
+  await page.getByRole('button', { name: 'Save changes' }).click()
+  await expect(page.locator('#profile-phone')).toHaveText('+49 1512345678')
+  await page.reload()
+  await expect(page.locator('#profile-phone')).toHaveText('+49 1512345678')
+
+  await page.getByRole('button', { name: 'Change password' }).click()
+  await page.locator('#profile-current-password').fill(PASSWORD)
+  await page.locator('#profile-new-password').fill('another-pass-1')
+  await page.locator('#profile-confirm-password').fill('another-pass-1')
+  await page.getByRole('button', { name: 'Update password' }).click()
+  await expect(page.locator('#profile-password-success')).toBeVisible()
+
+  await logout(page, 'Vera')
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Password', { exact: true }).fill('another-pass-1')
+  await page.getByRole('button', { name: 'Log in', exact: true }).click()
+  await expect(page).toHaveURL('/app')
 })

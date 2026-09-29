@@ -5,6 +5,7 @@
  */
 import type {
   Booking,
+  ChangePasswordPayload,
   BookingPayload,
   BookingWithTrip,
   Credentials,
@@ -26,6 +27,8 @@ export interface AuthApi {
   me(): Promise<User>
   /** Updates name and/or email for the authenticated user. */
   updateProfile(payload: UpdateProfilePayload): Promise<User>
+  /** Verifies the current password; the backend ends the user's other sessions. */
+  changePassword(payload: ChangePasswordPayload): Promise<void>
   /** Permanently removes the account. The caller is responsible for clearing the session. */
   deleteAccount(): Promise<void>
 }
