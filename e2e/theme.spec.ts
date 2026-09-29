@@ -34,7 +34,7 @@ test('the chosen theme survives a reload', async ({ page }) => {
 
 test('the app nav carries the same toggle', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('tab', { name: 'Register' }).click()
+  await page.getByRole('button', { name: 'Create an account' }).click()
   await page.getByLabel('Name').fill('Theme Tester')
   await page.getByLabel('Email').fill(`theme-${Date.now()}@shotgun.app`)
   await page.getByLabel('Password', { exact: true }).fill('password123')

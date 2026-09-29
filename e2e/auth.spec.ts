@@ -10,7 +10,7 @@ function uniqueEmail() {
 
 async function register(page: Page, name: string, email: string) {
   await page.goto('/')
-  await page.getByRole('tab', { name: 'Register' }).click()
+  await page.getByRole('button', { name: 'Create an account' }).click()
   await page.getByLabel('Name').fill(name)
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
@@ -27,7 +27,7 @@ async function logout(page: Page, name: string) {
 test('landing page shows promo and auth panel without a demo account', async ({ page }) => {
   await page.goto('/')
   await expect(page.locator('h1')).toContainText('Ride together')
-  await expect(page.getByRole('tab', { name: 'Register' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Create an account' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Use demo account' })).toHaveCount(0)
 })
 
@@ -46,7 +46,7 @@ test('registering with a taken email shows an error', async ({ page }) => {
   await register(page, 'First Person', email)
   await logout(page, 'First')
 
-  await page.getByRole('tab', { name: 'Register' }).click()
+  await page.getByRole('button', { name: 'Create an account' }).click()
   await page.getByLabel('Name').fill('Second Person')
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
@@ -100,7 +100,7 @@ test('session survives a reload and the profile shows the real account', async (
 test('password eye toggle, phone number and password change work end to end', async ({ page }) => {
   const email = uniqueEmail()
   await page.goto('/')
-  await page.getByRole('tab', { name: 'Register' }).click()
+  await page.getByRole('button', { name: 'Create an account' }).click()
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
   await expect(page.getByLabel('Password', { exact: true })).toHaveAttribute('type', 'password')
   await page.getByRole('button', { name: 'Show password' }).click()

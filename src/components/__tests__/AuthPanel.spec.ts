@@ -30,29 +30,47 @@ describe('AuthPanel', () => {
     await router.isReady()
   })
 
-  it('starts on the login tab and hides the name field', () => {
+  it('starts in login mode and hides the name field', () => {
     const wrapper = mountPanel(router)
 
-    expect(wrapper.get('h2').text()).toBe('Log in')
+    expect(wrapper.get('h2').text()).toBe('Welcome back')
+    expect(wrapper.find('[role="tablist"]').exists()).toBe(false)
     expect(wrapper.find('input[autocomplete="name"]').exists()).toBe(false)
   })
 
   it('shows the name field after switching to register', async () => {
     const wrapper = mountPanel(router)
 
-    const [, registerTab] = wrapper.findAll('[role="tab"]')
-    await registerTab!.trigger('click')
+    await wrapper.get('form + p button').trigger('click')
 
     expect(wrapper.get('h2').text()).toBe('Create your account')
     expect(wrapper.find('input[autocomplete="name"]').exists()).toBe(true)
   })
 
-  it('logs in with the demo account and navigates to /app', async () => {
+  it('switches back to login and clears a previous error', async () => {
+    const wrapper = mountPanel(router)
+    await wrapper.get('form + p button').trigger('click')
+    await wrapper.get('input[autocomplete="name"]').setValue('New Person')
+    await wrapper.get('input[type="email"]').setValue(DEMO_CREDENTIALS.email)
+    await wrapper.get('input[type="password"]').setValue('password123')
+    await wrapper.get('form').trigger('submit')
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    await wrapper.vm.$nextTick()
+    expect(wrapper.get('[role="alert"]').text()).toContain('already exists')
+
+    await wrapper.get('form + p button').trigger('click')
+
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    expect(wrapper.get('h2').text()).toBe('Welcome back')
+  })
+
+  it('logs in and navigates to /app', async () => {
     const wrapper = mountPanel(router)
 
-    await wrapper.get('button[type="button"]:last-of-type').trigger('click')
+    await wrapper.get('input[type="email"]').setValue(DEMO_CREDENTIALS.email)
+    await wrapper.get('input[type="password"]').setValue(DEMO_CREDENTIALS.password)
     await wrapper.get('form').trigger('submit')
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await new Promise((resolve) => setTimeout(resolve, 50))
     await wrapper.vm.$nextTick()
 
     expect(router.currentRoute.value.name).toBe('app')

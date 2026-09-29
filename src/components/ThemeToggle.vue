@@ -18,7 +18,7 @@ const target = computed(() => (isDark.value ? 'Light' : 'Dark'))
 <template>
   <button
     type="button"
-    class="btn btn-ghost size-9 p-0"
+    class="btn btn-ghost size-9 border-0 bg-transparent p-0 hover:bg-slate-100 dark:bg-transparent dark:hover:bg-night-raised"
     :aria-label="`Theme: ${current}. Switch to ${target}.`"
     :title="`Switch to ${target}`"
     @click="theme.toggle()"
