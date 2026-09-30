@@ -44,7 +44,23 @@ npm run test:unit    # Vitest
 npm run test:e2e     # Playwright, needs the API running (npx playwright install chromium first)
 npm run lint         # oxlint + eslint, both with --fix
 npm run format       # prettier
+npm run check:format # prettier --check (CI)
+npm run check:lint   # oxlint + eslint without --fix (CI)
 ```
+
+## CI
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and on
+`main`. A pull request can only be merged into `main` when all of these checks
+pass:
+
+| Check        | Runs                                          |
+| ------------ | --------------------------------------------- |
+| `Format`     | `npm run check:format`                        |
+| `Lint`       | `npm run check:lint` and `npm run type-check` |
+| `Unit tests` | `npx vitest run`                              |
+
+If `Format` fails, run `npm run format` and commit the result.
 
 ## Architecture
 
