@@ -15,7 +15,7 @@ import UserAvatar from '@/components/UserAvatar.vue'
 import RouteLine from '@/components/RouteLine.vue'
 import { formatDeparture } from '@/utils/format'
 
-// defineProps is a Vue compiler macro (no need to import it).
+// defineProps: compiler macro (no need to import it).
 // It defines what data this child component expects from its parent.
 const props = defineProps<{
   trip: TripWithDriver
