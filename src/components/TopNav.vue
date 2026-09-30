@@ -42,7 +42,7 @@ async function logout() {
 
 <template>
   <header
-    class="sticky top-0 z-20  bg-white/80 backdrop-blur-md dark:border-night-line dark:bg-night/80"
+    class="sticky top-0 z-20 bg-white/80 backdrop-blur-md dark:border-night-line dark:bg-night/80"
   >
     <div class="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4">
       <RouterLink
