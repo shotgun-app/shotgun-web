@@ -16,7 +16,8 @@
     "lint:eslint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/ e2e/",
     "check:format": "prettier --check --experimental-cli src/ e2e/",
-    "check:lint": "oxlint . && eslint ."
+    "check:lint": "oxlint . && eslint .",
+    "check:test": "vitest run"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",

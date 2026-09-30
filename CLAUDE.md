@@ -27,12 +27,13 @@ npm run lint
 npm run format
 npm run check:format    # prettier --check, what CI runs
 npm run check:lint      # oxlint + eslint without --fix, what CI runs
+npm run check:test      # vitest once, what CI runs
 ```
 
 ## CI
 
 `.github/workflows/ci.yml` runs on every pull request and on `main`. Its jobs
-`Format`, `Lint` (lint + type-check) and `Unit tests` are required checks: a PR
+`Format`, `Lint` (lint + type-check) and `Tests` are required checks: a PR
 cannot merge into `main` until all three pass. Run `npm run format` before
 committing.
 

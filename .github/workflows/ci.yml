@@ -9,10 +9,10 @@ on:
 permissions:
   contents: read
 
-# A new push to the same branch cancels the run that is still going
+# A new push to a pull request cancels its run that is still going. Runs on main always finish
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   format:
@@ -41,7 +41,7 @@ jobs:
       - run: npm run type-check
 
   test:
-    name: Unit tests
+    name: Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -50,4 +50,4 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npx vitest run
+      - run: npm run check:test

@@ -46,6 +46,7 @@ npm run lint         # oxlint + eslint, both with --fix
 npm run format       # prettier
 npm run check:format # prettier --check (CI)
 npm run check:lint   # oxlint + eslint without --fix (CI)
+npm run check:test   # vitest once, no watch mode (CI)
 ```
 
 ## CI
@@ -54,11 +55,11 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and on
 `main`. A pull request can only be merged into `main` when all of these checks
 pass:
 
-| Check        | Runs                                          |
-| ------------ | --------------------------------------------- |
-| `Format`     | `npm run check:format`                        |
-| `Lint`       | `npm run check:lint` and `npm run type-check` |
-| `Unit tests` | `npx vitest run`                              |
+| Check    | Runs                                          |
+| -------- | --------------------------------------------- |
+| `Format` | `npm run check:format`                        |
+| `Lint`   | `npm run check:lint` and `npm run type-check` |
+| `Tests`  | `npm run check:test`                          |
 
 If `Format` fails, run `npm run format` and commit the result.
 
