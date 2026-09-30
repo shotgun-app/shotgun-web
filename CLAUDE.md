@@ -6,8 +6,9 @@ Guidance for Claude Code working in this repo.
 
 `shotgun-web` - the Vue 3 front end of Shotgun, a carpooling app (drivers publish
 trips, passengers book empty seats). The Go backend is a sibling repo at
-`../shotgun-api` and is not implemented yet; this app runs against an in-memory
-mock.
+`../shotgun-api`. Auth (register, login, logout, profile, password) is real,
+using an HttpOnly session cookie. Trips, rides and bookings have no backend
+endpoints yet, so those screens show errors until the API has them.
 
 ## Stack
 
@@ -28,12 +29,12 @@ npm run format
 
 ## Architecture rules
 
-- **All fake data lives in `src/mock/data.ts`.** One file. Never hardcode users,
-  trips or bookings anywhere else - import them from there.
+- **No fake data in the app.** Seed data and the in-memory fake api exist only
+  under `src/test/` for unit tests. Never hardcode users, trips or bookings in
+  app code.
 - **`src/services/api.ts` is the only backend seam.** It exports the `Api`
-  interface and picks `mock.ts` or `http.ts` based on `VITE_USE_MOCK_API`.
-  Adding an endpoint means: add it to the interface, then to _both_
-  implementations.
+  interface and `api` (the `http.ts` client). Adding an endpoint means: add it to
+  the interface, then to `http.ts` and to `src/test/fakeApi.ts`.
 - **Components never call services.** UI → Pinia store → `api`. Today that is
   `src/stores/auth.ts`; follow the same shape for new stores.
 - **Errors** are always `ApiError` (`src/types/index.ts`). Stores turn them into
@@ -51,46 +52,26 @@ npm run format
   Tailwind turns each into utilities: `--color-brand-600` gives `bg-brand-600`,
   `text-brand-600`, `border-brand-600`, and so on.
 - `@layer components` in the same file holds only what more than one component
-  uses: `.btn` + `.btn-primary` / `.btn-ghost`, `.field`, `.rise`. Used once?
-  Keep it inline in the template.
+  uses (full list in `DESIGN.md`). Used once? Keep it inline in the template.
 - Long class lists wrap across lines; Prettier handles the formatting.
 
-## Design direction: clean modern minimal
+## Design system
 
-Keep new screens inside these rules. They are the reason the app looks
-deliberate rather than generated.
+**`DESIGN.md` is the source of truth for how the UI looks.** Read it before adding
+or changing any screen, and update it in the same change when a token, shared
+class or pattern changes. The essentials:
 
-- **Palette, locked.** `brand-*` is blue (primary actions, focus, avatar),
-  `accent-*` is green and appears rarely - currently one highlighted word.
-  Neutrals are one cool-grey ramp: `ink`, `ink-soft`, `line`, plus `night*` for
-  dark mode. Never introduce a second grey family or a third accent.
-- **Type.** Geist Variable, self-hosted (`@fontsource-variable/geist`), imported
-  at the top of `main.css`. Never add a Google Fonts `<link>`. Headings are
-  `font-medium tracking-tight`; hierarchy comes from weight, size and colour,
-  not from bold-and-huge.
-- **Shape, locked.** One radius: `rounded-card` (12px) for containers, inputs
-  and buttons. Full-pill only for the avatar chip.
-- **Dark mode is mandatory** on every new surface. Tailwind `dark:` variant,
-  driven by the `.dark` class on `<html>`: with no stored pick the theme store
-  follows `prefers-color-scheme`, and the toggle in the nav / on the landing
-  page pins light or dark (stored under `shotgun.theme`). The page switches as a
-  whole; a section must never invert on its own. No pure black, no pure white.
-- **Motion is one primitive.** The `.rise` class, a 600ms settle on first paint,
-  staggered with inline `animation-delay` when several elements enter together.
-  It is disabled under `prefers-reduced-motion`. Do not add an animation
-  library, scroll-driven animation or infinite loops.
-- **Density is low.** Generous padding (`py-16` and up on app pages), short copy,
-  few elements per screen. Hero text is at most three elements and fits the
-  first viewport.
-- **Images are real.** Landing uses a stock photo under the Unsplash License.
-  Never fake a product screenshot out of `<div>`s, never hand-roll decorative
-  SVG.
-- **Copy rules.** No em-dashes anywhere visible (use a hyphen or two sentences).
-  No eyebrow labels above every heading, no scroll cues, no decorative status
-  dots, no invented precise statistics.
-- **Icons:** Phosphor (`@phosphor-icons/vue`), one family only, introduced with
-  the theme toggle (Sun / Moon). New icons must come from the same library
-  rather than hand-pasted SVG paths.
+- Build from the shared classes in `main.css` (`.btn-*`, `.card`, `.field`, `.input`,
+  `.alert-*`, `.badge-*`, `.empty`, `.page-title`, `.page-lead`, `.section-title`,
+  `.meta`) and the shared components (`UserAvatar`, `RouteLine`, `PasswordInput`,
+  `PhoneInput`). Never re-type a card, alert, badge or danger-button utility string.
+- Palette is locked: blue `brand-*` is the only primary, green `accent-*` is rare, one
+  cool-grey ramp. One radius, `rounded-card`. Flat: no shadows on cards.
+- Dark mode is mandatory: every colour utility gets a `dark:` pair.
+- Sentence case, no em-dashes, no eyebrow labels, no invented statistics.
+- Icons: Phosphor only. Font: Geist Variable, self-hosted. Motion: only `.rise`.
+- Every list view has loading, empty and error states.
+- Destructive actions take two steps (`btn-danger`, then `btn-danger-solid`).
 
 ## Routing and auth
 
@@ -98,29 +79,28 @@ deliberate rather than generated.
   paths redirect to `/`.
 - The guard in `src/router/index.ts` calls `auth.restore()` once, then enforces
   the route meta. Don't duplicate auth checks inside components.
-- Token lives in `localStorage` under `shotgun.token`, sent as
-  `Authorization: Bearer <token>`. All storage access is wrapped in try/catch.
+- Session is an HttpOnly cookie set by the API; requests use
+  `credentials: 'include'`. The frontend never handles the token. All
+  `localStorage` access (theme) is wrapped in try/catch.
 
 ## Tests
 
-- Unit tests live next to what they test in `__tests__/` folders: mock service,
-  stores (auth, rides, trips, theme), router guards, and component suites.
+- Unit tests live next to what they test in `__tests__/` folders: stores (auth, rides, trips, theme), router guards, and component suites.
 - A new store, service method or guarded route ships with a unit test. A new
   user-visible flow ships with a Playwright test in `e2e/`.
-- Component tests mount with a real Pinia and a real memory router, and run
-  against the mock api rather than a stubbed service. Keep it that way: it
-  exercises the seam the backend will later replace.
-- The mock api has a built-in 350ms delay, so async component tests wait on a
-  real timeout before asserting.
+- Component tests mount with a real Pinia and a real memory router. The api is
+  swapped for `src/test/fakeApi.ts` by `src/test/setup.ts`; call `resetFakeApi()`
+  in `beforeEach`. The fake has no latency.
+- Playwright tests run against the real API + database (`docker compose up -d
+--build` in `../shotgun-api` first).
 - `npm run test:unit` and `npm run test:e2e` must both pass before work is done.
   Playwright needs `npx playwright install chromium` once.
 
 ## Scope
 
-Current sprint is **auth only**: register, login, logout, protected `/app`,
-placeholder profile. Trip search, trip creation, bookings, ratings and CO2
-stats are later tickets - the types and seed data exist, the screens do not.
-Don't build them unasked; ask first.
+Auth and profile are done and talk to the real API. The trip search, rides and
+bookings screens exist but wait for their backend endpoints. Ratings and CO2
+stats are later tickets. Don't build them unasked; ask first.
 
 ## Conventions
 

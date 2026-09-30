@@ -10,7 +10,8 @@
  * 5. @submit.prevent: Event handling that intercepts HTML form submission.
  */
 import { computed, nextTick, ref, watch } from 'vue'
-import { EUROPEAN_LOCATIONS, getTodayDateString } from '@/mock/data'
+import { PhArrowsLeftRight } from '@phosphor-icons/vue'
+import { EUROPEAN_LOCATIONS, getTodayDateString } from '@/utils/locations'
 import { useTripsStore } from '@/stores/trips'
 
 const trips = useTripsStore()
@@ -85,67 +86,23 @@ async function handleSearch() {
     departureTime: departureTime.value || undefined,
   })
 }
-
-/** Convenience demo helper: prefill a route that has matching mock drivers */
-async function fillDemoRoute(route: 'sweden' | 'germany') {
-  if (route === 'sweden') {
-    fromCountry.value = 'Sweden'
-    toCountry.value = 'Sweden'
-    await nextTick()
-    fromCity.value = 'Gothenburg'
-    toCity.value = 'Stockholm'
-    //departureDate.value = '2026-09-25'
-    departureDate.value = getTodayDateString()
-  } else {
-    fromCountry.value = 'Germany'
-    toCountry.value = 'Germany'
-    await nextTick()
-    fromCity.value = 'Berlin'
-    toCity.value = 'Munich'
-    //departureDate.value = '2026-09-25'
-    departureDate.value = getTodayDateString()
-  }
-}
 </script>
 
 <template>
-  <div
-    class="rounded-card border border-line bg-white p-6 shadow-xs dark:border-night-line dark:bg-night-raised"
-  >
+  <div class="card">
     <div class="mb-5 flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-medium tracking-tight text-ink dark:text-night-ink">Find a ride</h2>
-        <p class="mt-1 text-sm text-ink-soft dark:text-night-ink-soft">
-          Select origin, destination, and travel date across Europe.
-        </p>
-      </div>
-
-      <!-- Quick demo autofill buttons -->
-      <div class="flex items-center gap-2 text-xs">
-        <span class="text-ink-soft dark:text-night-ink-soft">Try demo:</span>
-        <button
-          type="button"
-          class="cursor-pointer rounded-md border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-slate-50 dark:border-night-line dark:text-night-ink dark:hover:bg-night"
-          @click="fillDemoRoute('sweden')"
-        >
-          Gothenburg → Stockholm
-        </button>
-        <button
-          type="button"
-          class="cursor-pointer rounded-md border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-slate-50 dark:border-night-line dark:text-night-ink dark:hover:bg-night"
-          @click="fillDemoRoute('germany')"
-        >
-          Berlin → Munich
-        </button>
+        <h2 class="section-title">Find a ride</h2>
+        <p class="page-lead mt-1">Select origin, destination, and travel date across Europe.</p>
       </div>
     </div>
 
     <!-- SEARCH FORM -->
     <form class="grid gap-6" @submit.prevent="handleSearch">
       <!-- ROUTE: From, swap, To — one visual group -->
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+      <div class="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
         <!-- From -->
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label class="field">
             <span>From country</span>
             <select v-model="fromCountry" required>
@@ -165,35 +122,20 @@ async function fillDemoRoute(route: 'sweden' | 'germany') {
         </div>
 
         <!-- Swap button, centered between From and To -->
-        <div class="flex justify-center sm:pt-6">
+        <div class="flex justify-center lg:pt-6">
           <button
             type="button"
-            class="cursor-pointer rounded-full border border-line p-2 text-ink hover:bg-slate-50 dark:border-night-line dark:text-night-ink dark:hover:bg-night"
-            @click="swapLocations"
+            class="btn btn-ghost size-9 rounded-full p-0"
             aria-label="Swap origin and destination"
             title="Swap origin and destination"
+            @click="swapLocations"
           >
-            <!-- Simple left/right arrows icon -->
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="h-4 w-4 rotate-90"
-            >
-              <path d="M7 16V4" />
-              <path d="m3 8 4-4 4 4" />
-              <path d="M17 8v12" />
-              <path d="m21 16-4 4-4-4" />
-            </svg>
+            <PhArrowsLeftRight :size="16" class="rotate-90 lg:rotate-0" aria-hidden="true" />
           </button>
         </div>
 
         <!-- To -->
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label class="field">
             <span>To country</span>
             <select v-model="toCountry" required>
@@ -227,11 +169,11 @@ async function fillDemoRoute(route: 'sweden' | 'germany') {
 
         <button
           type="submit"
-          class="btn btn-primary h-[42px] w-full sm:w-auto"
+          class="btn btn-primary h-10.5 w-full sm:w-auto"
           :disabled="trips.pending || !fromCity || !toCity"
         >
-          <span v-if="trips.pending">Searching...</span>
-          <span v-else>Find Drivers</span>
+          <span v-if="trips.pending">Searching…</span>
+          <span v-else>Find drivers</span>
         </button>
       </div>
     </form>

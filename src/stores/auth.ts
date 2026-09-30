@@ -7,53 +7,22 @@ import { defineStore } from 'pinia'
 import { api } from '@/services/api'
 import {
   ApiError,
+  type ChangePasswordPayload,
   type Credentials,
   type RegisterPayload,
   type UpdateProfilePayload,
   type User,
 } from '@/types'
 
-const TOKEN_KEY = 'shotgun.token'
-
-function readStoredToken(): string | null {
-  try {
-    return localStorage.getItem(TOKEN_KEY)
-  } catch {
-    return null
-  }
-}
-
-function writeStoredToken(token: string | null): void {
-  try {
-    if (token) localStorage.setItem(TOKEN_KEY, token)
-    else localStorage.removeItem(TOKEN_KEY)
-  } catch {
-    // Private mode / blocked storage: session simply does not survive a reload.
-  }
-}
-
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
-  const token = ref<string | null>(readStoredToken())
   const pending = ref(false)
   const error = ref<string | null>(null)
 
-  /** Set once the stored token has been checked, so the guard only restores once. */
+  /** Set once the session cookie has been checked, so the guard only restores once. */
   const restored = ref(false)
 
   const isAuthenticated = computed(() => user.value !== null)
-
-  function setSession(next: { token: string; user: User }): void {
-    token.value = next.token
-    user.value = next.user
-    writeStoredToken(next.token)
-  }
-
-  function clearSession(): void {
-    token.value = null
-    user.value = null
-    writeStoredToken(null)
-  }
 
   async function run<T>(fn: () => Promise<T>): Promise<T | null> {
     pending.value = true
@@ -69,62 +38,67 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(credentials: Credentials): Promise<boolean> {
-    const session = await run(() => api.auth.login(credentials))
-    if (!session) return false
-    setSession(session)
+    const loggedIn = await run(() => api.auth.login(credentials))
+    if (!loggedIn) return false
+    user.value = loggedIn
     return true
   }
 
   async function register(payload: RegisterPayload): Promise<boolean> {
-    const session = await run(() => api.auth.register(payload))
-    if (!session) return false
-    setSession(session)
+    const created = await run(() => api.auth.register(payload))
+    if (!created) return false
+    user.value = created
     return true
   }
 
+  /** The backend deletes the session row and clears the cookie. Local state is cleared either way. */
   async function logout(): Promise<void> {
-    const current = token.value
-    clearSession()
-    if (current) await api.auth.logout(current).catch(() => {})
+    user.value = null
+    await api.auth.logout().catch(() => {})
   }
 
-  /** Turns a stored token back into a user on boot / hard refresh. */
+  /** Asks the backend who the session cookie belongs to, on boot / hard refresh. */
   async function restore(): Promise<void> {
     if (restored.value) return
     restored.value = true
-    if (!token.value) return
     try {
-      user.value = await api.auth.me(token.value)
+      user.value = await api.auth.me()
     } catch {
-      clearSession()
+      user.value = null
     }
   }
 
   async function updateProfile(payload: UpdateProfilePayload): Promise<boolean> {
-    if (!token.value) return false
-    const updated = await run(() => api.auth.updateProfile(token.value!, payload))
+    if (!user.value) return false
+    const updated = await run(() => api.auth.updateProfile(payload))
     if (!updated) return false
     // Mutate in place so all reactive consumers (TopNav, etc.) update instantly.
     if (user.value) {
       user.value.name = updated.name
       user.value.email = updated.email
+      user.value.phone = updated.phone
     }
     return true
   }
 
-  /** Deletes the account on the backend then wipes the local session. */
+  async function changePassword(payload: ChangePasswordPayload): Promise<boolean> {
+    if (!user.value) return false
+    await run(() => api.auth.changePassword(payload))
+    return !error.value
+  }
+
+  /** Deletes the account on the backend (which also ends the session) then clears local state. */
   async function deleteAccount(): Promise<boolean> {
-    if (!token.value) return false
-    await run(() => api.auth.deleteAccount(token.value!))
+    if (!user.value) return false
+    await run(() => api.auth.deleteAccount())
     // run() sets error.value on failure and leaves it null on success.
     if (error.value) return false
-    clearSession()
+    user.value = null
     return true
   }
 
   return {
     user,
-    token,
     pending,
     error,
     isAuthenticated,
@@ -133,6 +107,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     restore,
     updateProfile,
+    changePassword,
     deleteAccount,
   }
 })

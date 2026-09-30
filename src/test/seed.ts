@@ -1,26 +1,10 @@
-/**
- * THE single source of hardcoded data for the whole app.
- *
- * Everything fake lives here - users, credentials, trips, bookings. Nothing else
- * in `src/` should invent data. When ../shotgun-api is ready, the services in
- * `src/services/` switch to the HTTP client and this file can be deleted whole.
- */
+/** Seed data for the test-only fake API (src/test/fakeApi.ts). Not part of the app bundle. */
 import type { Booking, Trip, User } from '@/types'
 
-/** Passwords are plain text on purpose: mock only, never shipped to a real backend. */
+/** Passwords are plain text on purpose: test double only. */
 export interface MockAccount {
   password: string
   user: User
-}
-
-export const EUROPEAN_LOCATIONS: Record<string, string[]> = {
-  Sweden: ['Gothenburg', 'Stockholm', 'Malmö', 'Uppsala'],
-  Germany: ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne'],
-  France: ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nice'],
-  Netherlands: ['Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht'],
-  Spain: ['Madrid', 'Barcelona', 'Valencia', 'Seville'],
-  'United Kingdom': ['London', 'Manchester', 'Birmingham', 'Edinburgh'],
-  Italy: ['Rome', 'Milan', 'Florence', 'Naples'],
 }
 
 export const MOCK_ACCOUNTS: MockAccount[] = [
@@ -82,7 +66,7 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
   },
 ]
 
-/** Account the login form is prefilled with, so the demo is one click away. */
+/** Seeded account most specs log in as. */
 export const DEMO_CREDENTIALS = {
   email: 'alice@shotgun.app',
   password: 'password123',
@@ -98,15 +82,6 @@ export function relativeDate(daysAhead: number, hours: number, minutes: number):
   const h = String(hours).padStart(2, '0')
   const min = String(minutes).padStart(2, '0')
   return `${y}-${m}-${day}T${h}:${min}:00Z`
-}
-
-export function getTodayDateString(daysOffset = 0): string {
-  const d = new Date()
-  d.setDate(d.getDate() + daysOffset)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
 }
 
 export const MOCK_TRIPS: Trip[] = [

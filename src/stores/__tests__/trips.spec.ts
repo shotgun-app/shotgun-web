@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 
 import { useTripsStore } from '../trips'
-import { getTodayDateString } from '@/mock/data'
+import { getTodayDateString } from '@/utils/locations'
 
 describe('trips store', () => {
   beforeEach(() => {

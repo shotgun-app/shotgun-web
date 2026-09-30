@@ -2,12 +2,13 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
+import { getFakeTrips, resetFakeApi } from '@/test/fakeApi'
 
 import BookingsView from '../BookingsView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useBookingsStore } from '@/stores/bookings'
 import { api } from '@/services/api'
-import { MOCK_TRIPS } from '@/mock/data'
+import type { RidePayload } from '@/types'
 
 const blank = { template: '<div />' }
 
@@ -37,27 +38,37 @@ async function mountBookings(router: Router) {
  * Registers a fresh passenger account to avoid polluting the shared module-level
  * `bookings` array with other tests' data.
  */
+let passenger = { email: '', password: 'password123' }
+
 async function freshPassenger() {
   const auth = useAuthStore()
-  await auth.register({
-    name: 'Test Passenger',
+  passenger = {
     email: `passenger-${Date.now()}-${Math.random().toString(36).slice(2)}@test.app`,
     password: 'password123',
-  })
+  }
+  await auth.register({ name: 'Test Passenger', phone: '+38640123456', ...passenger })
   return auth
 }
 
 /**
- * Creates a fresh driver + trip with the requested seat count, then returns the trip id.
- * Using fresh trips ensures no cross-test contamination of seatsBooked.
+ * Registers a fresh driver and publishes a trip as them, then signs the passenger back in
+ * (the fake api keeps one session, like the browser's session cookie).
+ * Fresh trips ensure no cross-test contamination of seatsBooked.
  */
-async function freshTrip(seatsTotal: number): Promise<string> {
-  const session = await api.auth.register({
-    name: 'Test Driver',
+async function tripBy(name: string, payload: RidePayload) {
+  await api.auth.register({
+    name,
     email: `driver-${Date.now()}-${Math.random().toString(36).slice(2)}@test.app`,
     password: 'password123',
+    phone: '+38640123456',
   })
-  const trip = await api.trips.create(session.token, {
+  const trip = await api.trips.create(payload)
+  await api.auth.login(passenger)
+  return trip
+}
+
+async function freshTrip(seatsTotal: number): Promise<string> {
+  const trip = await tripBy('Test Driver', {
     origin: 'Berlin',
     destination: 'Munich',
     departureAt: '2030-01-01T09:00:00Z',
@@ -71,7 +82,7 @@ describe('BookingsView', () => {
 
   beforeEach(async () => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
 
     router = buildRouter()
     await router.push('/app/bookings')
@@ -206,33 +217,22 @@ describe('BookingsView', () => {
   })
 
   it('shows multiple bookings sorted soonest-departing first', async () => {
-    const auth = useAuthStore()
     // Create two trips with different departure times (sooner and later).
-    const soonerSession = await api.auth.register({
-      name: 'Driver Sooner',
-      email: `driver-sooner-${Date.now()}@test.app`,
-      password: 'password123',
-    })
-    const laterSession = await api.auth.register({
-      name: 'Driver Later',
-      email: `driver-later-${Date.now()}@test.app`,
-      password: 'password123',
-    })
-    const tripSooner = await api.trips.create(soonerSession.token, {
+    const tripSooner = await tripBy('Driver Sooner', {
       origin: 'Paris',
       destination: 'Lyon',
       departureAt: '2030-06-01T08:00:00Z',
       seatsTotal: 3,
     })
-    const tripLater = await api.trips.create(laterSession.token, {
+    const tripLater = await tripBy('Driver Later', {
       origin: 'Lyon',
       destination: 'Nice',
       departureAt: '2030-06-15T10:00:00Z',
       seatsTotal: 3,
     })
     // Book the later trip first, then the sooner trip.
-    await api.bookings.create(auth.token!, tripLater.id, { seats: 1 })
-    await api.bookings.create(auth.token!, tripSooner.id, { seats: 1 })
+    await api.bookings.create(tripLater.id, { seats: 1 })
+    await api.bookings.create(tripSooner.id, { seats: 1 })
 
     const wrapper = await mountBookings(router)
 
@@ -250,14 +250,14 @@ describe('BookingsView', () => {
 describe('bookings store', () => {
   beforeEach(async () => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
     await freshPassenger()
   })
 
   it('books a seat and decrements the trip free seats', async () => {
     const bookingsStore = useBookingsStore()
     const tripId = await freshTrip(3)
-    const tripRow = MOCK_TRIPS.find((t) => t.id === tripId)!
+    const tripRow = getFakeTrips().find((t) => t.id === tripId)!
     const bookedBefore = tripRow.seatsBooked
 
     await bookingsStore.create(tripId, { seats: 1 })
@@ -301,7 +301,7 @@ describe('bookings store', () => {
     await bookingsStore.fetchMine()
     const bookingId = bookingsStore.bookings[0]!.id
 
-    const tripRow = MOCK_TRIPS.find((t) => t.id === tripId)!
+    const tripRow = getFakeTrips().find((t) => t.id === tripId)!
     const bookedBefore = tripRow.seatsBooked
 
     const ok = await bookingsStore.update(bookingId, { seats: 2 })
@@ -318,7 +318,7 @@ describe('bookings store', () => {
     await bookingsStore.fetchMine()
     const bookingId = bookingsStore.bookings[0]!.id
 
-    const tripRow = MOCK_TRIPS.find((t) => t.id === tripId)!
+    const tripRow = getFakeTrips().find((t) => t.id === tripId)!
     const bookedBefore = tripRow.seatsBooked
 
     const ok = await bookingsStore.cancel(bookingId)
@@ -329,34 +329,23 @@ describe('bookings store', () => {
   })
 
   it('listMine returns bookings sorted soonest-departing first', async () => {
-    const auth = useAuthStore()
-    const soonerSession = await api.auth.register({
-      name: 'Driver A',
-      email: `driver-a-${Date.now()}@test.app`,
-      password: 'password123',
-    })
-    const laterSession = await api.auth.register({
-      name: 'Driver B',
-      email: `driver-b-${Date.now()}@test.app`,
-      password: 'password123',
-    })
-    const tripSooner = await api.trips.create(soonerSession.token, {
+    const tripSooner = await tripBy('Driver Sooner', {
       origin: 'A',
       destination: 'B',
       departureAt: '2030-01-01T08:00:00Z',
       seatsTotal: 3,
     })
-    const tripLater = await api.trips.create(laterSession.token, {
+    const tripLater = await tripBy('Driver Later', {
       origin: 'C',
       destination: 'D',
       departureAt: '2030-06-01T08:00:00Z',
       seatsTotal: 3,
     })
     // Book later first, then sooner.
-    await api.bookings.create(auth.token!, tripLater.id, { seats: 1 })
-    await api.bookings.create(auth.token!, tripSooner.id, { seats: 1 })
+    await api.bookings.create(tripLater.id, { seats: 1 })
+    await api.bookings.create(tripSooner.id, { seats: 1 })
 
-    const list = await api.bookings.listMine(auth.token!)
+    const list = await api.bookings.listMine()
 
     const departures = list.map((b) => b.trip.departureAt)
     expect(departures).toEqual([...departures].sort())

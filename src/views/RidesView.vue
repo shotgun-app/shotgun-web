@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { EUROPEAN_LOCATIONS, getTodayDateString } from '@/mock/data'
+import SeatStepper from '@/components/SeatStepper.vue'
+import RouteLine from '@/components/RouteLine.vue'
+import { formatDeparture } from '@/utils/format'
+import { EUROPEAN_LOCATIONS, getTodayDateString } from '@/utils/locations'
 import { useRidesStore } from '@/stores/rides'
 import type { RidePayload, Trip } from '@/types'
 
@@ -159,21 +162,6 @@ async function confirmDelete(id: string) {
 function seatsLeft(ride: Trip): number {
   return ride.seatsTotal - ride.seatsBooked
 }
-
-function formattedDate(iso: string): string {
-  try {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).format(new Date(iso))
-  } catch {
-    return iso
-  }
-}
 </script>
 
 <template>
@@ -181,10 +169,8 @@ function formattedDate(iso: string): string {
     <!-- ── Page header ────────────────────────────────────────────────── -->
     <div class="flex items-start justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-medium tracking-tight text-ink dark:text-night-ink">My rides</h1>
-        <p class="mt-2 text-sm text-ink-soft dark:text-night-ink-soft">
-          Rides you're offering as a driver.
-        </p>
+        <h1 class="page-title">My rides</h1>
+        <p class="page-lead">Rides you're offering as a driver.</p>
       </div>
 
       <button
@@ -202,10 +188,10 @@ function formattedDate(iso: string): string {
     <form
       v-if="formTarget !== null"
       id="ride-form"
-      class="mt-8 grid gap-6 rounded-card border border-line bg-white p-6 dark:border-night-line dark:bg-night-raised"
+      class="card mt-8 grid gap-6"
       @submit.prevent="submitForm"
     >
-      <h2 class="text-lg font-medium tracking-tight text-ink dark:text-night-ink">
+      <h2 class="section-title">
         {{ formTarget === 'create' ? 'Offer a ride' : 'Edit ride' }}
       </h2>
 
@@ -255,24 +241,19 @@ function formattedDate(iso: string): string {
           <span>Hour</span>
           <input id="ride-form-time" v-model="form.time" type="time" required />
         </label>
-        <label class="field">
+        <div class="field">
           <span>Free seats</span>
-          <input
+          <SeatStepper
             id="ride-form-seats"
-            v-model.number="form.seatsTotal"
-            type="number"
+            v-model="form.seatsTotal"
+            label="Free seats"
             :min="minSeats"
             :max="MAX_SEATS"
-            required
           />
-        </label>
+        </div>
       </div>
 
-      <p
-        v-if="formError"
-        class="rounded-card bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
-        role="alert"
-      >
+      <p v-if="formError" class="alert alert-error" role="alert">
         {{ formError }}
       </p>
 
@@ -298,42 +279,23 @@ function formattedDate(iso: string): string {
     </form>
 
     <!-- ── LIST ───────────────────────────────────────────────────────── -->
-    <p
-      v-if="rides.error && formTarget === null"
-      class="mt-8 rounded-card bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
-      role="alert"
-    >
+    <p v-if="rides.error && formTarget === null" class="alert alert-error mt-8" role="alert">
       {{ rides.error }}
     </p>
 
-    <p
-      v-if="rides.pending && rides.rides.length === 0"
-      class="mt-10 text-sm text-ink-soft dark:text-night-ink-soft"
-    >
+    <p v-if="rides.pending && rides.rides.length === 0" class="meta mt-10 text-sm">
       Loading your rides…
     </p>
-    <p
-      v-else-if="rides.rides.length === 0"
-      class="mt-10 text-sm text-ink-soft dark:text-night-ink-soft"
-    >
-      You're not offering any rides yet.
-    </p>
+    <div v-else-if="rides.rides.length === 0" id="rides-empty" class="empty mt-10">
+      <p class="meta mt-1.5 text-sm">You're not offering any rides yet.</p>
+    </div>
     <ul v-else class="mt-10 grid gap-4">
-      <li
-        v-for="ride in rides.rides"
-        :id="`ride-card-${ride.id}`"
-        :key="ride.id"
-        class="rounded-card border border-line bg-white p-5 dark:border-night-line dark:bg-night-raised"
-      >
+      <li v-for="ride in rides.rides" :id="`ride-card-${ride.id}`" :key="ride.id" class="card">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div class="flex items-center gap-2 font-medium text-ink dark:text-night-ink">
-              <span>{{ ride.origin }}</span>
-              <span class="text-brand-600 dark:text-brand-400">→</span>
-              <span>{{ ride.destination }}</span>
-            </div>
-            <p class="mt-1 text-xs text-ink-soft dark:text-night-ink-soft">
-              Departing {{ formattedDate(ride.departureAt) }} · {{ seatsLeft(ride) }} of
+            <RouteLine :origin="ride.origin" :destination="ride.destination" />
+            <p class="meta mt-1">
+              Departing {{ formatDeparture(ride.departureAt) }} · {{ seatsLeft(ride) }} of
               {{ ride.seatsTotal }} seats free
             </p>
           </div>
@@ -351,7 +313,7 @@ function formattedDate(iso: string): string {
               <button
                 :id="`ride-delete-btn-${ride.id}`"
                 type="button"
-                class="btn border border-red-200 bg-white text-red-600 hover:border-red-300 hover:bg-red-50 dark:border-red-900/60 dark:bg-night-raised dark:text-red-400 dark:hover:border-red-800 dark:hover:bg-red-950/40"
+                class="btn btn-danger"
                 @click="requestDelete(ride.id)"
               >
                 Delete
@@ -364,7 +326,7 @@ function formattedDate(iso: string): string {
               <button
                 :id="`ride-delete-confirm-btn-${ride.id}`"
                 type="button"
-                class="btn bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
+                class="btn btn-danger-solid"
                 :disabled="rides.pending"
                 @click="confirmDelete(ride.id)"
               >

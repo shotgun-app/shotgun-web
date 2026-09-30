@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { resetFakeApi } from '@/test/fakeApi'
 
 import { useRidesStore } from '../rides'
 import { useAuthStore } from '../auth'
@@ -8,7 +9,7 @@ import { useTripsStore } from '../trips'
 describe('rides store', () => {
   beforeEach(async () => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
     // Use Ben's account: no seed bookings, so seat-floor tests stay independent.
     await useAuthStore().login({ email: 'ben@shotgun.app', password: 'password123' })
   })

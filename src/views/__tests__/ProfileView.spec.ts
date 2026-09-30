@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
+import { resetFakeApi } from '@/test/fakeApi'
 
 import ProfileView from '../ProfileView.vue'
 import { useAuthStore } from '@/stores/auth'
-import { DEMO_CREDENTIALS } from '@/mock/data'
+import { DEMO_CREDENTIALS } from '@/test/seed'
 
 const blank = { template: '<div />' }
 
@@ -34,7 +35,7 @@ describe('ProfileView', () => {
 
   beforeEach(async () => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
 
     router = buildRouter()
     await router.push('/app/profile')
@@ -184,14 +185,14 @@ describe('ProfileView', () => {
 describe('auth store – updateProfile', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
   })
 
   it('updates name and email in the store', async () => {
     const auth = useAuthStore()
     await auth.login(DEMO_CREDENTIALS)
 
-    const ok = await auth.updateProfile({ name: 'New Name', email: 'new@shotgun.app' })
+    const ok = await auth.updateProfile({ name: 'New Name', email: 'new@shotgun.app', phone: '' })
 
     expect(ok).toBe(true)
     expect(auth.user?.name).toBe('New Name')
@@ -204,7 +205,11 @@ describe('auth store – updateProfile', () => {
     await auth.login({ email: 'ben@shotgun.app', password: 'password123' })
 
     // clara@shotgun.app belongs to a different mock account
-    const ok = await auth.updateProfile({ name: 'Ben Foster', email: 'clara@shotgun.app' })
+    const ok = await auth.updateProfile({
+      name: 'Ben Foster',
+      email: 'clara@shotgun.app',
+      phone: '',
+    })
 
     expect(ok).toBe(false)
     expect(auth.error).toBeTruthy()
@@ -216,15 +221,12 @@ describe('auth store – updateProfile', () => {
   it('persists the update so me() returns the new values', async () => {
     const auth = useAuthStore()
     await auth.login({ email: 'markus@shotgun.app', password: 'password123' })
-    // Capture token before we replace the Pinia instance.
-    const token = auth.token!
-
-    await auth.updateProfile({ name: 'Persisted Name', email: 'persisted@shotgun.app' })
+    await auth.updateProfile({ name: 'Persisted Name', email: 'persisted@shotgun.app', phone: '' })
 
     // Create a fresh store instance and verify the mock layer kept the mutation.
     setActivePinia(createPinia())
     const freshAuth = useAuthStore()
-    const user = await import('@/services/api').then(({ api }) => api.auth.me(token))
+    const user = await import('@/services/api').then(({ api }) => api.auth.me())
 
     expect(user.name).toBe('Persisted Name')
     expect(user.email).toBe('persisted@shotgun.app')
@@ -242,7 +244,7 @@ describe('ProfileView – delete account', () => {
 
   beforeEach(async () => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
 
     router = buildRouter()
     await router.push('/app/profile')
@@ -253,14 +255,16 @@ describe('ProfileView – delete account', () => {
     await auth.login({ email: 'ben@shotgun.app', password: 'password123' })
   })
 
-  it('does not show the delete button in view mode', async () => {
+  it('does not show the delete button in edit mode', async () => {
     const wrapper = await mountProfile(router)
+    await wrapper.find('#profile-edit-btn').trigger('click')
+    await wrapper.vm.$nextTick()
+
     expect(wrapper.find('#profile-delete-btn').exists()).toBe(false)
   })
 
-  it('shows the delete button after entering edit mode', async () => {
+  it('shows the delete button in view mode, under the password section', async () => {
     const wrapper = await mountProfile(router)
-    await wrapper.find('#profile-edit-btn').trigger('click')
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('#profile-delete-btn').exists()).toBe(true)
@@ -270,7 +274,6 @@ describe('ProfileView – delete account', () => {
 
   it('reveals confirmation step after clicking "Delete my account"', async () => {
     const wrapper = await mountProfile(router)
-    await wrapper.find('#profile-edit-btn').trigger('click')
     await wrapper.vm.$nextTick()
 
     await wrapper.find('#profile-delete-btn').trigger('click')
@@ -284,7 +287,6 @@ describe('ProfileView – delete account', () => {
 
   it('"Keep my account" hides the confirmation and restores the initial delete button', async () => {
     const wrapper = await mountProfile(router)
-    await wrapper.find('#profile-edit-btn').trigger('click')
     await wrapper.vm.$nextTick()
 
     await wrapper.find('#profile-delete-btn').trigger('click')
@@ -304,11 +306,11 @@ describe('ProfileView – delete account', () => {
       name: 'Delete Me',
       email: 'delete-view@test.app',
       password: 'password123',
+      phone: '+38640123456',
     })
 
     const wrapper = await mountProfile(router)
 
-    await wrapper.find('#profile-edit-btn').trigger('click')
     await wrapper.vm.$nextTick()
 
     await wrapper.find('#profile-delete-btn').trigger('click')
@@ -326,7 +328,7 @@ describe('ProfileView – delete account', () => {
 describe('auth store – deleteAccount', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
   })
 
   it('clears the session and returns true on success', async () => {
@@ -336,6 +338,7 @@ describe('auth store – deleteAccount', () => {
       name: 'Delete Me',
       email: 'delete-store-1@test.app',
       password: 'password123',
+      phone: '+38640123456',
     })
 
     const ok = await auth.deleteAccount()
@@ -343,14 +346,17 @@ describe('auth store – deleteAccount', () => {
     expect(ok).toBe(true)
     expect(auth.isAuthenticated).toBe(false)
     expect(auth.user).toBeNull()
-    expect(localStorage.getItem('shotgun.token')).toBeNull()
   })
 
   it('makes the account unreachable after deletion', async () => {
     const auth = useAuthStore()
     // Register a fresh throwaway account so this test is isolated from seed-data mutations.
     const throwawayCredentials = { email: 'delete-store-2@test.app', password: 'password123' }
-    await auth.register({ name: 'Delete Me 2', ...throwawayCredentials })
+    await auth.register({
+      name: 'Delete Me 2',
+      phone: '+38640123456',
+      ...throwawayCredentials,
+    })
 
     await auth.deleteAccount()
 
@@ -359,5 +365,65 @@ describe('auth store – deleteAccount', () => {
     const freshAuth = useAuthStore()
     const ok = await freshAuth.login(throwawayCredentials)
     expect(ok).toBe(false)
+  })
+})
+
+describe('ProfileView phone and password', () => {
+  let router: Router
+
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    resetFakeApi()
+    router = buildRouter()
+    await router.push('/app/profile')
+    await router.isReady()
+    await useAuthStore().login(DEMO_CREDENTIALS)
+  })
+
+  it('saves a phone number chosen with a country code', async () => {
+    const wrapper = await mountProfile(router)
+    await wrapper.get('#profile-edit-btn').trigger('click')
+
+    await wrapper.get('select[aria-label="Country code"]').setValue('Germany')
+    await wrapper.get('input[aria-label="Phone number"]').setValue('0151 2345678')
+    await wrapper.get('#profile-edit-form').trigger('submit')
+    await flushPromises()
+
+    expect(useAuthStore().user?.phone).toBe('+491512345678')
+    expect(wrapper.get('#profile-phone').text()).toBe('+49 1512345678')
+  })
+
+  it('changes the password and accepts the new one at login', async () => {
+    const wrapper = await mountProfile(router)
+    await wrapper.get('#profile-password-btn').trigger('click')
+
+    await wrapper.get('#profile-current-password').setValue('password123')
+    await wrapper.get('#profile-new-password').setValue('brandnew456')
+    await wrapper.get('#profile-confirm-password').setValue('brandnew456')
+    await wrapper.get('#profile-password-form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.find('#profile-password-success').exists()).toBe(true)
+    const auth = useAuthStore()
+    await auth.logout()
+    expect(await auth.login({ email: DEMO_CREDENTIALS.email, password: 'brandnew456' })).toBe(true)
+  })
+
+  it('rejects mismatched confirmation and a wrong current password', async () => {
+    const wrapper = await mountProfile(router)
+    await wrapper.get('#profile-password-btn').trigger('click')
+
+    await wrapper.get('#profile-current-password').setValue('password123')
+    await wrapper.get('#profile-new-password').setValue('brandnew456')
+    await wrapper.get('#profile-confirm-password').setValue('different789')
+    await wrapper.get('#profile-password-form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).toContain('do not match')
+
+    await wrapper.get('#profile-current-password').setValue('wrong-password')
+    await wrapper.get('#profile-confirm-password').setValue('brandnew456')
+    await wrapper.get('#profile-password-form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Current password is incorrect.')
   })
 })

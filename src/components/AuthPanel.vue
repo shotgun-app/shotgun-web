@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { DEMO_CREDENTIALS } from '@/mock/data'
-import { USE_MOCK_API } from '@/services/api'
+import PasswordInput from './PasswordInput.vue'
+import PhoneInput from './PhoneInput.vue'
 
 type Mode = 'login' | 'register'
 
@@ -11,67 +11,61 @@ const auth = useAuthStore()
 const router = useRouter()
 
 const mode = ref<Mode>('login')
-const form = reactive({ name: '', email: '', password: '' })
+const form = reactive({ name: '', email: '', phone: '', password: '' })
 
-watch(mode, () => {
+const isLogin = computed(() => mode.value === 'login')
+
+function toggleMode() {
+  mode.value = isLogin.value ? 'register' : 'login'
   auth.error = null
-})
-
-async function submit() {
-  const ok =
-    mode.value === 'login'
-      ? await auth.login({ email: form.email, password: form.password })
-      : await auth.register({ name: form.name, email: form.email, password: form.password })
-
-  if (ok) await router.push({ name: 'app' })
 }
 
-/** Mock-only convenience: fill the seeded account so the demo is one click. */
-function fillDemo() {
-  form.email = DEMO_CREDENTIALS.email
-  form.password = DEMO_CREDENTIALS.password
+async function submit() {
+  if (!isLogin.value && !form.phone) {
+    auth.error = 'Enter your phone number.'
+    return
+  }
+  const ok = isLogin.value
+    ? await auth.login({ email: form.email, password: form.password })
+    : await auth.register({
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+      })
+
+  if (ok) await router.push({ name: 'app' })
 }
 </script>
 
 <template>
   <div class="w-full max-w-sm">
-    <h2 class="text-2xl font-medium tracking-tight">
-      {{ mode === 'login' ? 'Log in' : 'Create your account' }}
+    <p class="flex items-center gap-3 text-xl font-medium tracking-tight">
+      <img src="/logo.png" alt="" class="size-10" width="40" height="40" />
+      Shotgun
+    </p>
+
+    <h2 class="mt-8 text-3xl font-medium tracking-tight">
+      {{ isLogin ? 'Welcome back' : 'Create your account' }}
     </h2>
     <p class="mt-2 text-sm text-ink-soft dark:text-night-ink-soft">
       {{
-        mode === 'login'
-          ? 'Find a seat or publish the trip you are already driving.'
-          : 'Takes a minute. No car required.'
+        isLogin
+          ? 'Log in to find a seat or publish the trip you are already driving.'
+          : 'Takes a minute. No car or card required.'
       }}
     </p>
 
-    <div
-      class="mt-8 grid grid-cols-2 gap-1 rounded-card bg-slate-100 p-1 dark:bg-night-raised"
-      role="tablist"
-    >
-      <button
-        v-for="tab in ['login', 'register'] as Mode[]"
-        :key="tab"
-        role="tab"
-        type="button"
-        class="cursor-pointer rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200"
-        :class="
-          mode === tab
-            ? 'bg-white text-ink shadow-sm dark:bg-brand-950 dark:text-night-ink'
-            : 'text-ink-soft hover:text-ink dark:text-night-ink-soft dark:hover:text-night-ink'
-        "
-        :aria-selected="mode === tab"
-        @click="mode = tab"
-      >
-        {{ tab === 'login' ? 'Log in' : 'Register' }}
-      </button>
-    </div>
-
     <form class="mt-6 grid gap-5" @submit.prevent="submit">
-      <label v-if="mode === 'register'" class="field">
+      <label v-if="!isLogin" class="field">
         <span>Name</span>
-        <input v-model="form.name" type="text" autocomplete="name" placeholder="Alice" required />
+        <input
+          v-model="form.name"
+          type="text"
+          autocomplete="name"
+          placeholder="Your name"
+          required
+        />
       </label>
 
       <label class="field">
@@ -85,39 +79,40 @@ function fillDemo() {
         />
       </label>
 
+      <div v-if="!isLogin" class="field">
+        <span>Phone</span>
+        <PhoneInput id="register-phone" v-model="form.phone" required />
+      </div>
+
       <label class="field">
         <span>Password</span>
-        <input
+        <PasswordInput
           v-model="form.password"
-          type="password"
-          :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
-          placeholder="At least 8 characters"
-          minlength="8"
+          :autocomplete="isLogin ? 'current-password' : 'new-password'"
+          :placeholder="isLogin ? 'Your password' : 'At least 8 characters'"
+          :minlength="isLogin ? undefined : 8"
           required
         />
       </label>
 
-      <p
-        v-if="auth.error"
-        class="rounded-card bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
-        role="alert"
-      >
+      <p v-if="auth.error" class="alert alert-error" role="alert">
         {{ auth.error }}
       </p>
 
-      <button class="btn btn-primary" type="submit" :disabled="auth.pending">
-        {{ auth.pending ? 'Working' : mode === 'login' ? 'Log in' : 'Create account' }}
+      <button class="btn btn-primary mt-1 py-3" type="submit" :disabled="auth.pending">
+        {{ auth.pending ? 'Working' : isLogin ? 'Log in' : 'Create account' }}
       </button>
-
-      <template v-if="USE_MOCK_API">
-        <div class="flex items-center gap-4 text-xs text-ink-soft dark:text-night-ink-soft">
-          <span class="h-px flex-1 bg-line dark:bg-night-line"></span>
-          or
-          <span class="h-px flex-1 bg-line dark:bg-night-line"></span>
-        </div>
-
-        <button class="btn btn-ghost" type="button" @click="fillDemo">Use demo account</button>
-      </template>
     </form>
+
+    <p class="mt-4 text-center text-sm text-ink-soft dark:text-night-ink-soft">
+      {{ isLogin ? 'New to Shotgun?' : 'Already have an account?' }}
+      <button
+        type="button"
+        class="cursor-pointer rounded font-medium text-brand-600 underline-offset-4 transition-colors duration-200 hover:underline dark:text-brand-400"
+        @click="toggleMode"
+      >
+        {{ isLogin ? 'Create an account' : 'Log in' }}
+      </button>
+    </p>
   </div>
 </template>

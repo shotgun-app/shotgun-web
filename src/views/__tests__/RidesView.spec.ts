@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
+import { resetFakeApi } from '@/test/fakeApi'
 
 import RidesView from '../RidesView.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -36,7 +37,7 @@ describe('RidesView', () => {
 
   beforeEach(async () => {
     setActivePinia(createPinia())
-    localStorage.clear()
+    resetFakeApi()
 
     router = buildRouter()
     await router.push('/app/rides')
@@ -49,6 +50,7 @@ describe('RidesView', () => {
       name: 'Test Driver',
       email: `driver-${Date.now()}-${Math.random().toString(36).slice(2)}@test.app`,
       password: 'password123',
+      phone: '+38640123456',
     })
   })
 

@@ -2,6 +2,10 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import UserAvatar from '@/components/UserAvatar.vue'
+import PasswordInput from '@/components/PasswordInput.vue'
+import PhoneInput from '@/components/PhoneInput.vue'
+import { formatPhone } from '@/utils/dialCodes'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -10,15 +14,17 @@ const router = useRouter()
 const editing = ref(false)
 
 // ── Edit-form state ────────────────────────────────────────────────────────
-const form = reactive({ name: '', email: '' })
+const form = reactive({ name: '', email: '', phone: '' })
 const nameError = ref<string | null>(null)
 const emailError = ref<string | null>(null)
+const phoneError = ref<string | null>(null)
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function validate(): boolean {
   nameError.value = null
   emailError.value = null
+  phoneError.value = null
 
   if (!form.name.trim()) {
     nameError.value = 'Name is required.'
@@ -29,7 +35,11 @@ function validate(): boolean {
     emailError.value = 'Enter a valid email address.'
   }
 
-  return !nameError.value && !emailError.value
+  if (!form.phone) {
+    phoneError.value = 'Phone number is required.'
+  }
+
+  return !nameError.value && !emailError.value && !phoneError.value
 }
 
 // Clear per-field errors as the user types.
@@ -37,6 +47,12 @@ watch(
   () => form.name,
   () => {
     nameError.value = null
+  },
+)
+watch(
+  () => form.phone,
+  () => {
+    phoneError.value = null
   },
 )
 watch(
@@ -69,11 +85,55 @@ async function confirmDelete() {
 function startEditing() {
   form.name = auth.user?.name ?? ''
   form.email = auth.user?.email ?? ''
+  form.phone = auth.user?.phone ?? ''
   nameError.value = null
   emailError.value = null
+  phoneError.value = null
   confirmingDelete.value = false
   auth.error = null
   editing.value = true
+}
+
+// ── Change password ────────────────────────────────────────────────────────
+const changingPassword = ref(false)
+const passwordForm = reactive({ current: '', next: '', confirm: '' })
+const passwordError = ref<string | null>(null)
+const passwordChanged = ref(false)
+
+function openPasswordForm() {
+  passwordForm.current = ''
+  passwordForm.next = ''
+  passwordForm.confirm = ''
+  passwordError.value = null
+  passwordChanged.value = false
+  auth.error = null
+  changingPassword.value = true
+}
+
+function closePasswordForm() {
+  changingPassword.value = false
+  passwordError.value = null
+  auth.error = null
+}
+
+async function submitPassword() {
+  passwordError.value = null
+  if (passwordForm.next.length < 8) {
+    passwordError.value = 'New password must be at least 8 characters.'
+    return
+  }
+  if (passwordForm.next !== passwordForm.confirm) {
+    passwordError.value = 'The new passwords do not match.'
+    return
+  }
+  const ok = await auth.changePassword({
+    currentPassword: passwordForm.current,
+    newPassword: passwordForm.next,
+  })
+  if (ok) {
+    changingPassword.value = false
+    passwordChanged.value = true
+  }
 }
 
 function cancel() {
@@ -84,7 +144,11 @@ function cancel() {
 
 async function save() {
   if (!validate()) return
-  const ok = await auth.updateProfile({ name: form.name, email: form.email })
+  const ok = await auth.updateProfile({
+    name: form.name,
+    email: form.email,
+    phone: form.phone,
+  })
   if (ok) editing.value = false
 }
 
@@ -98,35 +162,18 @@ const memberSince = computed(() => {
     day: 'numeric',
   }).format(new Date(raw))
 })
-
-const initials = computed(() =>
-  (auth.user?.name ?? '?')
-    .split(' ')
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase(),
-)
 </script>
 
 <template>
-  <section class="rise max-w-lg">
+  <section class="rise max-w-2xl">
     <!-- ── Page header ─────────────────────────────────────────────────── -->
     <div class="flex items-start justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-medium tracking-tight text-ink dark:text-night-ink">My profile</h1>
-        <p class="mt-2 text-sm text-ink-soft dark:text-night-ink-soft">
-          Your public details visible to drivers and fellow passengers.
-        </p>
+        <h1 class="page-title">My profile</h1>
+        <p class="page-lead">Your public details visible to drivers and fellow passengers.</p>
       </div>
 
-      <!-- Avatar bubble -->
-      <span
-        class="grid size-14 shrink-0 place-items-center rounded-full bg-brand-600 text-xl font-semibold text-white"
-        aria-hidden="true"
-      >
-        {{ initials }}
-      </span>
+      <UserAvatar :name="auth.user?.name" size="lg" />
     </div>
 
     <!-- ── VIEW MODE ──────────────────────────────────────────────────────── -->
@@ -141,6 +188,12 @@ const initials = computed(() =>
           <dd class="text-sm font-medium text-ink dark:text-night-ink">{{ auth.user?.email }}</dd>
         </div>
         <div class="grid grid-cols-[7rem_1fr] gap-4 py-4">
+          <dt class="text-sm text-ink-soft dark:text-night-ink-soft">Phone</dt>
+          <dd id="profile-phone" class="text-sm font-medium text-ink dark:text-night-ink">
+            {{ formatPhone(auth.user?.phone) || 'Not added' }}
+          </dd>
+        </div>
+        <div class="grid grid-cols-[7rem_1fr] gap-4 py-4">
           <dt class="text-sm text-ink-soft dark:text-night-ink-soft">Member since</dt>
           <dd class="text-sm font-medium text-ink dark:text-night-ink">{{ memberSince }}</dd>
         </div>
@@ -150,6 +203,136 @@ const initials = computed(() =>
         <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">
           Edit profile
         </button>
+      </div>
+
+      <!-- ── Change password ──────────────────────────────────────────── -->
+      <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
+        <h2 class="section-title">Password</h2>
+
+        <p
+          v-if="passwordChanged"
+          id="profile-password-success"
+          class="alert alert-success mt-3"
+          role="status"
+        >
+          Password changed. Your other devices were logged out.
+        </p>
+
+        <button
+          v-if="!changingPassword"
+          id="profile-password-btn"
+          type="button"
+          class="btn btn-ghost mt-4"
+          @click="openPasswordForm"
+        >
+          Change password
+        </button>
+
+        <form
+          v-else
+          id="profile-password-form"
+          class="mt-4 grid gap-5"
+          @submit.prevent="submitPassword"
+        >
+          <label class="field">
+            <span>Current password</span>
+            <PasswordInput
+              id="profile-current-password"
+              v-model="passwordForm.current"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+          <label class="field">
+            <span>New password</span>
+            <PasswordInput
+              id="profile-new-password"
+              v-model="passwordForm.next"
+              autocomplete="new-password"
+              placeholder="At least 8 characters"
+              :minlength="8"
+              required
+            />
+          </label>
+          <label class="field">
+            <span>Confirm new password</span>
+            <PasswordInput
+              id="profile-confirm-password"
+              v-model="passwordForm.confirm"
+              autocomplete="new-password"
+              required
+            />
+          </label>
+
+          <p v-if="passwordError || auth.error" class="alert alert-error" role="alert">
+            {{ passwordError ?? auth.error }}
+          </p>
+
+          <div class="flex items-center gap-3">
+            <button
+              id="profile-password-save-btn"
+              type="submit"
+              class="btn btn-primary"
+              :disabled="auth.pending"
+            >
+              {{ auth.pending ? 'Saving…' : 'Update password' }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-ghost"
+              :disabled="auth.pending"
+              @click="closePasswordForm"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ── Delete account ──────────────────────────────────────────────── -->
+      <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
+        <h2 class="section-title">Delete account</h2>
+
+        <!-- Step 1: initial prompt -->
+        <template v-if="!confirmingDelete">
+          <p class="meta mt-2 text-sm">Permanently remove your account and all associated data.</p>
+          <button
+            id="profile-delete-btn"
+            type="button"
+            class="btn btn-danger mt-4"
+            :disabled="auth.pending"
+            @click="requestDelete"
+          >
+            Delete my account
+          </button>
+        </template>
+
+        <!-- Step 2: confirmation -->
+        <template v-else>
+          <p class="mt-2 text-sm font-medium text-red-600 dark:text-red-400">
+            Are you sure? This cannot be undone.
+          </p>
+          <div class="mt-4 flex items-center gap-3">
+            <button
+              id="profile-delete-confirm-btn"
+              type="button"
+              class="btn btn-danger-solid"
+              :disabled="auth.pending"
+              @click="confirmDelete"
+            >
+              {{ auth.pending ? 'Deleting…' : 'Yes, delete my account' }}
+            </button>
+            <button
+              id="profile-delete-cancel-btn"
+              type="button"
+              class="btn btn-ghost"
+              :disabled="auth.pending"
+              @click="cancelDelete"
+            >
+              Keep my account
+            </button>
+          </div>
+        </template>
       </div>
     </template>
 
@@ -200,12 +383,22 @@ const initials = computed(() =>
           </p>
         </label>
 
+        <!-- Phone field -->
+        <div class="field">
+          <span>Phone</span>
+          <PhoneInput id="profile-phone-input" v-model="form.phone" required />
+          <p
+            v-if="phoneError"
+            id="profile-phone-error"
+            class="mt-0.5 text-xs text-red-600 dark:text-red-400"
+            role="alert"
+          >
+            {{ phoneError }}
+          </p>
+        </div>
+
         <!-- API-level error (e.g. email already taken) -->
-        <p
-          v-if="auth.error"
-          class="rounded-card bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
-          role="alert"
-        >
+        <p v-if="auth.error" class="alert alert-error" role="alert">
           {{ auth.error }}
         </p>
 
@@ -228,58 +421,6 @@ const initials = computed(() =>
           >
             Cancel
           </button>
-        </div>
-
-        <!-- ── Danger zone ──────────────────────────────────────────────── -->
-        <div class="mt-4 border-t border-line pt-6 dark:border-night-line">
-          <p
-            class="text-xs font-medium uppercase tracking-widest text-ink-soft dark:text-night-ink-soft"
-          >
-            Danger zone
-          </p>
-
-          <!-- Step 1: initial prompt -->
-          <template v-if="!confirmingDelete">
-            <p class="mt-2 text-sm text-ink-soft dark:text-night-ink-soft">
-              Permanently remove your account and all associated data.
-            </p>
-            <button
-              id="profile-delete-btn"
-              type="button"
-              class="btn mt-4 border border-red-200 bg-white text-red-600 hover:border-red-300 hover:bg-red-50 dark:border-red-900/60 dark:bg-night-raised dark:text-red-400 dark:hover:border-red-800 dark:hover:bg-red-950/40"
-              :disabled="auth.pending"
-              @click="requestDelete"
-            >
-              Delete my account
-            </button>
-          </template>
-
-          <!-- Step 2: confirmation -->
-          <template v-else>
-            <p class="mt-2 text-sm font-medium text-red-600 dark:text-red-400">
-              Are you sure? This cannot be undone.
-            </p>
-            <div class="mt-4 flex items-center gap-3">
-              <button
-                id="profile-delete-confirm-btn"
-                type="button"
-                class="btn bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
-                :disabled="auth.pending"
-                @click="confirmDelete"
-              >
-                {{ auth.pending ? 'Deleting…' : 'Yes, delete my account' }}
-              </button>
-              <button
-                id="profile-delete-cancel-btn"
-                type="button"
-                class="btn btn-ghost"
-                :disabled="auth.pending"
-                @click="cancelDelete"
-              >
-                Keep my account
-              </button>
-            </div>
-          </template>
         </div>
       </form>
     </template>

@@ -32,15 +32,15 @@ export const useRidesStore = defineStore('rides', () => {
 
   async function fetchMine(): Promise<void> {
     const auth = useAuthStore()
-    if (!auth.token) return
-    const list = await run(() => api.trips.listMine(auth.token!))
+    if (!auth.user) return
+    const list = await run(() => api.trips.listMine())
     if (list) rides.value = list
   }
 
   async function create(payload: RidePayload): Promise<boolean> {
     const auth = useAuthStore()
-    if (!auth.token) return false
-    const trip = await run(() => api.trips.create(auth.token!, payload))
+    if (!auth.user) return false
+    const trip = await run(() => api.trips.create(payload))
     if (!trip) return false
     rides.value = [...rides.value, trip].sort(byDepartureAt)
     return true
@@ -48,8 +48,8 @@ export const useRidesStore = defineStore('rides', () => {
 
   async function update(tripId: string, payload: RidePayload): Promise<boolean> {
     const auth = useAuthStore()
-    if (!auth.token) return false
-    const trip = await run(() => api.trips.update(auth.token!, tripId, payload))
+    if (!auth.user) return false
+    const trip = await run(() => api.trips.update(tripId, payload))
     if (!trip) return false
     rides.value = rides.value.map((r) => (r.id === tripId ? trip : r)).sort(byDepartureAt)
     return true
@@ -57,11 +57,11 @@ export const useRidesStore = defineStore('rides', () => {
 
   async function remove(tripId: string): Promise<boolean> {
     const auth = useAuthStore()
-    if (!auth.token) return false
+    if (!auth.user) return false
     pending.value = true
     error.value = null
     try {
-      await api.trips.remove(auth.token, tripId)
+      await api.trips.remove(tripId)
       rides.value = rides.value.filter((r) => r.id !== tripId)
       return true
     } catch (e) {

@@ -98,20 +98,96 @@
       dark:hover:border-brand-400/40 dark:hover:bg-brand-950;
   }
 
+  /* Destructive actions: outlined first, solid only on the confirmation step. */
+  .btn-danger {
+    @apply border border-red-200 bg-white text-red-600 hover:border-red-300 hover:bg-red-50
+      dark:border-red-900/60 dark:bg-night-raised dark:text-red-400 dark:hover:border-red-800
+      dark:hover:bg-red-950/40;
+  }
+
+  .btn-danger-solid {
+    @apply bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600;
+  }
+
   .field {
-    @apply grid gap-1.5;
+    @apply grid min-w-0 gap-1.5;
   }
 
   .field > span {
     @apply text-[0.8125rem] font-medium text-ink-soft dark:text-night-ink-soft;
   }
 
+  /* Every text control. `.input` is for controls that are not a direct child of `.field`. */
+  .input,
   .field input,
   .field select {
-    @apply rounded-card border border-line bg-white px-3.5 py-2.5 text-sm transition-colors
+    @apply w-full min-w-0 rounded-card border border-line bg-white px-3.5 py-2.5 text-sm transition-colors
       duration-200 placeholder:text-slate-400 hover:border-slate-300
       focus:border-brand-600 dark:border-night-line dark:bg-night-raised
       dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-brand-400;
+  }
+
+  /* Disabled: flat, dimmed, no hover feedback, so it reads as not interactive. */
+  .input:disabled,
+  .field input:disabled,
+  .field select:disabled {
+    @apply cursor-not-allowed border-dashed bg-slate-100 text-slate-400 opacity-60
+      hover:border-line dark:bg-night dark:text-slate-500 dark:hover:border-night-line;
+  }
+
+  /* The one container: forms, list items, panels. Flat, no shadow. */
+  .card {
+    @apply rounded-card border border-line bg-white p-6 dark:border-night-line dark:bg-night-raised;
+  }
+
+  /* Nothing to show yet (no results, no bookings, no rides). */
+  .empty {
+    @apply rounded-card border border-dashed border-line p-10 text-center dark:border-night-line;
+  }
+
+  .page-title {
+    @apply text-3xl font-medium tracking-tight text-ink dark:text-night-ink;
+  }
+
+  .page-lead {
+    @apply mt-2 text-sm text-ink-soft dark:text-night-ink-soft;
+  }
+
+  .section-title {
+    @apply text-lg font-medium tracking-tight text-ink dark:text-night-ink;
+  }
+
+  /* Secondary line under a title or in a list row. */
+  .meta {
+    @apply text-xs text-ink-soft dark:text-night-ink-soft;
+  }
+
+  .alert {
+    @apply rounded-card px-3.5 py-2.5 text-sm;
+  }
+
+  .alert-error {
+    @apply bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300;
+  }
+
+  .alert-success {
+    @apply bg-accent-100 text-accent-700 dark:bg-accent-700/20 dark:text-accent-400;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium;
+  }
+
+  .badge-neutral {
+    @apply bg-slate-100 text-ink-soft dark:bg-night dark:text-night-ink-soft;
+  }
+
+  .badge-success {
+    @apply bg-accent-100 text-accent-700 dark:bg-accent-700/20 dark:text-accent-400;
+  }
+
+  .badge-danger {
+    @apply bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300;
   }
 
   /* Single motion primitive: a short settle on first paint, off when unwanted. */
