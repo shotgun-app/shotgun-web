@@ -25,7 +25,17 @@ npm run test:unit
 npm run test:e2e
 npm run lint
 npm run format
+npm run check:format    # prettier --check, what CI runs
+npm run check:lint      # oxlint + eslint without --fix, what CI runs
+npm run check:test      # vitest once, what CI runs
 ```
+
+## CI
+
+`.github/workflows/ci.yml` runs on every pull request and on `main`. Its jobs
+`Format`, `Lint` (lint + type-check) and `Tests` are required checks: a PR
+cannot merge into `main` until all three pass. Run `npm run format` before
+committing.
 
 ## Architecture rules
 
@@ -109,3 +119,8 @@ stats are later tickets. Don't build them unasked; ask first.
 - Comments explain _why_, and are sparse; the existing files set the density.
 - Prefer real accessible markup (`role="menu"`, `aria-expanded`, `<label>`)
   over div soup - the vision doc calls out accessibility and high contrast.
+
+## Commits
+
+- Do not add `Co-Authored-By` trailers or any other attribution for AI agents
+  to commit messages or pull requests.
