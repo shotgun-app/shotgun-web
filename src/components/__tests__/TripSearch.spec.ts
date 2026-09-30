@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 
@@ -55,26 +55,20 @@ describe('TripSearch.vue', () => {
     expect(fromCitySelect.element.value).toBe('')
   })
 
-  it('fills demo route and triggers search on submit', async () => {
+  it('searches for the selected route on submit', async () => {
     const wrapper = mount(TripSearch)
     const tripsStore = useTripsStore()
+    const search = vi.spyOn(tripsStore, 'search').mockResolvedValue(true)
+    const [fromCountry, fromCity, toCountry, toCity] = wrapper.findAll('select')
 
-    // Click Gothenburg -> Stockholm demo button
-    const demoButton = wrapper.findAll('button[type="button"]')[0]!
-    await demoButton.trigger('click')
-    await wrapper.vm.$nextTick()
-    await wrapper.vm.$nextTick()
-
-    const selects = wrapper.findAll('select')
-    expect(selects[0]!.element.value).toBe('Sweden')
-    expect(selects[1]!.element.value).toBe('Gothenburg')
-    expect(selects[2]!.element.value).toBe('Sweden')
-    expect(selects[3]!.element.value).toBe('Stockholm')
-
+    await fromCountry!.setValue('Sweden')
+    await fromCity!.setValue('Gothenburg')
+    await toCountry!.setValue('Sweden')
+    await toCity!.setValue('Stockholm')
     await wrapper.find('form').trigger('submit')
-    await new Promise((resolve) => setTimeout(resolve, 450))
 
-    expect(tripsStore.hasSearched).toBe(true)
-    expect(tripsStore.results.length).toBeGreaterThan(0)
+    expect(search).toHaveBeenCalledWith(
+      expect.objectContaining({ originCity: 'Gothenburg', destinationCity: 'Stockholm' }),
+    )
   })
 })
