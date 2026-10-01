@@ -86,15 +86,25 @@ export const httpApi: Api = {
       return request<TripWithDriver[]>(`/trips?${query.toString()}`)
     },
 
-    listMine: () => request<Trip[]>('/rides/mine'),
+    listMine: async () => (await request<{ rides: Trip[] }>('/api/rides/mine')).rides,
 
-    create: (payload: RidePayload) =>
-      request<Trip>('/rides', { method: 'POST', body: JSON.stringify(payload) }),
+    create: async (payload: RidePayload) =>
+      (
+        await request<{ ride: Trip }>('/api/rides', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        })
+      ).ride,
 
-    update: (tripId: string, payload: RidePayload) =>
-      request<Trip>(`/rides/${tripId}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+    update: async (tripId: string, payload: RidePayload) =>
+      (
+        await request<{ ride: Trip }>(`/api/rides/${tripId}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        })
+      ).ride,
 
-    remove: (tripId: string) => request<void>(`/rides/${tripId}`, { method: 'DELETE' }),
+    remove: (tripId: string) => request<void>(`/api/rides/${tripId}`, { method: 'DELETE' }),
   },
 
   bookings: {
