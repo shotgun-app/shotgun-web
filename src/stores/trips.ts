@@ -38,6 +38,11 @@ export const useTripsStore = defineStore('trips', () => {
     error.value = null
   }
 
+  function applySeatsDelta(tripId: string, delta: number) {
+    const t = results.value.find((r) => r.id === tripId)
+    if (t) t.seatsBooked = Math.max(0, t.seatsBooked + delta)
+  }
+
   return {
     results,
     pending,
@@ -45,5 +50,6 @@ export const useTripsStore = defineStore('trips', () => {
     hasSearched,
     search,
     clear,
+    applySeatsDelta,
   }
 })

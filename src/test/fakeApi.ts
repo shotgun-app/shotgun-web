@@ -148,13 +148,12 @@ export const fakeApi: Api = {
 
   trips: {
     async search(params: TripSearchParams): Promise<TripWithDriver[]> {
-      const origin = params.originCity.trim().toLowerCase()
-      const destination = params.destinationCity.trim().toLowerCase()
+      const origin = (params.originCity || '').trim().toLowerCase()
+      const destination = (params.destinationCity || '').trim().toLowerCase()
 
       const matching = trips.filter((trip) => {
-        const matchesOrigin = trip.originCity.toLowerCase() === origin
-        const matchesDestination = trip.destinationCity.toLowerCase() === destination
-        if (!matchesOrigin || !matchesDestination) return false
+        if (origin && trip.originCity.toLowerCase() !== origin) return false
+        if (destination && trip.destinationCity.toLowerCase() !== destination) return false
 
         if (params.departureDate && !trip.departureAt.startsWith(params.departureDate)) {
           return false

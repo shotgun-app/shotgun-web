@@ -8,18 +8,30 @@
  * 3. Conditional rendering: `v-if`, `v-else-if`, `v-else` to toggle between loading, empty state, and results.
  * 4. List rendering: `v-for="trip in trips.results" :key="trip.id"` to display rows of drivers.
  */
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useTripsStore } from '@/stores/trips'
 import TripSearch from '@/components/TripSearch.vue'
 import TripCard from '@/components/TripCard.vue'
 import { greetingFor } from '@/utils/greeting'
+import { useRouter } from 'vue-router'
 
 const auth = useAuthStore()
 const trips = useTripsStore()
+const router = useRouter()
 
 /** One of three greetings, picked from the user's local time when the page opens. */
 const greeting = computed(() => greetingFor(new Date()))
+
+function onReserve() {
+  router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
+}
+
+onMounted(async () => {
+  if (!trips.hasSearched) {
+    await trips.search({ originCity: '', destinationCity: '' })
+  }
+})
 </script>
 
 <template>
@@ -67,7 +79,12 @@ const greeting = computed(() => greetingFor(new Date()))
 
         <!-- Vertical column with rows of drivers/trips -->
         <div class="grid grid-cols-1 gap-4">
-          <TripCard v-for="trip in trips.results" :key="trip.id" :trip="trip" />
+          <TripCard
+            v-for="trip in trips.results"
+            :key="trip.id"
+            :trip="trip"
+            @reserve="onReserve"
+          />
         </div>
       </div>
 

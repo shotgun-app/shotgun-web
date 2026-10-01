@@ -22,15 +22,23 @@ import type { Api } from './api'
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers = new Headers(init.headers)
+  if (init.body) headers.set('Content-Type', 'application/json')
+
   const response = await fetch(`${BASE_URL}${path}`, {
     ...init,
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...init.headers,
-    },
+    headers,
   })
 
+  if (
+    response.status === 401 &&
+    path !== '/auth/login' &&
+    path !== '/auth/password'
+  ) {
+    window.dispatchEvent(new CustomEvent('auth:unauthorized'))
+  }
+  
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
     throw new ApiError(body.message ?? response.statusText, response.status)
@@ -78,12 +86,13 @@ export const httpApi: Api = {
   trips: {
     search: (params: TripSearchParams) => {
       const query = new URLSearchParams({
-        origin: params.originCity,
-        destination: params.destinationCity,
-        ...(params.departureDate ? { date: params.departureDate } : {}),
-        ...(params.departureTime ? { time: params.departureTime } : {}),
+        ...(params?.originCity ? { origin: params.originCity } : {}),
+        ...(params?.destinationCity ? { destination: params.destinationCity } : {}),
+        ...(params?.departureDate ? { date: params.departureDate } : {}),
+        ...(params?.departureTime ? { time: params.departureTime } : {}),
       })
-      return request<TripWithDriver[]>(`/trips?${query.toString()}`)
+      const qs = query.toString()
+      return request<TripWithDriver[]>(`/trips${qs ? `?${qs}` : ''}`)
     },
 
     listMine: async () => (await request<{ rides: Trip[] }>('/api/rides/mine')).rides,

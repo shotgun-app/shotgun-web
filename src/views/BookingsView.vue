@@ -23,13 +23,13 @@ function openEdit(b: BookingWithTrip) {
   editingId.value = b.id
   editSeats.value = b.seats
   editError.value = null
-  bookings.error = null
+  bookings.clearError() // clear any previous API error so it doesn't show up in the edit form
 }
 
 function closeEdit() {
   editingId.value = null
   editError.value = null
-  bookings.error = null
+  bookings.clearError() // clear any previous API error so it doesn't show up in the edit form
 }
 
 async function submitEdit(bookingId: string) {
@@ -48,10 +48,12 @@ const confirmingCancelId = ref<string | null>(null)
 
 function requestCancel(id: string) {
   confirmingCancelId.value = id
+  bookings.clearError()
 }
 
 function dismissCancel() {
   confirmingCancelId.value = null
+  bookings.clearError()
 }
 
 async function confirmCancel(id: string) {
@@ -190,8 +192,9 @@ function seatsLeft(b: BookingWithTrip): number {
         <!-- ── Cancel confirmation ────────────────────────────────────── -->
         <div
           v-if="confirmingCancelId === booking.id"
-          class="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4 dark:border-night-line"
+          class="mt-4 flex flex-col gap-3 border-t border-line pt-4 dark:border-night-line"
         >
+          <div class="flex flex-wrap items-center gap-3">
           <span class="text-sm font-medium text-red-600 dark:text-red-400">
             Cancel this booking?
           </span>
@@ -214,6 +217,10 @@ function seatsLeft(b: BookingWithTrip): number {
             Keep booking
           </button>
         </div>
+        <p v-if="bookings.error" class="alert alert-error" role="alert">
+          {{ bookings.error }}
+        </p>
+      </div>
       </li>
     </ul>
   </section>
