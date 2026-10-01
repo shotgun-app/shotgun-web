@@ -69,10 +69,13 @@ async function tripBy(name: string, payload: RidePayload) {
 
 async function freshTrip(seatsTotal: number): Promise<string> {
   const trip = await tripBy('Test Driver', {
-    origin: 'Berlin',
-    destination: 'Munich',
+    originCity: 'Berlin',
+    originCountry: 'Germany',
+    destinationCity: 'Munich',
+    destinationCountry: 'Germany',
     departureAt: '2030-01-01T09:00:00Z',
     seatsTotal,
+    pricePerSeat: 0,
   })
   return trip.id
 }
@@ -219,16 +222,22 @@ describe('BookingsView', () => {
   it('shows multiple bookings sorted soonest-departing first', async () => {
     // Create two trips with different departure times (sooner and later).
     const tripSooner = await tripBy('Driver Sooner', {
-      origin: 'Paris',
-      destination: 'Lyon',
+      originCity: 'Paris',
+      originCountry: 'France',
+      destinationCity: 'Lyon',
+      destinationCountry: 'France',
       departureAt: '2030-06-01T08:00:00Z',
       seatsTotal: 3,
+      pricePerSeat: 0,
     })
     const tripLater = await tripBy('Driver Later', {
-      origin: 'Lyon',
-      destination: 'Nice',
+      originCity: 'Lyon',
+      originCountry: 'France',
+      destinationCity: 'Nice',
+      destinationCountry: 'France',
       departureAt: '2030-06-15T10:00:00Z',
       seatsTotal: 3,
+      pricePerSeat: 0,
     })
     // Book the later trip first, then the sooner trip.
     await api.bookings.create(tripLater.id, { seats: 1 })
@@ -330,16 +339,22 @@ describe('bookings store', () => {
 
   it('listMine returns bookings sorted soonest-departing first', async () => {
     const tripSooner = await tripBy('Driver Sooner', {
-      origin: 'A',
-      destination: 'B',
+      originCity: 'A',
+      originCountry: 'AX',
+      destinationCity: 'B',
+      destinationCountry: 'BX',
       departureAt: '2030-01-01T08:00:00Z',
       seatsTotal: 3,
+      pricePerSeat: 0,
     })
     const tripLater = await tripBy('Driver Later', {
-      origin: 'C',
-      destination: 'D',
+      originCity: 'C',
+      originCountry: 'CX',
+      destinationCity: 'D',
+      destinationCountry: 'DX',
       departureAt: '2030-06-01T08:00:00Z',
       seatsTotal: 3,
+      pricePerSeat: 0,
     })
     // Book later first, then sooner.
     await api.bookings.create(tripLater.id, { seats: 1 })

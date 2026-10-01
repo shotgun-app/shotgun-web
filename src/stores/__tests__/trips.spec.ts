@@ -31,8 +31,8 @@ describe('trips store', () => {
     expect(store.pending).toBe(false)
     expect(store.results.length).toBeGreaterThan(0)
     const firstTrip = store.results[0]!
-    expect(firstTrip.origin).toBe('Gothenburg')
-    expect(firstTrip.destination).toBe('Stockholm')
+    expect(firstTrip.originCity).toBe('Gothenburg')
+    expect(firstTrip.destinationCity).toBe('Stockholm')
     expect(firstTrip.driver).toBeDefined()
     expect(firstTrip.driver.name).toBeTruthy()
   })

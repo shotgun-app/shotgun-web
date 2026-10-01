@@ -104,7 +104,7 @@ function seatsLeft(b: BookingWithTrip): number {
         <!-- Trip summary row -->
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <RouteLine :origin="booking.trip.origin" :destination="booking.trip.destination" />
+            <RouteLine :origin="booking.trip.originCity" :destination="booking.trip.destinationCity" />
             <p class="meta mt-1">Departing {{ formatDeparture(booking.trip.departureAt) }}</p>
             <p class="meta mt-0.5">
               {{ booking.seats }} seat{{ booking.seats === 1 ? '' : 's' }} booked ·

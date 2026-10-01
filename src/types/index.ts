@@ -21,18 +21,25 @@ export interface User {
   co2SavedKg?: number
 }
 
+/**
+ * A ride offered by a driver.
+ * Field names mirror the Go backend's JSON response exactly (`rides.go` handler).
+ */
 export interface Trip {
   id: string
   driverId: string
-  origin: string
-  destination: string
+  originCity: string
+  originCountry: string
+  destinationCity: string
+  destinationCountry: string
   departureAt: string
   seatsTotal: number
   seatsBooked: number
   pricePerSeat: number
   currency: string
-  /** Free text the driver adds: car model, luggage room, meeting point. */
+  /** Free text: car model, luggage, meeting point. */
   notes: string
+  createdAt: string
 }
 
 export interface TripWithDriver extends Trip {
@@ -90,12 +97,17 @@ export interface ChangePasswordPayload {
   newPassword: string
 }
 
-/** Fields a driver sets when offering or editing a ride. */
+/** Fields a driver sends when creating or editing a ride. Mirrors the Go backend's `rideRequest`. */
 export interface RidePayload {
-  origin: string
-  destination: string
+  originCity: string
+  originCountry: string
+  destinationCity: string
+  destinationCountry: string
   departureAt: string
   seatsTotal: number
+  pricePerSeat: number
+  currency?: string
+  notes?: string
 }
 
 /** The shape every service error takes, so the UI never cares about transport. */

@@ -57,7 +57,13 @@ function nextId(prefix: string): string {
 const MAX_SEATS = 15
 
 function assertValidRide(payload: RidePayload, minSeats: number): void {
-  if (!payload.origin.trim() || !payload.destination.trim() || !payload.departureAt) {
+  if (
+    !payload.originCity.trim() ||
+    !payload.originCountry.trim() ||
+    !payload.destinationCity.trim() ||
+    !payload.destinationCountry.trim() ||
+    !payload.departureAt
+  ) {
     throw new ApiError('Start, end and date are required.', 400)
   }
   if (!Number.isInteger(payload.seatsTotal) || payload.seatsTotal < minSeats) {
@@ -146,8 +152,8 @@ export const fakeApi: Api = {
       const destination = params.destinationCity.trim().toLowerCase()
 
       const matching = trips.filter((trip) => {
-        const matchesOrigin = trip.origin.toLowerCase() === origin
-        const matchesDestination = trip.destination.toLowerCase() === destination
+        const matchesOrigin = trip.originCity.toLowerCase() === origin
+        const matchesDestination = trip.destinationCity.toLowerCase() === destination
         if (!matchesOrigin || !matchesDestination) return false
 
         if (params.departureDate && !trip.departureAt.startsWith(params.departureDate)) {
@@ -197,14 +203,17 @@ export const fakeApi: Api = {
       const trip: Trip = {
         id: nextId('trip'),
         driverId: account.user.id,
-        origin: payload.origin.trim(),
-        destination: payload.destination.trim(),
+        originCity: payload.originCity.trim(),
+        originCountry: payload.originCountry.trim(),
+        destinationCity: payload.destinationCity.trim(),
+        destinationCountry: payload.destinationCountry.trim(),
         departureAt: payload.departureAt,
         seatsTotal: payload.seatsTotal,
         seatsBooked: 0,
-        pricePerSeat: 0,
-        currency: 'EUR',
-        notes: '',
+        pricePerSeat: payload.pricePerSeat ?? 0,
+        currency: payload.currency ?? 'EUR',
+        notes: payload.notes ?? '',
+        createdAt: new Date().toISOString(),
       }
       trips.push(trip)
       return { ...trip }
@@ -218,10 +227,15 @@ export const fakeApi: Api = {
       }
       assertValidRide(payload, Math.max(1, trip.seatsBooked))
 
-      trip.origin = payload.origin.trim()
-      trip.destination = payload.destination.trim()
+      trip.originCity = payload.originCity.trim()
+      trip.originCountry = payload.originCountry.trim()
+      trip.destinationCity = payload.destinationCity.trim()
+      trip.destinationCountry = payload.destinationCountry.trim()
       trip.departureAt = payload.departureAt
       trip.seatsTotal = payload.seatsTotal
+      if (payload.pricePerSeat !== undefined) trip.pricePerSeat = payload.pricePerSeat
+      if (payload.currency) trip.currency = payload.currency
+      if (payload.notes !== undefined) trip.notes = payload.notes
       return { ...trip }
     },
 

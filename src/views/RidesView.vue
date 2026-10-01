@@ -82,10 +82,10 @@ function openCreate() {
 
 function openEdit(ride: Trip) {
   resetForm()
-  form.fromCountry = countryOf(ride.origin)
-  form.fromCity = ride.origin
-  form.toCountry = countryOf(ride.destination)
-  form.toCity = ride.destination
+  form.fromCountry = ride.originCountry
+  form.fromCity = ride.originCity
+  form.toCountry = ride.destinationCountry
+  form.toCity = ride.destinationCity
   form.date = ride.departureAt.slice(0, 10)
   form.time = ride.departureAt.slice(11, 16)
   form.seatsTotal = ride.seatsTotal
@@ -124,10 +124,13 @@ async function submitForm() {
   }
 
   const payload: RidePayload = {
-    origin: form.fromCity,
-    destination: form.toCity,
+    originCity: form.fromCity,
+    originCountry: form.fromCountry,
+    destinationCity: form.toCity,
+    destinationCountry: form.toCountry,
     departureAt: `${form.date}T${form.time}:00Z`,
     seatsTotal: form.seatsTotal,
+    pricePerSeat: 0,
   }
 
   const ok =
@@ -293,7 +296,7 @@ function seatsLeft(ride: Trip): number {
       <li v-for="ride in rides.rides" :id="`ride-card-${ride.id}`" :key="ride.id" class="card">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <RouteLine :origin="ride.origin" :destination="ride.destination" />
+            <RouteLine :origin="ride.originCity" :destination="ride.destinationCity" />
             <p class="meta mt-1">
               Departing {{ formatDeparture(ride.departureAt) }} · {{ seatsLeft(ride) }} of
               {{ ride.seatsTotal }} seats free

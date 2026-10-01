@@ -132,10 +132,13 @@ describe('RidesView', () => {
   it('edits an existing ride', async () => {
     const rides = useRidesStore()
     await rides.create({
-      origin: 'Berlin',
-      destination: 'Munich',
+      originCity: 'Berlin',
+      originCountry: 'Germany',
+      destinationCity: 'Munich',
+      destinationCountry: 'Germany',
       departureAt: '2027-10-01T09:00:00Z',
       seatsTotal: 2,
+      pricePerSeat: 0,
     })
     const rideId = rides.rides[0]!.id
 
@@ -157,10 +160,13 @@ describe('RidesView', () => {
   it('deletes a ride after confirming', async () => {
     const rides = useRidesStore()
     await rides.create({
-      origin: 'Amsterdam',
-      destination: 'Rotterdam',
+      originCity: 'Amsterdam',
+      originCountry: 'Netherlands',
+      destinationCity: 'Rotterdam',
+      destinationCountry: 'Netherlands',
       departureAt: '2027-11-01T09:00:00Z',
       seatsTotal: 2,
+      pricePerSeat: 0,
     })
     const rideId = rides.rides[0]!.id
 

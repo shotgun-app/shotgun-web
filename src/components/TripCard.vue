@@ -113,7 +113,7 @@ async function submitBooking() {
     <div
       class="mt-4 border-t border-line pt-3 text-sm text-ink-soft dark:border-night-line dark:text-night-ink-soft"
     >
-      <RouteLine :origin="trip.origin" :destination="trip.destination" />
+      <RouteLine :origin="trip.originCity" :destination="trip.destinationCity" />
 
       <p v-if="trip.notes" class="meta mt-1.5 line-clamp-2">
         {{ trip.notes }}
