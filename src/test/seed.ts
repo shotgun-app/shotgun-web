@@ -1,5 +1,5 @@
 /** Seed data for the test-only fake API (src/test/fakeApi.ts). Not part of the app bundle. */
-import type { Booking, Trip, User } from '@/types'
+import type { User } from '@/types'
 
 /** Passwords are plain text on purpose: test double only. */
 export interface MockAccount {
@@ -83,6 +83,3 @@ export function relativeDate(daysAhead: number, hours: number, minutes: number):
   const min = String(minutes).padStart(2, '0')
   return `${y}-${m}-${day}T${h}:${min}:00Z`
 }
-
-
-

@@ -16,10 +16,6 @@ onMounted(() => {
 const countries = Object.keys(EUROPEAN_LOCATIONS)
 const MAX_SEATS = 15
 
-function countryOf(city: string): string {
-  return Object.entries(EUROPEAN_LOCATIONS).find(([, cities]) => cities.includes(city))?.[0] ?? ''
-}
-
 // ── Form state: 'create', an existing ride's id, or null (closed) ──────────
 const formTarget = ref<'create' | string | null>(null)
 const formError = ref<string | null>(null)

@@ -86,12 +86,15 @@ export const httpApi: Api = {
       return request<TripWithDriver[]>(`/trips?${query.toString()}`)
     },
 
-    listMine: async () =>
-      (await request<{ rides: Trip[] }>('/api/rides/mine')).rides,
+    listMine: async () => (await request<{ rides: Trip[] }>('/api/rides/mine')).rides,
 
     create: async (payload: RidePayload) =>
-      (await request<{ ride: Trip }>('/api/rides', { method: 'POST', body: JSON.stringify(payload) }))
-        .ride,
+      (
+        await request<{ ride: Trip }>('/api/rides', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        })
+      ).ride,
 
     update: async (tripId: string, payload: RidePayload) =>
       (
