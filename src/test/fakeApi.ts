@@ -20,7 +20,7 @@ import {
   type User,
 } from '@/types'
 import type { Api } from '@/services/api'
-import { MOCK_ACCOUNTS, MOCK_BOOKINGS, MOCK_TRIPS, type MockAccount } from './seed'
+import { MOCK_ACCOUNTS, type MockAccount } from './seed'
 
 let accounts: MockAccount[] = []
 let bookings: Booking[] = []
@@ -29,8 +29,8 @@ let currentUserId: string | null = null
 
 export function resetFakeApi(): void {
   accounts = MOCK_ACCOUNTS.map((a) => ({ ...a, user: { ...a.user } }))
-  bookings = MOCK_BOOKINGS.map((b) => ({ ...b }))
-  trips = MOCK_TRIPS.map((t) => ({ ...t }))
+  bookings = []
+  trips = []
   currentUserId = null
 }
 resetFakeApi()
