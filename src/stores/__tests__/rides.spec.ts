@@ -19,10 +19,13 @@ describe('rides store', () => {
     expect(rides.rides).toEqual([])
 
     await rides.create({
-      origin: 'Amsterdam',
-      destination: 'Rotterdam',
+      originCity: 'Amsterdam',
+      originCountry: 'Netherlands',
+      destinationCity: 'Rotterdam',
+      destinationCountry: 'Netherlands',
       departureAt: '2027-04-01T09:00:00Z',
       seatsTotal: 3,
+      pricePerSeat: 0,
     })
 
     await rides.fetchMine()
@@ -33,16 +36,22 @@ describe('rides store', () => {
     const rides = useRidesStore()
 
     await rides.create({
-      origin: 'Berlin',
-      destination: 'Munich',
+      originCity: 'Berlin',
+      originCountry: 'Germany',
+      destinationCity: 'Munich',
+      destinationCountry: 'Germany',
       departureAt: '2027-05-10T09:00:00Z',
       seatsTotal: 2,
+      pricePerSeat: 0,
     })
     await rides.create({
-      origin: 'Berlin',
-      destination: 'Munich',
+      originCity: 'Berlin',
+      originCountry: 'Germany',
+      destinationCity: 'Munich',
+      destinationCountry: 'Germany',
       departureAt: '2027-05-01T09:00:00Z',
       seatsTotal: 1,
+      pricePerSeat: 0,
     })
 
     expect(rides.rides[0]!.departureAt).toBe('2027-05-01T09:00:00Z')
@@ -52,19 +61,25 @@ describe('rides store', () => {
   it('updates a ride in place', async () => {
     const rides = useRidesStore()
     const ok1 = await rides.create({
-      origin: 'Paris',
-      destination: 'Lyon',
+      originCity: 'Paris',
+      originCountry: 'France',
+      destinationCity: 'Lyon',
+      destinationCountry: 'France',
       departureAt: '2027-06-01T09:00:00Z',
       seatsTotal: 2,
+      pricePerSeat: 0,
     })
     expect(ok1).toBe(true)
     const rideId = rides.rides[0]!.id
 
     const ok2 = await rides.update(rideId, {
-      origin: 'Paris',
-      destination: 'Lyon',
+      originCity: 'Paris',
+      originCountry: 'France',
+      destinationCity: 'Lyon',
+      destinationCountry: 'France',
       departureAt: '2027-06-01T09:00:00Z',
       seatsTotal: 4,
+      pricePerSeat: 0,
     })
 
     expect(ok2).toBe(true)
@@ -74,10 +89,13 @@ describe('rides store', () => {
   it('deletes a ride and updates search results right away', async () => {
     const rides = useRidesStore()
     await rides.create({
-      origin: 'Malmö',
-      destination: 'Uppsala',
+      originCity: 'Malmö',
+      originCountry: 'Sweden',
+      destinationCity: 'Uppsala',
+      destinationCountry: 'Sweden',
       departureAt: '2027-07-01T09:00:00Z',
       seatsTotal: 2,
+      pricePerSeat: 0,
     })
     const rideId = rides.rides[0]!.id
 
@@ -101,10 +119,13 @@ describe('rides store', () => {
     await rides.fetchMine()
 
     const ok = await rides.update('trip_1', {
-      origin: 'Gothenburg',
-      destination: 'Stockholm',
+      originCity: 'Gothenburg',
+      originCountry: 'Sweden',
+      destinationCity: 'Stockholm',
+      destinationCountry: 'Sweden',
       departureAt: '2027-08-01T09:00:00Z',
       seatsTotal: 0,
+      pricePerSeat: 0,
     })
 
     expect(ok).toBe(false)

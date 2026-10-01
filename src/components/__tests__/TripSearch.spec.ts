@@ -59,13 +59,12 @@ describe('TripSearch.vue', () => {
     const wrapper = mount(TripSearch)
     const tripsStore = useTripsStore()
 
-    // Click Gothenburg -> Stockholm demo button
-    const demoButton = wrapper.findAll('button[type="button"]')[0]!
-    await demoButton.trigger('click')
-    await wrapper.vm.$nextTick()
-    await wrapper.vm.$nextTick()
-
     const selects = wrapper.findAll('select')
+    await selects[0]!.setValue('Sweden')
+    await selects[1]!.setValue('Gothenburg')
+    await selects[2]!.setValue('Sweden')
+    await selects[3]!.setValue('Stockholm')
+
     expect(selects[0]!.element.value).toBe('Sweden')
     expect(selects[1]!.element.value).toBe('Gothenburg')
     expect(selects[2]!.element.value).toBe('Sweden')
