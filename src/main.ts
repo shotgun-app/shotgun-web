@@ -14,8 +14,11 @@ const pinia = createPinia()
 window.addEventListener('auth:unauthorized', () => {
   const auth = useAuthStore()
   auth.clearSession()
-  if (router.currentRoute.value.name !== 'landing') {
-    router.push({ name: 'landing', query: { redirect: router.currentRoute.value.fullPath } })
+
+  const current = router.currentRoute.value
+
+  if (current.name && current.name !== 'landing') {
+    router.push({ name: 'landing', query: { redirect: current.fullPath } })
   }
 })
 
