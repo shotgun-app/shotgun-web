@@ -41,10 +41,6 @@ export default defineConfig({
 
     /* Only on CI systems run the tests headless */
     headless: !!process.env.CI,
-
-    // Skip entry animations so elements are stable the moment they render.
-    // Firefox's frame timing makes animated boxes fail the stability check.
-    reducedMotion: 'reduce',
   },
 
   /* Configure projects for major browsers */
@@ -107,7 +103,7 @@ export default defineConfig({
      * Use the preview server on CI for more realistic testing.
      * Playwright will re-use the local server if there is already a dev-server running.
      */
-    command: process.env.CI ? 'npm run preview' : 'npm run dev:e2e',
+    command: process.env.CI ? 'npm run preview' : 'npm run dev',
     port: process.env.CI ? 4173 : 5173,
     reuseExistingServer: !process.env.CI,
   },

@@ -42,8 +42,11 @@ export interface Trip {
   createdAt: string
 }
 
+/** What the API reveals about a driver to passengers: no email or phone. */
+export type PublicUser = Omit<User, 'email' | 'phone'>
+
 export interface TripWithDriver extends Trip {
-  driver: User
+  driver: PublicUser
 }
 
 export interface TripSearchParams {

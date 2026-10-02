@@ -14,18 +14,12 @@ import { useTripsStore } from '@/stores/trips'
 import TripSearch from '@/components/TripSearch.vue'
 import TripCard from '@/components/TripCard.vue'
 import { greetingFor } from '@/utils/greeting'
-import { useRouter } from 'vue-router'
 
 const auth = useAuthStore()
 const trips = useTripsStore()
-const router = useRouter()
 
 /** One of three greetings, picked from the user's local time when the page opens. */
 const greeting = computed(() => greetingFor(new Date()))
-
-function onReserve() {
-  router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
-}
 
 onMounted(async () => {
   if (!trips.hasSearched) {
@@ -79,12 +73,7 @@ onMounted(async () => {
 
         <!-- Vertical column with rows of drivers/trips -->
         <div class="grid grid-cols-1 gap-4">
-          <TripCard
-            v-for="trip in trips.results"
-            :key="trip.id"
-            :trip="trip"
-            @reserve="onReserve"
-          />
+          <TripCard v-for="trip in trips.results" :key="trip.id" :trip="trip" />
         </div>
       </div>
 

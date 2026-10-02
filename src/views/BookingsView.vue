@@ -23,13 +23,13 @@ function openEdit(b: BookingWithTrip) {
   editingId.value = b.id
   editSeats.value = b.seats
   editError.value = null
-  bookings.clearError() // clear any previous API error so it doesn't show up in the edit form
+  bookings.error = null
 }
 
 function closeEdit() {
   editingId.value = null
   editError.value = null
-  bookings.clearError() // clear any previous API error so it doesn't show up in the edit form
+  bookings.error = null
 }
 
 async function submitEdit(bookingId: string) {
@@ -48,12 +48,10 @@ const confirmingCancelId = ref<string | null>(null)
 
 function requestCancel(id: string) {
   confirmingCancelId.value = id
-  bookings.clearError()
 }
 
 function dismissCancel() {
   confirmingCancelId.value = null
-  bookings.clearError()
 }
 
 async function confirmCancel(id: string) {
@@ -168,14 +166,13 @@ function seatsLeft(b: BookingWithTrip): number {
               {{ editError }}
             </p>
             <div class="flex gap-3">
-              <p v-if="bookings.pending" class="meta">Saving…</p>
               <button
                 :id="`booking-edit-save-btn-${booking.id}`"
                 type="submit"
                 class="btn btn-primary"
                 :disabled="bookings.pending"
               >
-                Save
+                {{ bookings.pending ? 'Saving…' : 'Save' }}
               </button>
               <button
                 :id="`booking-edit-cancel-btn-${booking.id}`"
@@ -193,30 +190,30 @@ function seatsLeft(b: BookingWithTrip): number {
         <!-- ── Cancel confirmation ────────────────────────────────────── -->
         <div
           v-if="confirmingCancelId === booking.id"
-          class="mt-4 flex flex-col gap-3 border-t border-line pt-4 dark:border-night-line"
+          class="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4 dark:border-night-line"
         >
-          <div class="flex flex-wrap items-center gap-3">
-            <p v-if="bookings.pending" class="meta">Cancelling…</p>
-            <button
-              :id="`booking-cancel-confirm-btn-${booking.id}`"
-              type="button"
-              class="btn btn-danger-solid"
-              :disabled="bookings.pending"
-              @click="confirmCancel(booking.id)"
-            >
-              Yes, cancel
-            </button>
-            <button
-              :id="`booking-cancel-dismiss-btn-${booking.id}`"
-              type="button"
-              class="btn btn-ghost"
-              :disabled="bookings.pending"
-              @click="dismissCancel"
-            >
-              Keep booking
-            </button>
-          </div>
-          <p v-if="bookings.error" class="alert alert-error" role="alert">
+          <span class="text-sm font-medium text-red-600 dark:text-red-400">
+            Cancel this booking?
+          </span>
+          <button
+            :id="`booking-cancel-confirm-btn-${booking.id}`"
+            type="button"
+            class="btn btn-danger-solid"
+            :disabled="bookings.pending"
+            @click="confirmCancel(booking.id)"
+          >
+            {{ bookings.pending ? 'Cancelling…' : 'Yes, cancel' }}
+          </button>
+          <button
+            :id="`booking-cancel-dismiss-btn-${booking.id}`"
+            type="button"
+            class="btn btn-ghost"
+            :disabled="bookings.pending"
+            @click="dismissCancel"
+          >
+            Keep booking
+          </button>
+          <p v-if="bookings.error" class="alert alert-error w-full" role="alert">
             {{ bookings.error }}
           </p>
         </div>

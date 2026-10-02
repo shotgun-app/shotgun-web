@@ -219,7 +219,7 @@ const memberSince = computed(() => {
         </p>
 
         <button
-          v-show="!changingPassword"
+          v-if="!changingPassword"
           id="profile-password-btn"
           type="button"
           class="btn btn-ghost mt-4"
@@ -229,7 +229,7 @@ const memberSince = computed(() => {
         </button>
 
         <form
-          v-if="changingPassword"
+          v-else
           id="profile-password-form"
           class="mt-4 grid gap-5"
           @submit.prevent="submitPassword"
@@ -269,14 +269,13 @@ const memberSince = computed(() => {
           </p>
 
           <div class="flex items-center gap-3">
-            <p v-if="auth.pending" class="meta">Saving…</p>
             <button
               id="profile-password-save-btn"
               type="submit"
               class="btn btn-primary"
               :disabled="auth.pending"
             >
-              Update password
+              {{ auth.pending ? 'Saving…' : 'Update password' }}
             </button>
             <button
               type="button"
@@ -314,7 +313,6 @@ const memberSince = computed(() => {
             Are you sure? This cannot be undone.
           </p>
           <div class="mt-4 flex items-center gap-3">
-            <p v-if="auth.pending" class="meta">Deleting…</p>
             <button
               id="profile-delete-confirm-btn"
               type="button"
@@ -322,7 +320,7 @@ const memberSince = computed(() => {
               :disabled="auth.pending"
               @click="confirmDelete"
             >
-              Yes, delete my account
+              {{ auth.pending ? 'Deleting…' : 'Yes, delete my account' }}
             </button>
             <button
               id="profile-delete-cancel-btn"
@@ -406,14 +404,13 @@ const memberSince = computed(() => {
 
         <!-- Save / Cancel -->
         <div class="flex items-center gap-3">
-          <p v-if="auth.pending" class="meta">Saving…</p>
           <button
             id="profile-save-btn"
             type="submit"
             class="btn btn-primary"
             :disabled="auth.pending"
           >
-            Save changes
+            {{ auth.pending ? 'Saving…' : 'Save changes' }}
           </button>
           <button
             id="profile-cancel-btn"

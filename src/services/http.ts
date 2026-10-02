@@ -82,13 +82,13 @@ export const httpApi: Api = {
   trips: {
     search: (params: TripSearchParams) => {
       const query = new URLSearchParams({
-        ...(params?.originCity ? { origin: params.originCity } : {}),
-        ...(params?.destinationCity ? { destination: params.destinationCity } : {}),
-        ...(params?.departureDate ? { date: params.departureDate } : {}),
-        ...(params?.departureTime ? { time: params.departureTime } : {}),
+        ...(params.originCity ? { origin: params.originCity } : {}),
+        ...(params.destinationCity ? { destination: params.destinationCity } : {}),
+        ...(params.departureDate ? { date: params.departureDate } : {}),
+        ...(params.departureTime ? { time: params.departureTime } : {}),
       })
       const qs = query.toString()
-      return request<TripWithDriver[]>(`/trips${qs ? `?${qs}` : ''}`)
+      return request<TripWithDriver[]>(`/api/trips${qs ? `?${qs}` : ''}`)
     },
 
     listMine: async () => (await request<{ rides: Trip[] }>('/api/rides/mine')).rides,
@@ -113,20 +113,21 @@ export const httpApi: Api = {
   },
 
   bookings: {
-    listMine: () => request<BookingWithTrip[]>('/bookings/mine'),
+    listMine: () => request<BookingWithTrip[]>('/api/bookings/mine'),
 
     create: (tripId: string, payload: BookingPayload) =>
-      request<Booking>('/bookings', {
+      request<Booking>('/api/bookings', {
         method: 'POST',
         body: JSON.stringify({ tripId, ...payload }),
       }),
 
     update: (bookingId: string, payload: BookingPayload) =>
-      request<Booking>(`/bookings/${bookingId}`, {
+      request<Booking>(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
         body: JSON.stringify(payload),
       }),
 
-    cancel: (bookingId: string) => request<void>(`/bookings/${bookingId}`, { method: 'DELETE' }),
+    cancel: (bookingId: string) =>
+      request<void>(`/api/bookings/${bookingId}`, { method: 'DELETE' }),
   },
 }

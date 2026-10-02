@@ -9,7 +9,6 @@
 import { computed, ref } from 'vue'
 import type { TripWithDriver } from '@/types'
 import { useBookingsStore } from '@/stores/bookings'
-import { useAuthStore } from '@/stores/auth'
 import SeatStepper from '@/components/SeatStepper.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import RouteLine from '@/components/RouteLine.vue'
@@ -21,15 +20,11 @@ const props = defineProps<{
   trip: TripWithDriver
 }>()
 
-// Emit a `reserve` event with the trip data when the user clicks "Reserve ride".
-// A parent (or future handler) can listen with @reserve="onReserve".
 const emit = defineEmits<{
-  (e: 'reserve', trip: TripWithDriver): void
   (e: 'booked'): void
 }>()
 
 const bookingsStore = useBookingsStore()
-const auth = useAuthStore()
 
 // ── Inline booking widget state ───────────────────────────────────────────
 /** null = collapsed, 'form' = seat picker, 'done' = success confirmation */
@@ -122,20 +117,8 @@ async function submitBooking() {
 
     <!-- BOOKING WIDGET -->
     <div class="mt-4 border-t border-line pt-4 dark:border-night-line">
-      <!-- Logged-out: keep original reserve emit -->
-      <template v-if="!auth.isAuthenticated">
-        <button
-          type="button"
-          class="btn btn-primary w-full"
-          :disabled="seatsLeft <= 0"
-          @click="emit('reserve', trip)"
-        >
-          {{ seatsLeft > 0 ? 'Reserve ride' : 'Fully booked' }}
-        </button>
-      </template>
-
       <!-- Success confirmation -->
-      <template v-else-if="bookingState === 'done'">
+      <template v-if="bookingState === 'done'">
         <p id="trip-card-booking-success" class="alert alert-success">
           ✓ Booked! Check
           <router-link :to="{ name: 'bookings' }" class="font-medium underline"

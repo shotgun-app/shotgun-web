@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import UserAvatar from '@/components/UserAvatar.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
-const route = useRoute()
 
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
@@ -34,14 +33,8 @@ onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown)
 })
 
-// Close the menu after navigation completes. Closing it on the RouterLink's
-// own click unmounts the anchor mid-click, which Firefox drops.
-watch(
-  () => route.path,
-  () => close(),
-)
-
 async function logout() {
+  close()
   await auth.logout()
   await router.push({ name: 'landing' })
 }
@@ -85,6 +78,7 @@ async function logout() {
                 role="menuitem"
                 :to="{ name: 'profile' }"
                 class="block rounded-lg px-3 py-2 text-sm transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-brand-950"
+                @click="close"
               >
                 My profile
               </RouterLink>
@@ -94,6 +88,7 @@ async function logout() {
                 role="menuitem"
                 :to="{ name: 'bookings' }"
                 class="block rounded-lg px-3 py-2 text-sm transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-brand-950"
+                @click="close"
               >
                 My bookings
               </RouterLink>
@@ -103,6 +98,7 @@ async function logout() {
                 role="menuitem"
                 :to="{ name: 'rides' }"
                 class="block rounded-lg px-3 py-2 text-sm transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-brand-950"
+                @click="close"
               >
                 My rides
               </RouterLink>

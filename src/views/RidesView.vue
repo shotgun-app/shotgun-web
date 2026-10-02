@@ -257,14 +257,13 @@ function seatsLeft(ride: Trip): number {
       </p>
 
       <div class="flex items-center gap-3">
-        <p v-if="rides.pending" class="meta">Saving…</p>
         <button
           id="ride-form-save-btn"
           type="submit"
           class="btn btn-primary"
           :disabled="rides.pending"
         >
-          Save ride
+          {{ rides.pending ? 'Saving…' : 'Save ride' }}
         </button>
         <button
           id="ride-form-cancel-btn"

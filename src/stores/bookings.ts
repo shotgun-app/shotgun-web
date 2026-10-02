@@ -82,10 +82,6 @@ export const useBookingsStore = defineStore('bookings', () => {
     }
   }
 
-  function clearError(): void {
-    error.value = null
-  }
-
   return {
     bookings,
     pending,
@@ -94,6 +90,5 @@ export const useBookingsStore = defineStore('bookings', () => {
     create,
     update,
     cancel,
-    clearError,
   }
 })
