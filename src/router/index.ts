@@ -20,6 +20,14 @@ const router = createRouter({
         { path: 'profile', name: 'profile', component: () => import('@/views/ProfileView.vue') },
         { path: 'rides', name: 'rides', component: () => import('@/views/RidesView.vue') },
         { path: 'bookings', name: 'bookings', component: () => import('@/views/BookingsView.vue') },
+        {
+          path: 'users/:id',
+          name: 'user',
+          component: () => import('@/views/UserView.vue'),
+          props: true,
+          // Your own profile has the edit controls, so it lives at /app/profile
+          beforeEnter: (to) => to.params.id !== useAuthStore().user?.id || { name: 'profile' },
+        },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },
