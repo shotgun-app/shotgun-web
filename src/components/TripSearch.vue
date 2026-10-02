@@ -72,12 +72,14 @@ function swapLocations() {
 }
 
 // --- DATE & TIME (Dynamically defaults to today) ---
-const departureDate = ref<string>(getTodayDateString())
+const today = getTodayDateString()
+const departureDate = ref<string>(today)
 const departureTime = ref<string>('')
 
 // --- SUBMISSION ---
 async function handleSearch() {
   if (!fromCity.value || !toCity.value) return
+  if (departureDate.value && departureDate.value < today) return
 
   await trips.search({
     originCity: fromCity.value,
@@ -159,7 +161,7 @@ async function handleSearch() {
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
         <label class="field">
           <span>Departure date</span>
-          <input v-model="departureDate" type="date" required />
+          <input v-model="departureDate" type="date" :min="today" required />
         </label>
 
         <label class="field">
