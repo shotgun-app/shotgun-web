@@ -130,4 +130,8 @@ export const httpApi: Api = {
     cancel: (bookingId: string) =>
       request<void>(`/api/bookings/${bookingId}`, { method: 'DELETE' }),
   },
+
+  users: {
+    get: async (userId: string) => (await request<{ user: User }>(`/api/users/${userId}`)).user,
+  },
 }

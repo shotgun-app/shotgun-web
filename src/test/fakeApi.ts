@@ -336,4 +336,13 @@ export const fakeApi: Api = {
       booking.status = 'cancelled'
     },
   },
+
+  users: {
+    async get(userId: string): Promise<User> {
+      requireAccount()
+      const account = accounts.find((a) => a.user.id === userId)
+      if (!account) throw new ApiError('User not found.', 404)
+      return { ...account.user }
+    },
+  },
 }

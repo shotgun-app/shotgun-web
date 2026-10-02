@@ -55,10 +55,16 @@ export interface BookingsApi {
   cancel(bookingId: string): Promise<void>
 }
 
+export interface UsersApi {
+  /** Public profile of any user, or throws ApiError(404). */
+  get(userId: string): Promise<User>
+}
+
 export interface Api {
   auth: AuthApi
   trips: TripsApi
   bookings: BookingsApi
+  users: UsersApi
 }
 
 export const api: Api = httpApi
