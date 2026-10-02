@@ -168,13 +168,14 @@ function seatsLeft(b: BookingWithTrip): number {
               {{ editError }}
             </p>
             <div class="flex gap-3">
+              <p v-if="bookings.pending" class="meta">Saving…</p>
               <button
                 :id="`booking-edit-save-btn-${booking.id}`"
                 type="submit"
                 class="btn btn-primary"
                 :disabled="bookings.pending"
               >
-                {{ bookings.pending ? 'Saving…' : 'Save' }}
+                Save
               </button>
               <button
                 :id="`booking-edit-cancel-btn-${booking.id}`"
@@ -195,32 +196,30 @@ function seatsLeft(b: BookingWithTrip): number {
           class="mt-4 flex flex-col gap-3 border-t border-line pt-4 dark:border-night-line"
         >
           <div class="flex flex-wrap items-center gap-3">
-          <span class="text-sm font-medium text-red-600 dark:text-red-400">
-            Cancel this booking?
-          </span>
-          <button
-            :id="`booking-cancel-confirm-btn-${booking.id}`"
-            type="button"
-            class="btn btn-danger-solid"
-            :disabled="bookings.pending"
-            @click="confirmCancel(booking.id)"
-          >
-            {{ bookings.pending ? 'Cancelling…' : 'Yes, cancel' }}
-          </button>
-          <button
-            :id="`booking-cancel-dismiss-btn-${booking.id}`"
-            type="button"
-            class="btn btn-ghost"
-            :disabled="bookings.pending"
-            @click="dismissCancel"
-          >
-            Keep booking
-          </button>
+            <p v-if="bookings.pending" class="meta">Cancelling…</p>
+            <button
+              :id="`booking-cancel-confirm-btn-${booking.id}`"
+              type="button"
+              class="btn btn-danger-solid"
+              :disabled="bookings.pending"
+              @click="confirmCancel(booking.id)"
+            >
+              Yes, cancel
+            </button>
+            <button
+              :id="`booking-cancel-dismiss-btn-${booking.id}`"
+              type="button"
+              class="btn btn-ghost"
+              :disabled="bookings.pending"
+              @click="dismissCancel"
+            >
+              Keep booking
+            </button>
+          </div>
+          <p v-if="bookings.error" class="alert alert-error" role="alert">
+            {{ bookings.error }}
+          </p>
         </div>
-        <p v-if="bookings.error" class="alert alert-error" role="alert">
-          {{ bookings.error }}
-        </p>
-      </div>
       </li>
     </ul>
   </section>

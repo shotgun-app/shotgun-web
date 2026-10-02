@@ -31,14 +31,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     headers,
   })
 
-  if (
-    response.status === 401 &&
-    path !== '/auth/login' &&
-    path !== '/auth/password'
-  ) {
+  if (response.status === 401 && path !== '/auth/login' && path !== '/auth/password') {
     window.dispatchEvent(new CustomEvent('auth:unauthorized'))
   }
-  
+
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
     throw new ApiError(body.message ?? response.statusText, response.status)

@@ -99,8 +99,10 @@ async function submit() {
         {{ auth.error }}
       </p>
 
+      <p v-if="auth.pending" class="meta">Working…</p>
+
       <button class="btn btn-primary mt-1 py-3" type="submit" :disabled="auth.pending">
-        {{ auth.pending ? 'Working' : isLogin ? 'Log in' : 'Create account' }}
+        {{ isLogin ? 'Log in' : 'Create account' }}
       </button>
     </form>
 
