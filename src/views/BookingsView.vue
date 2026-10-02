@@ -213,6 +213,9 @@ function seatsLeft(b: BookingWithTrip): number {
           >
             Keep booking
           </button>
+          <p v-if="bookings.error" class="alert alert-error w-full" role="alert">
+            {{ bookings.error }}
+          </p>
         </div>
       </li>
     </ul>

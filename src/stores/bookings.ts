@@ -6,11 +6,8 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import { useTripsStore } from '@/stores/trips'
 import { ApiError, type Booking, type BookingPayload, type BookingWithTrip } from '@/types'
-
-function byTripDeparture(a: BookingWithTrip, b: BookingWithTrip): number {
-  return a.trip.departureAt.localeCompare(b.trip.departureAt)
-}
 
 export const useBookingsStore = defineStore('bookings', () => {
   const bookings = ref<BookingWithTrip[]>([])
@@ -43,6 +40,7 @@ export const useBookingsStore = defineStore('bookings', () => {
     if (!auth.user) return null
     const booking = await run(() => api.bookings.create(tripId, payload))
     if (!booking) return null
+    useTripsStore().applySeatsDelta(tripId, payload.seats)
     // Re-fetch so the embedded trip snapshot is up to date.
     await fetchMine()
     return booking
@@ -52,11 +50,15 @@ export const useBookingsStore = defineStore('bookings', () => {
   async function update(bookingId: string, payload: BookingPayload): Promise<boolean> {
     const auth = useAuthStore()
     if (!auth.user) return false
+
+    const existing = bookings.value.find((b) => b.id === bookingId)
     const updated = await run(() => api.bookings.update(bookingId, payload))
     if (!updated) return false
-    bookings.value = bookings.value
-      .map((b) => (b.id === bookingId ? { ...b, seats: updated.seats } : b))
-      .sort(byTripDeparture)
+
+    if (existing) {
+      useTripsStore().applySeatsDelta(existing.tripId, payload.seats - existing.seats)
+    }
+    await fetchMine()
     return true
   }
 
@@ -64,10 +66,12 @@ export const useBookingsStore = defineStore('bookings', () => {
   async function cancel(bookingId: string): Promise<boolean> {
     const auth = useAuthStore()
     if (!auth.user) return false
+    const existing = bookings.value.find((b) => b.id === bookingId)
     pending.value = true
     error.value = null
     try {
       await api.bookings.cancel(bookingId)
+      if (existing) useTripsStore().applySeatsDelta(existing.tripId, -existing.seats)
       bookings.value = bookings.value.filter((b) => b.id !== bookingId)
       return true
     } catch (e) {

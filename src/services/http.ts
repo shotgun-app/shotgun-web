@@ -22,14 +22,18 @@ import type { Api } from './api'
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers = new Headers(init.headers)
+  if (init.body) headers.set('Content-Type', 'application/json')
+
   const response = await fetch(`${BASE_URL}${path}`, {
     ...init,
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...init.headers,
-    },
+    headers,
   })
+
+  if (response.status === 401 && path !== '/auth/login' && path !== '/auth/password') {
+    window.dispatchEvent(new CustomEvent('auth:unauthorized'))
+  }
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
@@ -78,12 +82,13 @@ export const httpApi: Api = {
   trips: {
     search: (params: TripSearchParams) => {
       const query = new URLSearchParams({
-        origin: params.originCity,
-        destination: params.destinationCity,
+        ...(params.originCity ? { origin: params.originCity } : {}),
+        ...(params.destinationCity ? { destination: params.destinationCity } : {}),
         ...(params.departureDate ? { date: params.departureDate } : {}),
         ...(params.departureTime ? { time: params.departureTime } : {}),
       })
-      return request<TripWithDriver[]>(`/trips?${query.toString()}`)
+      const qs = query.toString()
+      return request<TripWithDriver[]>(`/api/trips${qs ? `?${qs}` : ''}`)
     },
 
     listMine: async () => (await request<{ rides: Trip[] }>('/api/rides/mine')).rides,
@@ -108,20 +113,21 @@ export const httpApi: Api = {
   },
 
   bookings: {
-    listMine: () => request<BookingWithTrip[]>('/bookings/mine'),
+    listMine: () => request<BookingWithTrip[]>('/api/bookings/mine'),
 
     create: (tripId: string, payload: BookingPayload) =>
-      request<Booking>('/bookings', {
+      request<Booking>('/api/bookings', {
         method: 'POST',
         body: JSON.stringify({ tripId, ...payload }),
       }),
 
     update: (bookingId: string, payload: BookingPayload) =>
-      request<Booking>(`/bookings/${bookingId}`, {
+      request<Booking>(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
         body: JSON.stringify(payload),
       }),
 
-    cancel: (bookingId: string) => request<void>(`/bookings/${bookingId}`, { method: 'DELETE' }),
+    cancel: (bookingId: string) =>
+      request<void>(`/api/bookings/${bookingId}`, { method: 'DELETE' }),
   },
 }

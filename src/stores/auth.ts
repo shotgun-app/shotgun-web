@@ -41,6 +41,7 @@ export const useAuthStore = defineStore('auth', () => {
     const loggedIn = await run(() => api.auth.login(credentials))
     if (!loggedIn) return false
     user.value = loggedIn
+    restored.value = true
     return true
   }
 
@@ -48,6 +49,7 @@ export const useAuthStore = defineStore('auth', () => {
     const created = await run(() => api.auth.register(payload))
     if (!created) return false
     user.value = created
+    restored.value = true
     return true
   }
 
@@ -97,6 +99,10 @@ export const useAuthStore = defineStore('auth', () => {
     return true
   }
 
+  function clearSession() {
+    user.value = null
+  }
+
   return {
     user,
     pending,
@@ -109,5 +115,6 @@ export const useAuthStore = defineStore('auth', () => {
     updateProfile,
     changePassword,
     deleteAccount,
+    clearSession,
   }
 })
