@@ -41,6 +41,10 @@ export default defineConfig({
 
     /* Only on CI systems run the tests headless */
     headless: !!process.env.CI,
+
+    // Skip entry animations so elements are stable the moment they render.
+    // Firefox's frame timing makes animated boxes fail the stability check.
+    reducedMotion: 'reduce',
   },
 
   /* Configure projects for major browsers */
