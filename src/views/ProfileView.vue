@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import UserAvatar from '@/components/UserAvatar.vue'
 import PasswordInput from '@/components/PasswordInput.vue'
 import PhoneInput from '@/components/PhoneInput.vue'
-import { formatPhone } from '@/utils/dialCodes'
+import ProfileDetails from '@/components/ProfileDetails.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -151,17 +151,6 @@ async function save() {
   })
   if (ok) editing.value = false
 }
-
-// ── Display helpers ────────────────────────────────────────────────────────
-const memberSince = computed(() => {
-  const raw = auth.user?.joinedAt
-  if (!raw) return '—'
-  return new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(raw))
-})
 </script>
 
 <template>
@@ -178,26 +167,7 @@ const memberSince = computed(() => {
 
     <!-- ── VIEW MODE ──────────────────────────────────────────────────────── -->
     <template v-if="!editing">
-      <dl class="mt-10 divide-y divide-line dark:divide-night-line">
-        <div class="grid grid-cols-[7rem_1fr] gap-4 py-4">
-          <dt class="text-sm text-ink-soft dark:text-night-ink-soft">Name</dt>
-          <dd class="text-sm font-medium text-ink dark:text-night-ink">{{ auth.user?.name }}</dd>
-        </div>
-        <div class="grid grid-cols-[7rem_1fr] gap-4 py-4">
-          <dt class="text-sm text-ink-soft dark:text-night-ink-soft">Email</dt>
-          <dd class="text-sm font-medium text-ink dark:text-night-ink">{{ auth.user?.email }}</dd>
-        </div>
-        <div class="grid grid-cols-[7rem_1fr] gap-4 py-4">
-          <dt class="text-sm text-ink-soft dark:text-night-ink-soft">Phone</dt>
-          <dd id="profile-phone" class="text-sm font-medium text-ink dark:text-night-ink">
-            {{ formatPhone(auth.user?.phone) || 'Not added' }}
-          </dd>
-        </div>
-        <div class="grid grid-cols-[7rem_1fr] gap-4 py-4">
-          <dt class="text-sm text-ink-soft dark:text-night-ink-soft">Member since</dt>
-          <dd class="text-sm font-medium text-ink dark:text-night-ink">{{ memberSince }}</dd>
-        </div>
-      </dl>
+      <ProfileDetails v-if="auth.user" :user="auth.user" class="mt-10" />
 
       <div class="mt-8">
         <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">
