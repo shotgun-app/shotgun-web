@@ -4,8 +4,9 @@ import { RouterLink } from 'vue-router'
 import { useBookingsStore } from '@/stores/bookings'
 import SeatStepper from '@/components/SeatStepper.vue'
 import RouteLine from '@/components/RouteLine.vue'
+import UserList from '@/components/UserList.vue'
 import { formatDeparture } from '@/utils/format'
-import type { BookingWithTrip } from '@/types'
+import type { BookingWithTrip, PublicUser } from '@/types'
 
 const bookings = useBookingsStore()
 
@@ -62,6 +63,10 @@ async function confirmCancel(id: string) {
 // ── Display helpers ────────────────────────────────────────────────────────
 function seatsLeft(b: BookingWithTrip): number {
   return b.trip.seatsTotal - b.trip.seatsBooked + b.seats
+}
+
+function otherPassengers(b: BookingWithTrip): PublicUser[] {
+  return b.trip.passengers.filter((p) => p.id !== b.passengerId)
 }
 </script>
 
@@ -138,6 +143,20 @@ function seatsLeft(b: BookingWithTrip): number {
             </button>
           </div>
         </div>
+
+        <!-- ── Who's on the ride ───────────────────────────────────────── -->
+        <dl class="mt-4 grid gap-2 border-t border-line pt-4 dark:border-night-line">
+          <div class="grid grid-cols-[7rem_1fr] items-center gap-4">
+            <dt class="meta">Driver</dt>
+            <dd class="min-w-0"><UserList :users="[booking.trip.driver]" /></dd>
+          </div>
+          <div class="grid grid-cols-[7rem_1fr] items-center gap-4">
+            <dt class="meta">Other passengers</dt>
+            <dd class="min-w-0">
+              <UserList :users="otherPassengers(booking)" empty="No other passengers" />
+            </dd>
+          </div>
+        </dl>
 
         <!-- ── Edit form (inline) ─────────────────────────────────────── -->
         <div
