@@ -108,7 +108,9 @@ dimmed and show a not-allowed cursor. Disabled buttons dim to 60% and show a pro
 
 ## Components
 
-- `UserAvatar` - initials on `brand-600`. Sizes `sm` (nav), `md` (trip card), `lg` (profile).
+- `UserAvatar` - initials on `brand-600`. Sizes `sm` (nav, `UserList`), `md` (trip card), `lg` (profile).
+- `UserList` - drivers and passengers on one line, comma separated: small avatar plus name, each
+  linking to their profile in a new tab. Takes an `empty` text for when nobody is listed.
 - `ProfileDetails` - read-only name, email, phone and member since. Used on your own profile
   and on other users' profiles, so a new profile field shows up on both.
 - `RouteLine` - "Origin → Destination", the arrow in brand blue. Used on every trip row.

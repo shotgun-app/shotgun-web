@@ -6,14 +6,14 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
-import { ApiError, type RidePayload, type Trip } from '@/types'
+import { ApiError, type RidePayload, type TripWithPassengers } from '@/types'
 
-function byDepartureAt(a: Trip, b: Trip): number {
+function byDepartureAt(a: TripWithPassengers, b: TripWithPassengers): number {
   return a.departureAt.localeCompare(b.departureAt)
 }
 
 export const useRidesStore = defineStore('rides', () => {
-  const rides = ref<Trip[]>([])
+  const rides = ref<TripWithPassengers[]>([])
   const pending = ref(false)
   const error = ref<string | null>(null)
 

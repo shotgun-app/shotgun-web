@@ -11,11 +11,13 @@ import {
   type BookingPayload,
   type BookingWithTrip,
   type Credentials,
+  type PublicUser,
   type RegisterPayload,
   type RidePayload,
   type Trip,
   type TripSearchParams,
   type TripWithDriver,
+  type TripWithPassengers,
   type UpdateProfilePayload,
   type User,
 } from '@/types'
@@ -48,6 +50,18 @@ function requireAccount(): MockAccount {
   const account = currentUserId && accounts.find((a) => a.user.id === currentUserId)
   if (!account) throw new ApiError('Not signed in.', 401)
   return account
+}
+
+function publicUserOf(userId: string): PublicUser | undefined {
+  const user = accounts.find((a) => a.user.id === userId)?.user
+  return user && { id: user.id, name: user.name, joinedAt: user.joinedAt }
+}
+
+function withPassengers(trip: Trip): TripWithPassengers {
+  const passengers = bookings
+    .filter((b) => b.tripId === trip.id && b.status === 'confirmed')
+    .flatMap((b) => publicUserOf(b.passengerId) ?? [])
+  return { ...trip, passengers }
 }
 
 function nextId(prefix: string): string {
@@ -187,15 +201,15 @@ export const fakeApi: Api = {
       })
     },
 
-    async listMine(): Promise<Trip[]> {
+    async listMine(): Promise<TripWithPassengers[]> {
       const account = requireAccount()
       return trips
         .filter((trip) => trip.driverId === account.user.id)
-        .slice()
         .sort((a, b) => a.departureAt.localeCompare(b.departureAt))
+        .map(withPassengers)
     },
 
-    async create(payload: RidePayload): Promise<Trip> {
+    async create(payload: RidePayload): Promise<TripWithPassengers> {
       const account = requireAccount()
       assertValidRide(payload, 1)
 
@@ -215,10 +229,10 @@ export const fakeApi: Api = {
         createdAt: new Date().toISOString(),
       }
       trips.push(trip)
-      return { ...trip }
+      return withPassengers(trip)
     },
 
-    async update(tripId: string, payload: RidePayload): Promise<Trip> {
+    async update(tripId: string, payload: RidePayload): Promise<TripWithPassengers> {
       const account = requireAccount()
       const trip = trips.find((t) => t.id === tripId && t.driverId === account.user.id)
       if (!trip) {
@@ -235,7 +249,7 @@ export const fakeApi: Api = {
       if (payload.pricePerSeat !== undefined) trip.pricePerSeat = payload.pricePerSeat
       if (payload.currency) trip.currency = payload.currency
       if (payload.notes !== undefined) trip.notes = payload.notes
-      return { ...trip }
+      return withPassengers(trip)
     },
 
     async remove(tripId: string): Promise<void> {
@@ -265,8 +279,9 @@ export const fakeApi: Api = {
         })
         .map((b) => {
           const trip = trips.find((t) => t.id === b.tripId)
-          if (!trip) throw new ApiError('Trip not found.', 404)
-          return { ...b, trip: { ...trip } }
+          const driver = trip && publicUserOf(trip.driverId)
+          if (!trip || !driver) throw new ApiError('Trip not found.', 404)
+          return { ...b, trip: { ...withPassengers(trip), driver } }
         })
     },
 
