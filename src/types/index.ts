@@ -42,11 +42,17 @@ export interface Trip {
   createdAt: string
 }
 
-/** What the API reveals about a driver to passengers: no email or phone. */
+/** What the API reveals about a driver or passenger to other users: no email or phone. */
 export type PublicUser = Omit<User, 'email' | 'phone'>
 
 export interface TripWithDriver extends Trip {
   driver: PublicUser
+}
+
+/** A trip as its driver and passengers see it. Search results leave passengers out. */
+export interface TripWithPassengers extends Trip {
+  /** Confirmed passengers, in booking order. */
+  passengers: PublicUser[]
 }
 
 export interface TripSearchParams {
@@ -74,7 +80,7 @@ export interface BookingPayload {
 
 /** A confirmed booking together with a snapshot of the trip it belongs to. */
 export interface BookingWithTrip extends Booking {
-  trip: Trip
+  trip: TripWithDriver & TripWithPassengers
 }
 
 export interface Credentials {

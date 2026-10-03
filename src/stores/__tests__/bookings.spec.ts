@@ -60,4 +60,30 @@ describe('bookings store', () => {
     expect(cancelled).toBe(true)
     expect(bookings.bookings.length).toBe(0)
   })
+
+  it('lists the driver and passengers of each booked trip', async () => {
+    const auth = useAuthStore()
+    const bookings = useBookingsStore()
+
+    await api.auth.login({ email: 'ben@shotgun.app', password: 'password123' })
+    const trip = await api.trips.create({
+      originCity: 'Ljubljana',
+      originCountry: 'Slovenia',
+      destinationCity: 'Zagreb',
+      destinationCountry: 'Croatia',
+      departureAt: '2027-05-01T08:00:00Z',
+      seatsTotal: 3,
+      pricePerSeat: 0,
+    })
+    await api.auth.login({ email: 'clara@shotgun.app', password: 'password123' })
+    await api.bookings.create(trip.id, { seats: 1 })
+
+    await auth.login(DEMO_CREDENTIALS)
+    await bookings.create(trip.id, { seats: 1 })
+
+    const booked = bookings.bookings[0]!.trip
+    expect(booked.driver.name).toBe('Ben Foster')
+    expect(booked.driver).not.toHaveProperty('email')
+    expect(booked.passengers.map((p) => p.name)).toEqual(['Clara Lindqvist', 'Alice'])
+  })
 })

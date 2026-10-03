@@ -5,7 +5,7 @@ import RouteLine from '@/components/RouteLine.vue'
 import { formatDeparture } from '@/utils/format'
 import { EUROPEAN_LOCATIONS, getTodayDateString } from '@/utils/locations'
 import { useRidesStore } from '@/stores/rides'
-import type { RidePayload, Trip } from '@/types'
+import type { RidePayload, TripWithPassengers } from '@/types'
 
 const rides = useRidesStore()
 
@@ -50,7 +50,7 @@ watch(
   },
 )
 
-const editingRide = computed<Trip | null>(() => {
+const editingRide = computed<TripWithPassengers | null>(() => {
   if (formTarget.value === null || formTarget.value === 'create') return null
   return rides.rides.find((r) => r.id === formTarget.value) ?? null
 })
@@ -76,7 +76,7 @@ function openCreate() {
   formTarget.value = 'create'
 }
 
-function openEdit(ride: Trip) {
+function openEdit(ride: TripWithPassengers) {
   resetForm()
   form.fromCountry = ride.originCountry
   form.fromCity = ride.originCity
@@ -158,7 +158,7 @@ async function confirmDelete(id: string) {
 }
 
 // ── Display helpers ──────────────────────────────────────────────────────
-function seatsLeft(ride: Trip): number {
+function seatsLeft(ride: TripWithPassengers): number {
   return ride.seatsTotal - ride.seatsBooked
 }
 </script>
