@@ -149,3 +149,17 @@ test('password eye toggle, phone number and password change work end to end', as
   await page.getByRole('button', { name: 'Log in', exact: true }).click()
   await expect(page).toHaveURL('/app')
 })
+
+test("a signed-in user can open another user's profile", async ({ page }) => {
+  const email = uniqueEmail()
+  await register(page, 'Owen Public', email)
+  const { user } = await (await page.request.get('http://localhost:8080/auth/me')).json()
+  await logout(page, 'Owen')
+
+  await register(page, 'Nina Viewer', uniqueEmail())
+  await page.goto(`/app/users/${user.id}`)
+
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Owen Public')
+  await expect(page.getByText(email)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Edit profile' })).toHaveCount(0)
+})

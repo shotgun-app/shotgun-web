@@ -57,6 +57,20 @@ describe('router guards', () => {
     expect(router.currentRoute.value.name).toBe('app')
   })
 
+  it('protects user profiles', async () => {
+    await router.push('/app/users/usr_2')
+
+    expect(router.currentRoute.value.name).toBe('landing')
+  })
+
+  it('sends a user opening their own public profile to /app/profile', async () => {
+    await useAuthStore().login(DEMO_CREDENTIALS)
+
+    await router.push('/app/users/usr_1')
+
+    expect(router.currentRoute.value.name).toBe('profile')
+  })
+
   it('redirects unknown paths to the landing page', async () => {
     await router.push('/does-not-exist')
 

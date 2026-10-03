@@ -109,6 +109,8 @@ dimmed and show a not-allowed cursor. Disabled buttons dim to 60% and show a pro
 ## Components
 
 - `UserAvatar` - initials on `brand-600`. Sizes `sm` (nav), `md` (trip card), `lg` (profile).
+- `ProfileDetails` - read-only name, email, phone and member since. Used on your own profile
+  and on other users' profiles, so a new profile field shows up on both.
 - `RouteLine` - "Origin → Destination", the arrow in brand blue. Used on every trip row.
 - `PasswordInput` - password field with a show/hide eye button (Phosphor `PhEye`/`PhEyeSlash`).
 - `PhoneInput` - country-code select plus number, `v-model` is E.164. Phone is required on

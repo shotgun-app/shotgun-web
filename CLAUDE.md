@@ -74,7 +74,8 @@ class or pattern changes. The essentials:
 - Build from the shared classes in `main.css` (`.btn-*`, `.card`, `.field`, `.input`,
   `.alert-*`, `.badge-*`, `.empty`, `.page-title`, `.page-lead`, `.section-title`,
   `.meta`) and the shared components (`UserAvatar`, `RouteLine`, `PasswordInput`,
-  `PhoneInput`). Never re-type a card, alert, badge or danger-button utility string.
+  `PhoneInput`, `ProfileDetails`). Never re-type a card, alert, badge or danger-button
+  utility string.
 - Palette is locked: blue `brand-*` is the only primary, green `accent-*` is rare, one
   cool-grey ramp. One radius, `rounded-card`. Flat: no shadows on cards.
 - Dark mode is mandatory: every colour utility gets a `dark:` pair.
