@@ -11,9 +11,9 @@ import {
   type Credentials,
   type RegisterPayload,
   type RidePayload,
-  type Trip,
   type TripSearchParams,
   type TripWithDriver,
+  type TripWithPassengers,
   type UpdateProfilePayload,
   type User,
 } from '@/types'
@@ -91,11 +91,11 @@ export const httpApi: Api = {
       return request<TripWithDriver[]>(`/api/trips${qs ? `?${qs}` : ''}`)
     },
 
-    listMine: async () => (await request<{ rides: Trip[] }>('/api/rides/mine')).rides,
+    listMine: async () => (await request<{ rides: TripWithPassengers[] }>('/api/rides/mine')).rides,
 
     create: async (payload: RidePayload) =>
       (
-        await request<{ ride: Trip }>('/api/rides', {
+        await request<{ ride: TripWithPassengers }>('/api/rides', {
           method: 'POST',
           body: JSON.stringify(payload),
         })
@@ -103,7 +103,7 @@ export const httpApi: Api = {
 
     update: async (tripId: string, payload: RidePayload) =>
       (
-        await request<{ ride: Trip }>(`/api/rides/${tripId}`, {
+        await request<{ ride: TripWithPassengers }>(`/api/rides/${tripId}`, {
           method: 'PUT',
           body: JSON.stringify(payload),
         })

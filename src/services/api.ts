@@ -11,9 +11,9 @@ import type {
   Credentials,
   RegisterPayload,
   RidePayload,
-  Trip,
   TripSearchParams,
   TripWithDriver,
+  TripWithPassengers,
   UpdateProfilePayload,
   User,
 } from '@/types'
@@ -36,10 +36,10 @@ export interface AuthApi {
 export interface TripsApi {
   search(params: TripSearchParams): Promise<TripWithDriver[]>
   /** Rides the authenticated user is driving, soonest first. */
-  listMine(): Promise<Trip[]>
-  create(payload: RidePayload): Promise<Trip>
+  listMine(): Promise<TripWithPassengers[]>
+  create(payload: RidePayload): Promise<TripWithPassengers>
   /** Free seats can't be set below the seats already booked; the seam enforces this. */
-  update(tripId: string, payload: RidePayload): Promise<Trip>
+  update(tripId: string, payload: RidePayload): Promise<TripWithPassengers>
   /** Deletes the ride and its bookings. */
   remove(tripId: string): Promise<void>
 }

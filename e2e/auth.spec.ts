@@ -1,29 +1,7 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
+import { API_URL, PASSWORD, logout, register, uniqueEmail } from './helpers.js'
 
 // These tests run against the real API and database (docker compose up in ../shotgun-api)
-
-const PASSWORD = 'password123'
-
-function uniqueEmail() {
-  return `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@shotgun.app`
-}
-
-async function register(page: Page, name: string, email: string) {
-  await page.goto('/')
-  await page.getByRole('button', { name: 'Create an account' }).click()
-  await page.getByLabel('Name').fill(name)
-  await page.getByLabel('Email').fill(email)
-  await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
-  await page.getByLabel('Phone number').fill('40 123 456')
-  await page.getByRole('button', { name: 'Create account' }).click()
-  await expect(page).toHaveURL('/app')
-}
-
-async function logout(page: Page, name: string) {
-  await page.getByRole('button', { name: new RegExp(name) }).click()
-  await page.getByRole('menuitem', { name: 'Log out' }).click()
-  await expect(page).toHaveURL('/')
-}
 
 test('landing page shows promo and auth panel without a demo account', async ({ page }) => {
   await page.goto('/')
@@ -153,7 +131,7 @@ test('password eye toggle, phone number and password change work end to end', as
 test("a signed-in user can open another user's profile", async ({ page }) => {
   const email = uniqueEmail()
   await register(page, 'Owen Public', email)
-  const { user } = await (await page.request.get('http://localhost:8080/auth/me')).json()
+  const { user } = await (await page.request.get(`${API_URL}/auth/me`)).json()
   await logout(page, 'Owen')
 
   await register(page, 'Nina Viewer', uniqueEmail())
