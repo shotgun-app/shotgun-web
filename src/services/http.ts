@@ -10,6 +10,7 @@ import {
   type BookingWithTrip,
   type Credentials,
   type RegisterPayload,
+  type ResetPasswordPayload,
   type RidePayload,
   type TripSearchParams,
   type TripWithDriver,
@@ -75,6 +76,15 @@ export const httpApi: Api = {
 
     changePassword: (payload: ChangePasswordPayload) =>
       request<void>('/auth/password', { method: 'POST', body: JSON.stringify(payload) }),
+
+    requestPasswordReset: (email: string) =>
+      request<void>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+
+    checkResetToken: (token: string) =>
+      request<void>(`/auth/reset-password?token=${encodeURIComponent(token)}`),
+
+    resetPassword: (payload: ResetPasswordPayload) =>
+      request<void>('/auth/reset-password', { method: 'POST', body: JSON.stringify(payload) }),
 
     deleteAccount: () => request<void>('/auth/me', { method: 'DELETE' }),
   },

@@ -106,6 +106,12 @@ export interface ChangePasswordPayload {
   newPassword: string
 }
 
+export interface ResetPasswordPayload {
+  /** The `token` query param of the emailed link. */
+  token: string
+  password: string
+}
+
 /** Fields a driver sends when creating or editing a ride. Mirrors the Go backend's `rideRequest`. */
 export interface RidePayload {
   originCity: string

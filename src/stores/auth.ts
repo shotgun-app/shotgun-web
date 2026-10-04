@@ -10,6 +10,7 @@ import {
   type ChangePasswordPayload,
   type Credentials,
   type RegisterPayload,
+  type ResetPasswordPayload,
   type UpdateProfilePayload,
   type User,
 } from '@/types'
@@ -89,6 +90,28 @@ export const useAuthStore = defineStore('auth', () => {
     return !error.value
   }
 
+  async function requestPasswordReset(email: string): Promise<boolean> {
+    await run(() => api.auth.requestPasswordReset(email))
+    return !error.value
+  }
+
+  /** Lets the reset page reject a dead link before asking for a new password. */
+  async function isResetTokenValid(token: string): Promise<boolean> {
+    if (!token) return false
+    try {
+      await api.auth.checkResetToken(token)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /** Does not log in: the backend ends all sessions, so the user logs in with the new password. */
+  async function resetPassword(payload: ResetPasswordPayload): Promise<boolean> {
+    await run(() => api.auth.resetPassword(payload))
+    return !error.value
+  }
+
   /** Deletes the account on the backend (which also ends the session) then clears local state. */
   async function deleteAccount(): Promise<boolean> {
     if (!user.value) return false
@@ -114,6 +137,9 @@ export const useAuthStore = defineStore('auth', () => {
     restore,
     updateProfile,
     changePassword,
+    requestPasswordReset,
+    isResetTokenValid,
+    resetPassword,
     deleteAccount,
     clearSession,
   }

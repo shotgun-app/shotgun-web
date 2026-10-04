@@ -76,4 +76,13 @@ describe('router guards', () => {
 
     expect(router.currentRoute.value.name).toBe('landing')
   })
+
+  it('serves the reset page to guests and to logged-in users', async () => {
+    await router.push('/reset-password?token=abc')
+    expect(router.currentRoute.value.name).toBe('reset-password')
+
+    await useAuthStore().login(DEMO_CREDENTIALS)
+    await router.push('/reset-password?token=abc')
+    expect(router.currentRoute.value.name).toBe('reset-password')
+  })
 })

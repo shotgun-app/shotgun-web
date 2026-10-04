@@ -13,6 +13,7 @@ import {
   type Credentials,
   type PublicUser,
   type RegisterPayload,
+  type ResetPasswordPayload,
   type RidePayload,
   type Trip,
   type TripSearchParams,
@@ -28,18 +29,26 @@ let accounts: MockAccount[] = []
 let bookings: Booking[] = []
 let trips: Trip[] = []
 let currentUserId: string | null = null
+/** Reset token -> email, filled by requestPasswordReset like the emailed link. */
+let resetTokens = new Map<string, string>()
 
 export function resetFakeApi(): void {
   accounts = MOCK_ACCOUNTS.map((a) => ({ ...a, user: { ...a.user } }))
   bookings = []
   trips = []
   currentUserId = null
+  resetTokens = new Map()
 }
 resetFakeApi()
 
 /** Live trips, for specs that assert on server-side state such as seatsBooked. */
 export function getFakeTrips(): Trip[] {
   return trips
+}
+
+/** The token a real user would get by email, for specs that walk the reset flow. */
+export function getFakeResetToken(email: string): string | undefined {
+  return [...resetTokens].find(([, e]) => e === email.trim().toLowerCase())?.[0]
 }
 
 function findByEmail(email: string): MockAccount | undefined {
@@ -151,6 +160,29 @@ export const fakeApi: Api = {
         throw new ApiError('Password must be at least 8 characters.', 400)
       }
       account.password = payload.newPassword
+    },
+
+    async requestPasswordReset(email: string): Promise<void> {
+      const account = findByEmail(email)
+      if (!account) return
+      for (const [token, e] of resetTokens)
+        if (e === email.trim().toLowerCase()) resetTokens.delete(token)
+      resetTokens.set(nextId('reset'), email.trim().toLowerCase())
+    },
+
+    async checkResetToken(token: string): Promise<void> {
+      if (!resetTokens.has(token))
+        throw new ApiError('This reset link is invalid or has expired.', 400)
+    },
+
+    async resetPassword({ token, password }: ResetPasswordPayload): Promise<void> {
+      if (password.length < 8) throw new ApiError('Password must be at least 8 characters.', 400)
+      const email = resetTokens.get(token)
+      const account = email ? findByEmail(email) : undefined
+      if (!account) throw new ApiError('This reset link is invalid or has expired.', 400)
+      account.password = password
+      resetTokens.delete(token)
+      currentUserId = null
     },
 
     async deleteAccount(): Promise<void> {

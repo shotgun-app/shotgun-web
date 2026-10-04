@@ -141,3 +141,23 @@ test("a signed-in user can open another user's profile", async ({ page }) => {
   await expect(page.getByText(email)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Edit profile' })).toHaveCount(0)
 })
+
+test('forgot password confirms without revealing whether the account exists', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Forgot password?' }).click()
+  await page.getByLabel('Email').fill(uniqueEmail())
+  await page.getByRole('button', { name: 'Send reset link' }).click()
+  await expect(page.getByRole('status')).toContainText('a reset link is on its way')
+
+  await page.getByRole('button', { name: 'Back to log in' }).click()
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible()
+})
+
+test('reset page rejects an invalid token', async ({ page }) => {
+  await page.goto('/reset-password?token=d')
+  await expect(page.getByRole('alert')).toContainText('invalid or has expired')
+  await expect(page.getByLabel('New password')).toHaveCount(0)
+
+  await page.getByRole('link', { name: 'Request a new link' }).click()
+  await expect(page.getByRole('heading', { name: 'Forgot your password?' })).toBeVisible()
+})

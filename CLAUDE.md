@@ -6,7 +6,7 @@ Guidance for Claude Code working in this repo.
 
 `shotgun-web` - the Vue 3 front end of Shotgun, a carpooling app (drivers publish
 trips, passengers book empty seats). The Go backend is a sibling repo at
-`../shotgun-api`. Auth (register, login, logout, profile, password) is real,
+`../shotgun-api`. Auth (register, login, logout, profile, password, forgot/reset password) is real,
 using an HttpOnly session cookie. Trips, rides and bookings have no backend
 endpoints yet, so those screens show errors until the API has them.
 
@@ -86,8 +86,8 @@ class or pattern changes. The essentials:
 
 ## Routing and auth
 
-- `/` landing (`guestOnly`), `/app` + `/app/profile` (`requiresAuth`), unknown
-  paths redirect to `/`.
+- `/` landing (`guestOnly`), `/reset-password?token=` (public, reuses the landing
+  layout), `/app` + `/app/profile` (`requiresAuth`), unknown paths redirect to `/`.
 - The guard in `src/router/index.ts` calls `auth.restore()` once, then enforces
   the route meta. Don't duplicate auth checks inside components.
 - Session is an HttpOnly cookie set by the API; requests use
