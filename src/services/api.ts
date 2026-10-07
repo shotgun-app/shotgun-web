@@ -65,7 +65,7 @@ export interface ReviewsApi {
 
 export interface UsersApi {
   /** Public profile of any user, or throws ApiError(404). */
-  get(userId: string): Promise<User>
+  get(userId: string): Promise<UserProfile>
 }
 
 export interface Api {

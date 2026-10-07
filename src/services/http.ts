@@ -18,6 +18,7 @@ import {
   type TripWithPassengers,
   type UpdateProfilePayload,
   type User,
+  type UserProfile,
 } from '@/types'
 import type { Api } from './api'
 

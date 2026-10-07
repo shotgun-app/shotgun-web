@@ -17,7 +17,7 @@ describe('users store', () => {
 
     await users.load('usr_2')
 
-    expect(users.user?.name).toBe('Ben Foster')
+    expect(users.user?.user.name).toBe('Ben Foster')
     expect(users.error).toBeNull()
   })
 
