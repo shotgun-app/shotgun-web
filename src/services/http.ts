@@ -11,6 +11,8 @@ import {
   type Credentials,
   type RegisterPayload,
   type RidePayload,
+  type Review,
+  type ReviewPayload,
   type TripSearchParams,
   type TripWithDriver,
   type TripWithPassengers,
@@ -129,6 +131,14 @@ export const httpApi: Api = {
 
     cancel: (bookingId: string) =>
       request<void>(`/api/bookings/${bookingId}`, { method: 'DELETE' }),
+  },
+
+  reviews: {
+    create: (payload: ReviewPayload) =>
+      request<Review>('/api/reviews', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
   },
 
   users: {

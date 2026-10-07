@@ -81,6 +81,23 @@ export interface BookingPayload {
 /** A confirmed booking together with a snapshot of the trip it belongs to. */
 export interface BookingWithTrip extends Booking {
   trip: TripWithDriver & TripWithPassengers
+  reviewed: boolean
+}
+
+export interface Review {
+  id: string
+  rideId: string
+  reviewerId: string
+  revieweeId: string
+  rating: number
+  comment: string
+  createdAt: string
+}
+
+export interface ReviewPayload {
+  rideId: string
+  rating: number
+  comment: string
 }
 
 export interface Credentials {
