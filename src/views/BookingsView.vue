@@ -183,9 +183,7 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
                 :destination="booking.trip.destinationCity"
               />
 
-              <p class="meta mt-1">
-                Departing {{ formatDeparture(booking.trip.departureAt) }}
-              </p>
+              <p class="meta mt-1">Departing {{ formatDeparture(booking.trip.departureAt) }}</p>
 
               <p class="meta mt-0.5">
                 {{ booking.seats }} seat{{ booking.seats === 1 ? '' : 's' }} booked ·
@@ -232,10 +230,7 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
               <dt class="meta">Other passengers</dt>
 
               <dd class="min-w-0">
-                <UserList
-                  :users="otherPassengers(booking)"
-                  empty="No other passengers"
-                />
+                <UserList :users="otherPassengers(booking)" empty="No other passengers" />
               </dd>
             </div>
           </dl>
@@ -262,9 +257,7 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
                     :max="seatsLeft(booking)"
                   />
 
-                  <span class="meta">
-                    of {{ seatsLeft(booking) }} available
-                  </span>
+                  <span class="meta"> of {{ seatsLeft(booking) }} available </span>
                 </div>
               </div>
 
@@ -360,9 +353,7 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
                   :destination="booking.trip.destinationCity"
                 />
 
-                <p class="meta mt-1">
-                  Departed {{ formatDeparture(booking.trip.departureAt) }}
-                </p>
+                <p class="meta mt-1">Departed {{ formatDeparture(booking.trip.departureAt) }}</p>
 
                 <p class="meta mt-0.5">
                   {{ booking.seats }} seat{{ booking.seats === 1 ? '' : 's' }} booked ·
@@ -409,9 +400,7 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
         <!-- Modal header -->
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 id="review-modal-title" class="section-title">
-              Rate your ride
-            </h2>
+            <h2 id="review-modal-title" class="section-title">Rate your ride</h2>
 
             <p class="meta mt-1">
               {{ reviewingBooking.trip.driver.name }}
@@ -433,11 +422,7 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
         <div class="mt-6">
           <p class="meta mb-2">Rating</p>
 
-          <div
-            class="flex gap-2"
-            role="radiogroup"
-            aria-label="Rating"
-          >
+          <div class="flex gap-2" role="radiogroup" aria-label="Rating">
             <button
               v-for="star in 5"
               :key="star"
@@ -468,11 +453,7 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
         </label>
 
         <!-- Review error -->
-        <p
-          v-if="reviewError"
-          class="alert alert-error mt-4"
-          role="alert"
-        >
+        <p v-if="reviewError" class="alert alert-error mt-4" role="alert">
           {{ reviewError }}
         </p>
 

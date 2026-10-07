@@ -1,11 +1,10 @@
-/** Public profiles of other users, backed by `api.users`. */
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/services/api'
-import { ApiError, type User } from '@/types'
+import { ApiError, type UserProfile } from '@/types'
 
 export const useUsersStore = defineStore('users', () => {
-  const user = ref<User | null>(null)
+  const user = ref<UserProfile | null>(null)
   const pending = ref(false)
   const error = ref<string | null>(null)
 
@@ -13,6 +12,7 @@ export const useUsersStore = defineStore('users', () => {
     user.value = null
     pending.value = true
     error.value = null
+
     try {
       user.value = await api.users.get(userId)
     } catch (e) {

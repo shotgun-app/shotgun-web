@@ -94,6 +94,12 @@ export interface Review {
   createdAt: string
 }
 
+export interface UserProfile {
+  user: User
+  driverScore: number
+  reviews: Review[]
+}
+
 export interface ReviewPayload {
   rideId: string
   rating: number

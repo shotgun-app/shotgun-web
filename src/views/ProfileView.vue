@@ -1,14 +1,34 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import UserAvatar from '@/components/UserAvatar.vue'
 import PasswordInput from '@/components/PasswordInput.vue'
 import PhoneInput from '@/components/PhoneInput.vue'
 import ProfileDetails from '@/components/ProfileDetails.vue'
+import { api } from '@/services/api'
+import type { Review } from '@/types'
 
 const auth = useAuthStore()
 const router = useRouter()
+
+const driverScore = ref(0)
+const reviews = ref<Review[]>([])
+
+async function loadDriverReviews() {
+  if (!auth.user) return
+
+  try {
+    const profile = await api.users.get(auth.user.id)
+    driverScore.value = profile.driverScore
+    reviews.value = profile.reviews
+  } catch {
+    driverScore.value = 0
+    reviews.value = []
+  }
+}
+
+onMounted(loadDriverReviews)
 
 // ── View / edit toggle ─────────────────────────────────────────────────────
 const editing = ref(false)
@@ -168,6 +188,50 @@ async function save() {
     <!-- ── VIEW MODE ──────────────────────────────────────────────────────── -->
     <template v-if="!editing">
       <ProfileDetails v-if="auth.user" :user="auth.user" class="mt-10" />
+      <!-- Driver Score -->
+      <section class="mt-10">
+        <h2 class="section-title">Driver Score</h2>
+
+        <div class="mt-4 flex items-center gap-3">
+          <span class="text-lg font-semibold">
+            {{ driverScore.toFixed(1) }}
+          </span>
+
+          <div class="flex items-center gap-0.5 text-base" aria-label="Driver rating">
+            <span v-for="star in 5" :key="star">
+              {{ star <= Math.round(driverScore) ? '★' : '☆' }}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reviews -->
+      <section class="mt-10">
+        <h2 class="section-title">Reviews</h2>
+
+        <p v-if="reviews.length === 0" class="meta mt-3 text-sm">No reviews yet.</p>
+
+        <ul v-else class="mt-4 grid gap-4">
+          <li v-for="review in reviews" :key="review.id" class="card">
+            <!-- Stars -->
+            <div class="flex items-center gap-1 text-sm">
+              <span v-for="star in 5" :key="star">
+                {{ star <= review.rating ? '★' : '☆' }}
+              </span>
+            </div>
+
+            <!-- Comment -->
+            <p v-if="review.comment" class="mt-3 text-sm">
+              {{ review.comment }}
+            </p>
+
+            <!-- Date -->
+            <p class="meta mt-2 text-xs">
+              {{ new Date(review.createdAt).toLocaleDateString() }}
+            </p>
+          </li>
+        </ul>
+      </section>
 
       <div class="mt-8">
         <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">

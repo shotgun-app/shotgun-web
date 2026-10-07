@@ -27,10 +27,7 @@ export const useBookingsStore = defineStore('bookings', () => {
     try {
       return await fn()
     } catch (e) {
-      error.value =
-        e instanceof ApiError
-          ? e.message
-          : 'Something went wrong. Try again.'
+      error.value = e instanceof ApiError ? e.message : 'Something went wrong. Try again.'
 
       return null
     } finally {
@@ -51,17 +48,12 @@ export const useBookingsStore = defineStore('bookings', () => {
   }
 
   /** Books seats on a trip and adds the resulting booking to the local list. */
-  async function create(
-    tripId: string,
-    payload: BookingPayload,
-  ): Promise<Booking | null> {
+  async function create(tripId: string, payload: BookingPayload): Promise<Booking | null> {
     const auth = useAuthStore()
 
     if (!auth.user) return null
 
-    const booking = await run(() =>
-      api.bookings.create(tripId, payload),
-    )
+    const booking = await run(() => api.bookings.create(tripId, payload))
 
     if (!booking) return null
 
@@ -74,27 +66,19 @@ export const useBookingsStore = defineStore('bookings', () => {
   }
 
   /** Updates the seat count on an existing booking. */
-  async function update(
-    bookingId: string,
-    payload: BookingPayload,
-  ): Promise<boolean> {
+  async function update(bookingId: string, payload: BookingPayload): Promise<boolean> {
     const auth = useAuthStore()
 
     if (!auth.user) return false
 
     const existing = bookings.value.find((b) => b.id === bookingId)
 
-    const updated = await run(() =>
-      api.bookings.update(bookingId, payload),
-    )
+    const updated = await run(() => api.bookings.update(bookingId, payload))
 
     if (!updated) return false
 
     if (existing) {
-      useTripsStore().applySeatsDelta(
-        existing.tripId,
-        payload.seats - existing.seats,
-      )
+      useTripsStore().applySeatsDelta(existing.tripId, payload.seats - existing.seats)
     }
 
     await fetchMine()
@@ -117,22 +101,14 @@ export const useBookingsStore = defineStore('bookings', () => {
       await api.bookings.cancel(bookingId)
 
       if (existing) {
-        useTripsStore().applySeatsDelta(
-          existing.tripId,
-          -existing.seats,
-        )
+        useTripsStore().applySeatsDelta(existing.tripId, -existing.seats)
       }
 
-      bookings.value = bookings.value.filter(
-        (b) => b.id !== bookingId,
-      )
+      bookings.value = bookings.value.filter((b) => b.id !== bookingId)
 
       return true
     } catch (e) {
-      error.value =
-        e instanceof ApiError
-          ? e.message
-          : 'Something went wrong. Try again.'
+      error.value = e instanceof ApiError ? e.message : 'Something went wrong. Try again.'
 
       return false
     } finally {
@@ -146,9 +122,7 @@ export const useBookingsStore = defineStore('bookings', () => {
 
     if (!auth.user) return false
 
-    const created = await run(() =>
-      api.reviews.create(payload),
-    )
+    const created = await run(() => api.reviews.create(payload))
 
     if (!created) return false
 

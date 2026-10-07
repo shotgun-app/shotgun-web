@@ -142,6 +142,6 @@ export const httpApi: Api = {
   },
 
   users: {
-    get: async (userId: string) => (await request<{ user: User }>(`/api/users/${userId}`)).user,
+    get: (userId: string) => request<UserProfile>(`/api/users/${userId}`),
   },
 }
