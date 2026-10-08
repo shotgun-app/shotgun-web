@@ -27,47 +27,47 @@ watch(() => props.id, users.load, { immediate: true })
 
       <ProfileDetails :user="users.user.user" class="mt-10" />
 
-      <!-- Driver score -->
-      <section class="mt-10">
-        <h2 class="section-title">Driver Score</h2>
+      <template v-if="users.user.reviews.length > 0">
+        <!-- Driver score -->
+        <section class="mt-10">
+          <h2 class="section-title">Driver Score</h2>
 
-        <div class="mt-3 flex items-center gap-3">
-          <span class="text-2xl font-semibold">
-            {{ users.user.driverScore.toFixed(1) }}
-          </span>
+          <div class="mt-3 flex items-center gap-3">
+            <span class="text-2xl font-semibold">
+              {{ users.user.driverScore.toFixed(1) }}
+            </span>
 
-          <span class="text-lg"> ★ </span>
-        </div>
-      </section>
+            <span class="text-lg"> ★ </span>
+          </div>
+        </section>
 
-      <!-- Reviews -->
-      <section v-if="users.user.reviews.length > 0" class="mt-10">
-        <h2 class="section-title">Reviews</h2>
+        <!-- Reviews -->
+        <section class="mt-10">
+          <h2 class="section-title">Reviews</h2>
 
-        <ul class="mt-4 grid gap-4">
-          <li v-for="review in users.user.reviews" :key="review.id" class="card">
-            <div class="flex items-center gap-1">
-              <span v-for="star in 5" :key="star" class="text-lg">
-                {{ star <= review.rating ? '★' : '☆' }}
-              </span>
-            </div>
+          <ul class="mt-4 grid gap-4">
+            <li
+              v-for="review in users.user.reviews"
+              :key="review.id"
+              class="card"
+            >
+              <div class="flex items-center gap-1">
+                <span v-for="star in 5" :key="star" class="text-lg">
+                  {{ star <= review.rating ? '★' : '☆' }}
+                </span>
+              </div>
 
-            <p v-if="review.comment" class="mt-3 text-sm">
-              {{ review.comment }}
-            </p>
+              <p v-if="review.comment" class="mt-3 text-sm">
+                {{ review.comment }}
+              </p>
 
-            <p class="meta mt-3 text-xs">
-              {{ new Date(review.createdAt).toLocaleDateString() }}
-            </p>
-          </li>
-        </ul>
-      </section>
-
-      <section v-else class="mt-10">
-        <h2 class="section-title">Reviews</h2>
-
-        <p class="meta mt-3 text-sm">No reviews yet.</p>
-      </section>
+              <p class="meta mt-3 text-xs">
+                {{ new Date(review.createdAt).toLocaleDateString() }}
+              </p>
+            </li>
+          </ul>
+        </section>
+      </template>
     </template>
   </section>
 </template>
