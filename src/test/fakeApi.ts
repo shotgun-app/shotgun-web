@@ -493,7 +493,7 @@ export const fakeApi: Api = {
       const userReviews = reviews
         .filter((review) => review.revieweeId === userId)
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        
+
       const driverReviews = userReviews.filter((r) => {
         const trip = trips.find((t) => t.id === r.rideId)
         return trip && trip.driverId === userId
@@ -508,12 +508,13 @@ export const fakeApi: Api = {
         driverReviews.length === 0
           ? 0
           : driverReviews.reduce((sum, review) => sum + review.rating, 0) / driverReviews.length
-          
+
       const passengerScore =
         passengerReviews.length === 0
           ? 0
-          : passengerReviews.reduce((sum, review) => sum + review.rating, 0) / passengerReviews.length
-          
+          : passengerReviews.reduce((sum, review) => sum + review.rating, 0) /
+            passengerReviews.length
+
       return {
         user: { ...account.user },
         driverScore,

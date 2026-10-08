@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 import SeatStepper from '@/components/SeatStepper.vue'
 import RouteLine from '@/components/RouteLine.vue'
 import UserList from '@/components/UserList.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
 import { formatDeparture } from '@/utils/format'
 import { EUROPEAN_LOCATIONS, getTodayDateString } from '@/utils/locations'
 import { useRidesStore } from '@/stores/rides'
-import type { RidePayload, TripWithPassengers } from '@/types'
+import type { PublicUser, RidePayload, TripWithPassengers } from '@/types'
 
 const rides = useRidesStore()
 
@@ -162,6 +164,61 @@ async function confirmDelete(id: string) {
 function seatsLeft(ride: TripWithPassengers): number {
   return ride.seatsTotal - ride.seatsBooked
 }
+
+// ── Upcoming / completed rides ───────────────────────────────────────────
+const now = Date.now()
+const upcomingRides = computed(() =>
+  rides.rides.filter((r) => new Date(r.departureAt).getTime() > now),
+)
+const completedRides = computed(() =>
+  rides.rides.filter((r) => new Date(r.departureAt).getTime() <= now),
+)
+const completedOpen = ref(false)
+
+// ── Review state ───────────────────────────────────────────────────────────
+const reviewingRide = ref<TripWithPassengers | null>(null)
+const reviewingPassenger = ref<PublicUser | null>(null)
+const reviewRating = ref(0)
+const reviewComment = ref('')
+const reviewSubmitting = ref(false)
+const reviewError = ref<string | null>(null)
+
+function openReview(ride: TripWithPassengers, passenger: PublicUser) {
+  reviewingRide.value = ride
+  reviewingPassenger.value = passenger
+  reviewRating.value = 0
+  reviewComment.value = ''
+  reviewError.value = null
+}
+
+function closeReview() {
+  reviewingRide.value = null
+  reviewingPassenger.value = null
+  reviewError.value = null
+}
+
+async function submitReview() {
+  if (!reviewingRide.value || !reviewingPassenger.value || reviewRating.value === 0) return
+
+  reviewSubmitting.value = true
+  reviewError.value = null
+
+  const success = await rides.reviewPassenger({
+    rideId: reviewingRide.value.id,
+    targetId: reviewingPassenger.value.id,
+    rating: reviewRating.value,
+    comment: reviewComment.value.trim(),
+  })
+
+  reviewSubmitting.value = false
+
+  if (!success) {
+    reviewError.value = rides.error ?? 'Something went wrong. Try again.'
+    return
+  }
+
+  closeReview()
+}
 </script>
 
 <template>
@@ -289,69 +346,234 @@ function seatsLeft(ride: TripWithPassengers): number {
     <div v-else-if="rides.rides.length === 0" id="rides-empty" class="empty mt-10">
       <p class="meta mt-1.5 text-sm">You're not offering any rides yet.</p>
     </div>
-    <ul v-else class="mt-10 grid gap-4">
-      <li v-for="ride in rides.rides" :id="`ride-card-${ride.id}`" :key="ride.id" class="card">
-        <div class="flex flex-wrap items-center justify-between gap-4">
+    <template v-else>
+      <ul v-if="upcomingRides.length > 0" class="mt-10 grid gap-4">
+        <li v-for="ride in upcomingRides" :id="`ride-card-${ride.id}`" :key="ride.id" class="card">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <RouteLine :origin="ride.originCity" :destination="ride.destinationCity" />
+              <p class="meta mt-1">
+                Departing {{ formatDeparture(ride.departureAt) }} · {{ seatsLeft(ride) }} of
+                {{ ride.seatsTotal }} seats free
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <template v-if="confirmingDeleteId !== ride.id">
+                <button
+                  :id="`ride-edit-btn-${ride.id}`"
+                  type="button"
+                  class="btn btn-ghost"
+                  @click="openEdit(ride)"
+                >
+                  Edit
+                </button>
+                <button
+                  :id="`ride-delete-btn-${ride.id}`"
+                  type="button"
+                  class="btn btn-danger"
+                  @click="requestDelete(ride.id)"
+                >
+                  Delete
+                </button>
+              </template>
+              <template v-else>
+                <span class="text-sm font-medium text-red-600 dark:text-red-400"
+                  >Delete this ride?</span
+                >
+                <button
+                  :id="`ride-delete-confirm-btn-${ride.id}`"
+                  type="button"
+                  class="btn btn-danger-solid"
+                  :disabled="rides.pending"
+                  @click="confirmDelete(ride.id)"
+                >
+                  Yes, delete
+                </button>
+                <button
+                  :id="`ride-delete-cancel-btn-${ride.id}`"
+                  type="button"
+                  class="btn btn-ghost"
+                  :disabled="rides.pending"
+                  @click="cancelDelete"
+                >
+                  Cancel
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <dl class="mt-4 border-t border-line pt-4 dark:border-night-line">
+            <div class="grid grid-cols-[7rem_1fr] items-center gap-4">
+              <dt class="meta">Passengers</dt>
+              <dd class="min-w-0"><UserList :users="ride.passengers" empty="No bookings yet" /></dd>
+            </div>
+          </dl>
+        </li>
+      </ul>
+
+      <!-- ── Completed rides ─────────────────────────────────────────── -->
+      <section v-if="completedRides.length > 0" class="mt-10">
+        <button
+          type="button"
+          class="flex w-full items-center justify-between border-b border-line pb-3 text-left dark:border-night-line"
+          :aria-expanded="completedOpen"
+          @click="completedOpen = !completedOpen"
+        >
+          <span class="section-title">Completed rides</span>
+
+          <span class="meta">
+            {{ completedOpen ? 'Hide' : 'Show' }}
+          </span>
+        </button>
+
+        <ul v-if="completedOpen" class="mt-4 grid gap-4">
+          <li
+            v-for="ride in completedRides"
+            :id="`completed-ride-card-${ride.id}`"
+            :key="ride.id"
+            class="card"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <RouteLine :origin="ride.originCity" :destination="ride.destinationCity" />
+                <p class="meta mt-1">
+                  Departed {{ formatDeparture(ride.departureAt) }} · {{ seatsLeft(ride) }} of
+                  {{ ride.seatsTotal }} seats free
+                </p>
+              </div>
+            </div>
+
+            <dl class="mt-4 border-t border-line pt-4 dark:border-night-line">
+              <div class="grid grid-cols-[7rem_1fr] items-start gap-4">
+                <dt class="meta mt-1.5">Passengers</dt>
+                <dd class="min-w-0">
+                  <p v-if="ride.passengers.length === 0" class="meta mt-1.5 text-sm">
+                    No passengers
+                  </p>
+                  <ul v-else class="grid gap-2">
+                    <li
+                      v-for="passenger in ride.passengers"
+                      :key="passenger.id"
+                      class="flex items-center justify-between gap-2 rounded-lg bg-surface p-2 shadow-sm dark:bg-night-surface"
+                    >
+                      <div class="flex items-center gap-2 font-medium">
+                        <UserAvatar :name="passenger.name" size="sm" />
+                        <RouterLink
+                          :to="{ name: 'user', params: { id: passenger.id } }"
+                          class="text-ink hover:text-brand-600 hover:underline dark:text-night-ink dark:hover:text-brand-400"
+                        >
+                          {{ passenger.name }}
+                        </RouterLink>
+                      </div>
+                      <button
+                        v-if="!passenger.reviewed"
+                        :id="`rate-passenger-btn-${passenger.id}`"
+                        type="button"
+                        class="btn btn-primary btn-sm"
+                        @click="openReview(ride, passenger)"
+                      >
+                        Rate
+                      </button>
+                    </li>
+                  </ul>
+                </dd>
+              </div>
+            </dl>
+          </li>
+        </ul>
+      </section>
+    </template>
+
+    <!-- ── Review modal ───────────────────────────────────────────────── -->
+    <div
+      v-if="reviewingRide && reviewingPassenger"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="review-modal-title"
+    >
+      <div class="card w-full max-w-md">
+        <!-- Modal header -->
+        <div class="flex items-start justify-between gap-4">
           <div>
-            <RouteLine :origin="ride.originCity" :destination="ride.destinationCity" />
+            <h2 id="review-modal-title" class="section-title">Rate passenger</h2>
             <p class="meta mt-1">
-              Departing {{ formatDeparture(ride.departureAt) }} · {{ seatsLeft(ride) }} of
-              {{ ride.seatsTotal }} seats free
+              {{ reviewingPassenger.name }}
             </p>
           </div>
 
-          <div class="flex items-center gap-2">
-            <template v-if="confirmingDeleteId !== ride.id">
-              <button
-                :id="`ride-edit-btn-${ride.id}`"
-                type="button"
-                class="btn btn-ghost"
-                @click="openEdit(ride)"
-              >
-                Edit
-              </button>
-              <button
-                :id="`ride-delete-btn-${ride.id}`"
-                type="button"
-                class="btn btn-danger"
-                @click="requestDelete(ride.id)"
-              >
-                Delete
-              </button>
-            </template>
-            <template v-else>
-              <span class="text-sm font-medium text-red-600 dark:text-red-400"
-                >Delete this ride?</span
-              >
-              <button
-                :id="`ride-delete-confirm-btn-${ride.id}`"
-                type="button"
-                class="btn btn-danger-solid"
-                :disabled="rides.pending"
-                @click="confirmDelete(ride.id)"
-              >
-                Yes, delete
-              </button>
-              <button
-                :id="`ride-delete-cancel-btn-${ride.id}`"
-                type="button"
-                class="btn btn-ghost"
-                :disabled="rides.pending"
-                @click="cancelDelete"
-              >
-                Cancel
-              </button>
-            </template>
+          <button
+            type="button"
+            class="btn btn-ghost"
+            aria-label="Close review"
+            :disabled="reviewSubmitting"
+            @click="closeReview"
+          >
+            ×
+          </button>
+        </div>
+
+        <!-- Stars -->
+        <div class="mt-6">
+          <p class="meta mb-2">Rating</p>
+
+          <div class="flex gap-2" role="radiogroup" aria-label="Rating">
+            <button
+              v-for="star in 5"
+              :key="star"
+              type="button"
+              :aria-label="`${star} star${star === 1 ? '' : 's'}`"
+              :aria-checked="reviewRating === star"
+              role="radio"
+              class="text-3xl"
+              :disabled="reviewSubmitting"
+              @click="reviewRating = star"
+            >
+              {{ star <= reviewRating ? '★' : '☆' }}
+            </button>
           </div>
         </div>
 
-        <dl class="mt-4 border-t border-line pt-4 dark:border-night-line">
-          <div class="grid grid-cols-[7rem_1fr] items-center gap-4">
-            <dt class="meta">Passengers</dt>
-            <dd class="min-w-0"><UserList :users="ride.passengers" empty="No bookings yet" /></dd>
-          </div>
-        </dl>
-      </li>
-    </ul>
+        <!-- Comment -->
+        <label class="field mt-6">
+          <span>Review</span>
+
+          <textarea
+            v-model="reviewComment"
+            rows="4"
+            maxlength="500"
+            placeholder="How was the ride with them?"
+            :disabled="reviewSubmitting"
+          ></textarea>
+        </label>
+
+        <!-- Review error -->
+        <p v-if="reviewError" class="alert alert-error mt-4" role="alert">
+          {{ reviewError }}
+        </p>
+
+        <!-- Modal actions -->
+        <div class="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            class="btn btn-ghost"
+            :disabled="reviewSubmitting"
+            @click="closeReview"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-primary"
+            :disabled="reviewRating === 0 || reviewSubmitting"
+            @click="submitReview"
+          >
+            {{ reviewSubmitting ? 'Submitting…' : 'Submit review' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </section>
 </template>
