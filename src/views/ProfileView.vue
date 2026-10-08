@@ -181,9 +181,7 @@ async function save() {
     <div class="flex items-start justify-between gap-4">
       <div>
         <h1 class="page-title">My profile</h1>
-        <p class="page-lead">
-          Your public details visible to drivers and fellow passengers.
-        </p>
+        <p class="page-lead">Your public details visible to drivers and fellow passengers.</p>
       </div>
 
       <UserAvatar :name="auth.user?.name" size="lg" />
@@ -202,10 +200,7 @@ async function save() {
               {{ driverScore.toFixed(1) }}
             </span>
 
-            <div
-              class="flex items-center gap-0.5 text-base"
-              aria-label="Driver rating"
-            >
+            <div class="flex items-center gap-0.5 text-base" aria-label="Driver rating">
               <span v-for="star in 5" :key="star">
                 {{ star <= Math.round(driverScore) ? '★' : '☆' }}
               </span>
@@ -238,12 +233,7 @@ async function save() {
       </template>
 
       <div class="mt-8">
-        <button
-          id="profile-edit-btn"
-          type="button"
-          class="btn btn-primary"
-          @click="startEditing"
-        >
+        <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">
           Edit profile
         </button>
       </div>
@@ -308,11 +298,7 @@ async function save() {
             />
           </label>
 
-          <p
-            v-if="passwordError || auth.error"
-            class="alert alert-error"
-            role="alert"
-          >
+          <p v-if="passwordError || auth.error" class="alert alert-error" role="alert">
             {{ passwordError ?? auth.error }}
           </p>
 
@@ -342,9 +328,7 @@ async function save() {
         <h2 class="section-title">Delete account</h2>
 
         <template v-if="!confirmingDelete">
-          <p class="meta mt-2 text-sm">
-            Permanently remove your account and all associated data.
-          </p>
+          <p class="meta mt-2 text-sm">Permanently remove your account and all associated data.</p>
 
           <button
             id="profile-delete-btn"
@@ -388,11 +372,7 @@ async function save() {
     </template>
 
     <template v-else>
-      <form
-        id="profile-edit-form"
-        class="mt-10 grid gap-6"
-        @submit.prevent="save"
-      >
+      <form id="profile-edit-form" class="mt-10 grid gap-6" @submit.prevent="save">
         <label class="field">
           <span>Name</span>
           <input
@@ -402,9 +382,7 @@ async function save() {
             autocomplete="name"
             placeholder="Your name"
             :aria-invalid="!!nameError"
-            :aria-describedby="
-              nameError ? 'profile-name-error' : undefined
-            "
+            :aria-describedby="nameError ? 'profile-name-error' : undefined"
           />
 
           <p
@@ -426,9 +404,7 @@ async function save() {
             autocomplete="email"
             placeholder="you@example.com"
             :aria-invalid="!!emailError"
-            :aria-describedby="
-              emailError ? 'profile-email-error' : undefined
-            "
+            :aria-describedby="emailError ? 'profile-email-error' : undefined"
           />
 
           <p
@@ -444,11 +420,7 @@ async function save() {
         <div class="field">
           <span>Phone</span>
 
-          <PhoneInput
-            id="profile-phone-input"
-            v-model="form.phone"
-            required
-          />
+          <PhoneInput id="profile-phone-input" v-model="form.phone" required />
 
           <p
             v-if="phoneError"

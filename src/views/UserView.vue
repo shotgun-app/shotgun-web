@@ -46,11 +46,7 @@ watch(() => props.id, users.load, { immediate: true })
           <h2 class="section-title">Reviews</h2>
 
           <ul class="mt-4 grid gap-4">
-            <li
-              v-for="review in users.user.reviews"
-              :key="review.id"
-              class="card"
-            >
+            <li v-for="review in users.user.reviews" :key="review.id" class="card">
               <div class="flex items-center gap-1">
                 <span v-for="star in 5" :key="star" class="text-lg">
                   {{ star <= review.rating ? '★' : '☆' }}
