@@ -1,19 +1,37 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import UserAvatar from '@/components/UserAvatar.vue'
 import PasswordInput from '@/components/PasswordInput.vue'
 import PhoneInput from '@/components/PhoneInput.vue'
 import ProfileDetails from '@/components/ProfileDetails.vue'
+import { api } from '@/services/api'
+import type { Review } from '@/types'
 
 const auth = useAuthStore()
 const router = useRouter()
 
-// ── View / edit toggle ─────────────────────────────────────────────────────
+const driverScore = ref(0)
+const reviews = ref<Review[]>([])
+
+async function loadDriverReviews() {
+  if (!auth.user) return
+
+  try {
+    const profile = await api.users.get(auth.user.id)
+    driverScore.value = profile.driverScore
+    reviews.value = profile.reviews
+  } catch {
+    driverScore.value = 0
+    reviews.value = []
+  }
+}
+
+onMounted(loadDriverReviews)
+
 const editing = ref(false)
 
-// ── Edit-form state ────────────────────────────────────────────────────────
 const form = reactive({ name: '', email: '', phone: '' })
 const nameError = ref<string | null>(null)
 const emailError = ref<string | null>(null)
@@ -29,6 +47,7 @@ function validate(): boolean {
   if (!form.name.trim()) {
     nameError.value = 'Name is required.'
   }
+
   if (!form.email.trim()) {
     emailError.value = 'Email is required.'
   } else if (!EMAIL_RE.test(form.email.trim())) {
@@ -42,19 +61,20 @@ function validate(): boolean {
   return !nameError.value && !emailError.value && !phoneError.value
 }
 
-// Clear per-field errors as the user types.
 watch(
   () => form.name,
   () => {
     nameError.value = null
   },
 )
+
 watch(
   () => form.phone,
   () => {
     phoneError.value = null
   },
 )
+
 watch(
   () => form.email,
   () => {
@@ -62,8 +82,6 @@ watch(
   },
 )
 
-// ── Delete-account state ───────────────────────────────────────────────────
-/** Two-step confirmation: first click reveals the real delete button. */
 const confirmingDelete = ref(false)
 
 function requestDelete() {
@@ -76,12 +94,12 @@ function cancelDelete() {
 
 async function confirmDelete() {
   const ok = await auth.deleteAccount()
+
   if (ok) {
     await router.push({ name: 'landing' })
   }
 }
 
-// ── Actions ────────────────────────────────────────────────────────────────
 function startEditing() {
   form.name = auth.user?.name ?? ''
   form.email = auth.user?.email ?? ''
@@ -94,7 +112,6 @@ function startEditing() {
   editing.value = true
 }
 
-// ── Change password ────────────────────────────────────────────────────────
 const changingPassword = ref(false)
 const passwordForm = reactive({ current: '', next: '', confirm: '' })
 const passwordError = ref<string | null>(null)
@@ -118,18 +135,22 @@ function closePasswordForm() {
 
 async function submitPassword() {
   passwordError.value = null
+
   if (passwordForm.next.length < 8) {
     passwordError.value = 'New password must be at least 8 characters.'
     return
   }
+
   if (passwordForm.next !== passwordForm.confirm) {
     passwordError.value = 'The new passwords do not match.'
     return
   }
+
   const ok = await auth.changePassword({
     currentPassword: passwordForm.current,
     newPassword: passwordForm.next,
   })
+
   if (ok) {
     changingPassword.value = false
     passwordChanged.value = true
@@ -144,18 +165,19 @@ function cancel() {
 
 async function save() {
   if (!validate()) return
+
   const ok = await auth.updateProfile({
     name: form.name,
     email: form.email,
     phone: form.phone,
   })
+
   if (ok) editing.value = false
 }
 </script>
 
 <template>
   <section class="rise max-w-2xl">
-    <!-- ── Page header ─────────────────────────────────────────────────── -->
     <div class="flex items-start justify-between gap-4">
       <div>
         <h1 class="page-title">My profile</h1>
@@ -165,9 +187,50 @@ async function save() {
       <UserAvatar :name="auth.user?.name" size="lg" />
     </div>
 
-    <!-- ── VIEW MODE ──────────────────────────────────────────────────────── -->
     <template v-if="!editing">
       <ProfileDetails v-if="auth.user" :user="auth.user" class="mt-10" />
+
+      <template v-if="reviews.length > 0">
+        <!-- Driver Score -->
+        <section class="mt-10">
+          <h2 class="section-title">Driver Score</h2>
+
+          <div class="mt-4 flex items-center gap-3">
+            <span class="text-lg font-semibold">
+              {{ driverScore.toFixed(1) }}
+            </span>
+
+            <div class="flex items-center gap-0.5 text-base" aria-label="Driver rating">
+              <span v-for="star in 5" :key="star">
+                {{ star <= Math.round(driverScore) ? '★' : '☆' }}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Reviews -->
+        <section class="mt-10">
+          <h2 class="section-title">Reviews</h2>
+
+          <ul class="mt-4 grid gap-4">
+            <li v-for="review in reviews" :key="review.id" class="card">
+              <div class="flex items-center gap-1 text-sm">
+                <span v-for="star in 5" :key="star">
+                  {{ star <= review.rating ? '★' : '☆' }}
+                </span>
+              </div>
+
+              <p v-if="review.comment" class="mt-3 text-sm">
+                {{ review.comment }}
+              </p>
+
+              <p class="meta mt-2 text-xs">
+                {{ new Date(review.createdAt).toLocaleDateString() }}
+              </p>
+            </li>
+          </ul>
+        </section>
+      </template>
 
       <div class="mt-8">
         <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">
@@ -175,7 +238,6 @@ async function save() {
         </button>
       </div>
 
-      <!-- ── Change password ──────────────────────────────────────────── -->
       <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
         <h2 class="section-title">Password</h2>
 
@@ -213,6 +275,7 @@ async function save() {
               required
             />
           </label>
+
           <label class="field">
             <span>New password</span>
             <PasswordInput
@@ -224,6 +287,7 @@ async function save() {
               required
             />
           </label>
+
           <label class="field">
             <span>Confirm new password</span>
             <PasswordInput
@@ -247,6 +311,7 @@ async function save() {
             >
               {{ auth.pending ? 'Saving…' : 'Update password' }}
             </button>
+
             <button
               type="button"
               class="btn btn-ghost"
@@ -259,13 +324,12 @@ async function save() {
         </form>
       </div>
 
-      <!-- ── Delete account ──────────────────────────────────────────────── -->
       <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
         <h2 class="section-title">Delete account</h2>
 
-        <!-- Step 1: initial prompt -->
         <template v-if="!confirmingDelete">
           <p class="meta mt-2 text-sm">Permanently remove your account and all associated data.</p>
+
           <button
             id="profile-delete-btn"
             type="button"
@@ -277,11 +341,11 @@ async function save() {
           </button>
         </template>
 
-        <!-- Step 2: confirmation -->
         <template v-else>
           <p class="mt-2 text-sm font-medium text-red-600 dark:text-red-400">
             Are you sure? This cannot be undone.
           </p>
+
           <div class="mt-4 flex items-center gap-3">
             <button
               id="profile-delete-confirm-btn"
@@ -292,6 +356,7 @@ async function save() {
             >
               {{ auth.pending ? 'Deleting…' : 'Yes, delete my account' }}
             </button>
+
             <button
               id="profile-delete-cancel-btn"
               type="button"
@@ -306,10 +371,8 @@ async function save() {
       </div>
     </template>
 
-    <!-- ── EDIT MODE ──────────────────────────────────────────────────────── -->
     <template v-else>
       <form id="profile-edit-form" class="mt-10 grid gap-6" @submit.prevent="save">
-        <!-- Name field -->
         <label class="field">
           <span>Name</span>
           <input
@@ -321,6 +384,7 @@ async function save() {
             :aria-invalid="!!nameError"
             :aria-describedby="nameError ? 'profile-name-error' : undefined"
           />
+
           <p
             v-if="nameError"
             id="profile-name-error"
@@ -331,7 +395,6 @@ async function save() {
           </p>
         </label>
 
-        <!-- Email field -->
         <label class="field">
           <span>Email</span>
           <input
@@ -343,6 +406,7 @@ async function save() {
             :aria-invalid="!!emailError"
             :aria-describedby="emailError ? 'profile-email-error' : undefined"
           />
+
           <p
             v-if="emailError"
             id="profile-email-error"
@@ -353,10 +417,11 @@ async function save() {
           </p>
         </label>
 
-        <!-- Phone field -->
         <div class="field">
           <span>Phone</span>
+
           <PhoneInput id="profile-phone-input" v-model="form.phone" required />
+
           <p
             v-if="phoneError"
             id="profile-phone-error"
@@ -367,12 +432,10 @@ async function save() {
           </p>
         </div>
 
-        <!-- API-level error (e.g. email already taken) -->
         <p v-if="auth.error" class="alert alert-error" role="alert">
           {{ auth.error }}
         </p>
 
-        <!-- Save / Cancel -->
         <div class="flex items-center gap-3">
           <button
             id="profile-save-btn"
@@ -382,6 +445,7 @@ async function save() {
           >
             {{ auth.pending ? 'Saving…' : 'Save changes' }}
           </button>
+
           <button
             id="profile-cancel-btn"
             type="button"

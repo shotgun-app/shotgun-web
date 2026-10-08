@@ -12,10 +12,13 @@ import type {
   RegisterPayload,
   ResetPasswordPayload,
   RidePayload,
+  Review,
+  ReviewPayload,
   TripSearchParams,
   TripWithDriver,
   TripWithPassengers,
   UpdateProfilePayload,
+  UserProfile,
   User,
 } from '@/types'
 import { httpApi } from './http'
@@ -62,15 +65,21 @@ export interface BookingsApi {
   cancel(bookingId: string): Promise<void>
 }
 
+export interface ReviewsApi {
+  /** Creates a passenger-to-driver review for a completed ride. */
+  create(payload: ReviewPayload): Promise<Review>
+}
+
 export interface UsersApi {
   /** Public profile of any user, or throws ApiError(404). */
-  get(userId: string): Promise<User>
+  get(userId: string): Promise<UserProfile>
 }
 
 export interface Api {
   auth: AuthApi
   trips: TripsApi
   bookings: BookingsApi
+  reviews: ReviewsApi
   users: UsersApi
 }
 

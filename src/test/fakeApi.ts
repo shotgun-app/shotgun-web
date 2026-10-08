@@ -21,6 +21,9 @@ import {
   type TripWithPassengers,
   type UpdateProfilePayload,
   type User,
+  type Review,
+  type ReviewPayload,
+  type UserProfile,
 } from '@/types'
 import type { Api } from '@/services/api'
 import { MOCK_ACCOUNTS, type MockAccount } from './seed'
@@ -28,6 +31,7 @@ import { MOCK_ACCOUNTS, type MockAccount } from './seed'
 let accounts: MockAccount[] = []
 let bookings: Booking[] = []
 let trips: Trip[] = []
+let reviews: Review[] = []
 let currentUserId: string | null = null
 /** Reset token -> email, filled by requestPasswordReset like the emailed link. */
 let resetTokens = new Map<string, string>()
@@ -36,6 +40,7 @@ export function resetFakeApi(): void {
   accounts = MOCK_ACCOUNTS.map((a) => ({ ...a, user: { ...a.user } }))
   bookings = []
   trips = []
+  reviews = []
   currentUserId = null
   resetTokens = new Map()
 }
@@ -302,6 +307,7 @@ export const fakeApi: Api = {
     async listMine(): Promise<BookingWithTrip[]> {
       const account = requireAccount()
       const userId = account.user.id
+
       return bookings
         .filter((b) => b.passengerId === userId && b.status === 'confirmed')
         .sort((a, b) => {
@@ -312,8 +318,20 @@ export const fakeApi: Api = {
         .map((b) => {
           const trip = trips.find((t) => t.id === b.tripId)
           const driver = trip && publicUserOf(trip.driverId)
-          if (!trip || !driver) throw new ApiError('Trip not found.', 404)
-          return { ...b, trip: { ...withPassengers(trip), driver } }
+
+          if (!trip || !driver) {
+            throw new ApiError('Trip not found.', 404)
+          }
+
+          const reviewed = reviews.some(
+            (review) => review.rideId === trip.id && review.reviewerId === userId,
+          )
+
+          return {
+            ...b,
+            trip: { ...withPassengers(trip), driver },
+            reviewed,
+          }
         })
     },
 
@@ -384,12 +402,80 @@ export const fakeApi: Api = {
     },
   },
 
+  reviews: {
+    async create(payload: ReviewPayload): Promise<Review> {
+      const account = requireAccount()
+
+      const booking = bookings.find(
+        (booking) =>
+          booking.tripId === payload.rideId &&
+          booking.passengerId === account.user.id &&
+          booking.status === 'confirmed',
+      )
+
+      if (!booking) {
+        throw new ApiError('You cannot review this ride.', 403)
+      }
+
+      const trip = trips.find((trip) => trip.id === payload.rideId)
+
+      if (!trip) {
+        throw new ApiError('Ride not found.', 404)
+      }
+
+      if (trip.driverId === account.user.id) {
+        throw new ApiError('You cannot review yourself.', 403)
+      }
+
+      if (new Date(trip.departureAt) >= new Date()) {
+        throw new ApiError('You cannot review a future ride.', 400)
+      }
+
+      if (payload.rating < 1 || payload.rating > 5) {
+        throw new ApiError('Rating must be between 1 and 5.', 400)
+      }
+
+      const duplicate = reviews.some(
+        (review) => review.rideId === payload.rideId && review.reviewerId === account.user.id,
+      )
+
+      if (duplicate) {
+        throw new ApiError('You already reviewed this ride.', 409)
+      }
+
+      const review: Review = {
+        id: nextId('review'),
+        rideId: payload.rideId,
+        reviewerId: account.user.id,
+        revieweeId: trip.driverId,
+        rating: payload.rating,
+        comment: payload.comment.trim(),
+        createdAt: new Date().toISOString(),
+      }
+
+      reviews.push(review)
+
+      return { ...review }
+    },
+  },
+
   users: {
-    async get(userId: string): Promise<User> {
+    async get(userId: string): Promise<UserProfile> {
       requireAccount()
       const account = accounts.find((a) => a.user.id === userId)
       if (!account) throw new ApiError('User not found.', 404)
-      return { ...account.user }
+      const userReviews = reviews
+        .filter((review) => review.revieweeId === userId)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      const driverScore =
+        userReviews.length === 0
+          ? 0
+          : userReviews.reduce((sum, review) => sum + review.rating, 0) / userReviews.length
+      return {
+        user: { ...account.user },
+        driverScore,
+        reviews: userReviews.map((review) => ({ ...review })),
+      }
     },
   },
 }

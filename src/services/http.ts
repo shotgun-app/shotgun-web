@@ -12,11 +12,14 @@ import {
   type RegisterPayload,
   type ResetPasswordPayload,
   type RidePayload,
+  type Review,
+  type ReviewPayload,
   type TripSearchParams,
   type TripWithDriver,
   type TripWithPassengers,
   type UpdateProfilePayload,
   type User,
+  type UserProfile,
 } from '@/types'
 import type { Api } from './api'
 
@@ -141,7 +144,15 @@ export const httpApi: Api = {
       request<void>(`/api/bookings/${bookingId}`, { method: 'DELETE' }),
   },
 
+  reviews: {
+    create: (payload: ReviewPayload) =>
+      request<Review>('/api/reviews', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+  },
+
   users: {
-    get: async (userId: string) => (await request<{ user: User }>(`/api/users/${userId}`)).user,
+    get: (userId: string) => request<UserProfile>(`/api/users/${userId}`),
   },
 }
