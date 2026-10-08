@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { resetFakeApi } from '@/test/fakeApi'
+import { getFakeResetToken, resetFakeApi } from '@/test/fakeApi'
 
 import { useAuthStore } from '../auth'
 import { api } from '@/services/api'
@@ -60,5 +60,40 @@ describe('auth store session restore', () => {
 
     expect(auth.isAuthenticated).toBe(false)
     expect(auth.error).toBeNull()
+  })
+})
+
+describe('auth store password reset', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    resetFakeApi()
+  })
+
+  it('succeeds for unknown emails too, without creating a token', async () => {
+    const auth = useAuthStore()
+
+    expect(await auth.requestPasswordReset('nobody@shotgun.app')).toBe(true)
+    expect(getFakeResetToken('nobody@shotgun.app')).toBeUndefined()
+  })
+
+  it('resets the password with the emailed token, once', async () => {
+    const auth = useAuthStore()
+    await auth.requestPasswordReset(DEMO_CREDENTIALS.email)
+    const token = getFakeResetToken(DEMO_CREDENTIALS.email)!
+
+    expect(await auth.resetPassword({ token, password: 'brand-new-pass' })).toBe(true)
+    expect(await auth.login({ email: DEMO_CREDENTIALS.email, password: 'brand-new-pass' })).toBe(
+      true,
+    )
+
+    expect(await auth.resetPassword({ token, password: 'another-pass-1' })).toBe(false)
+    expect(auth.error).toBe('This reset link is invalid or has expired.')
+  })
+
+  it('reports a bad token as an error string', async () => {
+    const auth = useAuthStore()
+
+    expect(await auth.resetPassword({ token: 'nope', password: 'brand-new-pass' })).toBe(false)
+    expect(auth.error).toBe('This reset link is invalid or has expired.')
   })
 })

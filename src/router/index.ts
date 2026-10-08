@@ -12,6 +12,13 @@ const router = createRouter({
       meta: { guestOnly: true },
     },
     {
+      // Public: the emailed link must work whether or not the visitor has a session
+      path: '/reset-password',
+      name: 'reset-password',
+      component: LandingView,
+      props: { panel: 'reset' },
+    },
+    {
       path: '/app',
       component: () => import('@/views/AppLayout.vue'),
       meta: { requiresAuth: true },

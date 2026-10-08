@@ -41,7 +41,6 @@ npm run dev          # dev server
 npm run build        # type-check + production build
 npm run preview      # serve the production build
 npm run test:unit    # Vitest
-npm run test:e2e     # Playwright, needs the API running (npx playwright install chromium first)
 npm run lint         # oxlint + eslint, both with --fix
 npm run format       # prettier
 npm run check:format # prettier --check (CI)
@@ -112,11 +111,6 @@ Unit tests (Vitest + jsdom) run against an in-memory fake of the `Api` interface
 (`src/test/fakeApi.ts`, installed in `src/test/setup.ts`), so they need no
 backend. Call `resetFakeApi()` in `beforeEach`. The fake keeps one "current user",
 like the browser's session cookie.
-
-End-to-end tests (Playwright, `e2e/`) drive a real browser against the **real API
-and database**: start `docker compose up -d --build` in `../shotgun-api` first.
-They cover registration, login, logout, duplicate email, wrong password, session
-survival across a reload and the profile page.
 
 ## Authentication
 

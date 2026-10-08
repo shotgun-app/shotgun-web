@@ -10,6 +10,7 @@ import type {
   BookingWithTrip,
   Credentials,
   RegisterPayload,
+  ResetPasswordPayload,
   RidePayload,
   TripSearchParams,
   TripWithDriver,
@@ -29,6 +30,12 @@ export interface AuthApi {
   updateProfile(payload: UpdateProfilePayload): Promise<User>
   /** Verifies the current password; the backend ends the user's other sessions. */
   changePassword(payload: ChangePasswordPayload): Promise<void>
+  /** Emails a reset link. Resolves the same way whether or not the account exists. */
+  requestPasswordReset(email: string): Promise<void>
+  /** Resolves if the reset token is still usable, throws ApiError(400) if not. Does not use it up. */
+  checkResetToken(token: string): Promise<void>
+  /** Sets a new password from an emailed token; throws ApiError(400) if it is invalid or expired. */
+  resetPassword(payload: ResetPasswordPayload): Promise<void>
   /** Permanently removes the account. The caller is responsible for clearing the session. */
   deleteAccount(): Promise<void>
 }
