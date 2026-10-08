@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
-import { resetFakeApi } from '@/test/fakeApi'
+import { getFakeResetToken, resetFakeApi } from '@/test/fakeApi'
 
 import AuthPanel from '../AuthPanel.vue'
 import { DEMO_CREDENTIALS } from '@/test/seed'
@@ -101,5 +101,28 @@ describe('AuthPanel', () => {
 
     expect(wrapper.get('[role="alert"]').text()).toBe('Wrong email or password.')
     expect(router.currentRoute.value.name).toBe('landing')
+  })
+
+  it('offers a forgot password flow and returns to login', async () => {
+    const wrapper = mountPanel(router)
+    await wrapper.get('input[type="email"]').setValue(DEMO_CREDENTIALS.email)
+
+    await wrapper.get('button[type="button"]:not([aria-label])').trigger('click')
+
+    expect(wrapper.get('h2').text()).toBe('Forgot your password?')
+    expect((wrapper.get('input[type="email"]').element as HTMLInputElement).value).toBe(
+      DEMO_CREDENTIALS.email,
+    )
+
+    await wrapper.get('form').trigger('submit')
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.get('[role="status"]').text()).toContain(DEMO_CREDENTIALS.email)
+    expect(getFakeResetToken(DEMO_CREDENTIALS.email)).toBeDefined()
+
+    const back = wrapper.findAll('button').find((b) => b.text() === 'Back to log in')!
+    await back.trigger('click')
+    expect(wrapper.get('h2').text()).toBe('Welcome back')
   })
 })

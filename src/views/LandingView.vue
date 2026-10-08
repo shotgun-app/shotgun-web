@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import PromoPanel from '@/components/PromoPanel.vue'
 import AuthPanel from '@/components/AuthPanel.vue'
+import ResetPasswordPanel from '@/components/ResetPasswordPanel.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+
+withDefaults(defineProps<{ panel?: 'auth' | 'reset' }>(), { panel: 'auth' })
 </script>
 
 <template>
@@ -36,7 +39,8 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
       class="relative mx-4 mb-8 flex items-center justify-center rounded-card bg-white px-6 py-12 sm:mx-10 sm:px-10 lg:mx-0 lg:mb-0 lg:rounded-none lg:border-l lg:border-line lg:px-16 lg:py-16 dark:bg-night dark:lg:border-night-line"
     >
       <ThemeToggle class="absolute top-5 right-5 sm:top-6 sm:right-6" />
-      <AuthPanel />
+      <ResetPasswordPanel v-if="panel === 'reset'" />
+      <AuthPanel v-else />
     </section>
   </main>
 </template>

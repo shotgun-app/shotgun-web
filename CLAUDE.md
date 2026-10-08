@@ -6,14 +6,14 @@ Guidance for Claude Code working in this repo.
 
 `shotgun-web` - the Vue 3 front end of Shotgun, a carpooling app (drivers publish
 trips, passengers book empty seats). The Go backend is a sibling repo at
-`../shotgun-api`. Auth (register, login, logout, profile, password) is real,
+`../shotgun-api`. Auth (register, login, logout, profile, password, forgot/reset password) is real,
 using an HttpOnly session cookie. Trips, rides and bookings have no backend
 endpoints yet, so those screens show errors until the API has them.
 
 ## Stack
 
 Vue 3 (`<script setup>`, Composition API) · TypeScript · Vite · vue-router ·
-Pinia (setup stores) · **Tailwind CSS v4** · Vitest · Playwright ·
+Pinia (setup stores) · **Tailwind CSS v4** · Vitest ·
 ESLint + oxlint + Prettier.
 
 ## Commands
@@ -22,7 +22,6 @@ ESLint + oxlint + Prettier.
 npm run dev
 npm run type-check      # vue-tsc, must pass before saying work is done
 npm run test:unit
-npm run test:e2e
 npm run lint
 npm run format
 npm run check:format    # prettier --check, what CI runs
@@ -86,8 +85,8 @@ class or pattern changes. The essentials:
 
 ## Routing and auth
 
-- `/` landing (`guestOnly`), `/app` + `/app/profile` (`requiresAuth`), unknown
-  paths redirect to `/`.
+- `/` landing (`guestOnly`), `/reset-password?token=` (public, reuses the landing
+  layout), `/app` + `/app/profile` (`requiresAuth`), unknown paths redirect to `/`.
 - The guard in `src/router/index.ts` calls `auth.restore()` once, then enforces
   the route meta. Don't duplicate auth checks inside components.
 - Session is an HttpOnly cookie set by the API; requests use
@@ -97,15 +96,11 @@ class or pattern changes. The essentials:
 ## Tests
 
 - Unit tests live next to what they test in `__tests__/` folders: stores (auth, rides, trips, theme), router guards, and component suites.
-- A new store, service method or guarded route ships with a unit test. A new
-  user-visible flow ships with a Playwright test in `e2e/`.
+- A new store, service method or guarded route ships with a unit test.
 - Component tests mount with a real Pinia and a real memory router. The api is
   swapped for `src/test/fakeApi.ts` by `src/test/setup.ts`; call `resetFakeApi()`
   in `beforeEach`. The fake has no latency.
-- Playwright tests run against the real API + database (`docker compose up -d
---build` in `../shotgun-api` first).
-- `npm run test:unit` and `npm run test:e2e` must both pass before work is done.
-  Playwright needs `npx playwright install chromium` once.
+- `npm run test:unit` must pass before work is done.
 
 ## Scope
 
