@@ -6,7 +6,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
-import { ApiError, type RidePayload, type TripWithPassengers } from '@/types'
+import { ApiError, type RidePayload, type TripWithPassengers, type ReviewPayload } from '@/types'
 
 function byDepartureAt(a: TripWithPassengers, b: TripWithPassengers): number {
   return a.departureAt.localeCompare(b.departureAt)
@@ -72,6 +72,27 @@ export const useRidesStore = defineStore('rides', () => {
     }
   }
 
+  async function reviewPassenger(payload: ReviewPayload): Promise<boolean> {
+    const auth = useAuthStore()
+    if (!auth.user) return false
+    pending.value = true
+    error.value = null
+    try {
+      await api.reviews.create(payload)
+      const trip = rides.value.find((r) => r.id === payload.rideId)
+      if (trip) {
+        const passenger = trip.passengers.find((p) => p.id === payload.targetId)
+        if (passenger) passenger.reviewed = true
+      }
+      return true
+    } catch (e) {
+      error.value = e instanceof ApiError ? e.message : 'Something went wrong. Try again.'
+      return false
+    } finally {
+      pending.value = false
+    }
+  }
+
   return {
     rides,
     pending,
@@ -80,5 +101,6 @@ export const useRidesStore = defineStore('rides', () => {
     create,
     update,
     remove,
+    reviewPassenger,
   }
 })

@@ -74,7 +74,19 @@ function publicUserOf(userId: string): PublicUser | undefined {
 function withPassengers(trip: Trip): TripWithPassengers {
   const passengers = bookings
     .filter((b) => b.tripId === trip.id && b.status === 'confirmed')
-    .flatMap((b) => publicUserOf(b.passengerId) ?? [])
+    .flatMap((b) => {
+      const p = publicUserOf(b.passengerId)
+      if (!p) return []
+      const reviewed = currentUserId
+        ? reviews.some(
+            (r) =>
+              r.rideId === trip.id &&
+              r.reviewerId === currentUserId &&
+              r.revieweeId === b.passengerId,
+          )
+        : false
+      return [{ ...p, reviewed }]
+    })
   return { ...trip, passengers }
 }
 
@@ -405,26 +417,37 @@ export const fakeApi: Api = {
   reviews: {
     async create(payload: ReviewPayload): Promise<Review> {
       const account = requireAccount()
-
-      const booking = bookings.find(
-        (booking) =>
-          booking.tripId === payload.rideId &&
-          booking.passengerId === account.user.id &&
-          booking.status === 'confirmed',
-      )
-
-      if (!booking) {
-        throw new ApiError('You cannot review this ride.', 403)
-      }
-
       const trip = trips.find((trip) => trip.id === payload.rideId)
 
       if (!trip) {
         throw new ApiError('Ride not found.', 404)
       }
 
-      if (trip.driverId === account.user.id) {
+      if (account.user.id === payload.targetId) {
         throw new ApiError('You cannot review yourself.', 403)
+      }
+
+      const isDriver = trip.driverId === account.user.id
+      const targetIsDriver = trip.driverId === payload.targetId
+
+      const myBooking = bookings.find(
+        (b) =>
+          b.tripId === payload.rideId &&
+          b.passengerId === account.user.id &&
+          b.status === 'confirmed',
+      )
+      const targetBooking = bookings.find(
+        (b) =>
+          b.tripId === payload.rideId &&
+          b.passengerId === payload.targetId &&
+          b.status === 'confirmed',
+      )
+
+      const isPassenger = !!myBooking
+      const targetIsPassenger = !!targetBooking
+
+      if (!((isDriver && targetIsPassenger) || (isPassenger && targetIsDriver))) {
+        throw new ApiError('You cannot review this user for this ride.', 403)
       }
 
       if (new Date(trip.departureAt) >= new Date()) {
@@ -436,18 +459,21 @@ export const fakeApi: Api = {
       }
 
       const duplicate = reviews.some(
-        (review) => review.rideId === payload.rideId && review.reviewerId === account.user.id,
+        (review) =>
+          review.rideId === payload.rideId &&
+          review.reviewerId === account.user.id &&
+          review.revieweeId === payload.targetId,
       )
 
       if (duplicate) {
-        throw new ApiError('You already reviewed this ride.', 409)
+        throw new ApiError('You already reviewed this user for this ride.', 409)
       }
 
       const review: Review = {
         id: nextId('review'),
         rideId: payload.rideId,
         reviewerId: account.user.id,
-        revieweeId: trip.driverId,
+        revieweeId: payload.targetId,
         rating: payload.rating,
         comment: payload.comment.trim(),
         createdAt: new Date().toISOString(),
@@ -467,14 +493,33 @@ export const fakeApi: Api = {
       const userReviews = reviews
         .filter((review) => review.revieweeId === userId)
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        
+      const driverReviews = userReviews.filter((r) => {
+        const trip = trips.find((t) => t.id === r.rideId)
+        return trip && trip.driverId === userId
+      })
+
+      const passengerReviews = userReviews.filter((r) => {
+        const trip = trips.find((t) => t.id === r.rideId)
+        return trip && trip.driverId !== userId
+      })
+
       const driverScore =
-        userReviews.length === 0
+        driverReviews.length === 0
           ? 0
-          : userReviews.reduce((sum, review) => sum + review.rating, 0) / userReviews.length
+          : driverReviews.reduce((sum, review) => sum + review.rating, 0) / driverReviews.length
+          
+      const passengerScore =
+        passengerReviews.length === 0
+          ? 0
+          : passengerReviews.reduce((sum, review) => sum + review.rating, 0) / passengerReviews.length
+          
       return {
         user: { ...account.user },
         driverScore,
-        reviews: userReviews.map((review) => ({ ...review })),
+        passengerScore,
+        reviews: driverReviews.map((review) => ({ ...review })),
+        passengerReviews: passengerReviews.map((review) => ({ ...review })),
       }
     },
   },

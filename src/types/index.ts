@@ -43,7 +43,10 @@ export interface Trip {
 }
 
 /** What the API reveals about a driver or passenger to other users: no email or phone. */
-export type PublicUser = Omit<User, 'email' | 'phone'>
+export interface PublicUser extends Omit<User, 'email' | 'phone'> {
+  /** True if the authenticated user has reviewed this passenger/driver for a specific ride context. */
+  reviewed?: boolean
+}
 
 export interface TripWithDriver extends Trip {
   driver: PublicUser
@@ -97,11 +100,14 @@ export interface Review {
 export interface UserProfile {
   user: User
   driverScore: number
+  passengerScore: number
   reviews: Review[]
+  passengerReviews: Review[]
 }
 
 export interface ReviewPayload {
   rideId: string
+  targetId: string
   rating: number
   comment: string
 }

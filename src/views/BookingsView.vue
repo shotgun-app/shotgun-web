@@ -58,6 +58,7 @@ async function submitReview() {
 
   const success = await bookings.review({
     rideId: reviewingBooking.value.trip.id,
+    targetId: reviewingBooking.value.trip.driver.id,
     rating: reviewRating.value,
     comment: reviewComment.value.trim(),
   })
