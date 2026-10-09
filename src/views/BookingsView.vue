@@ -329,14 +329,14 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
       <section v-if="completedBookings.length > 0" class="mt-10">
         <button
           type="button"
-          class="flex w-full items-center justify-between border-b border-line pb-3 text-left dark:border-night-line"
+          class="flex w-full items-center justify-between rounded-lg bg-surface px-4 py-3 text-left shadow-sm hover:bg-surface-hover dark:bg-night-surface dark:hover:bg-night-surface-hover"
           :aria-expanded="completedOpen"
           @click="completedOpen = !completedOpen"
         >
           <span class="section-title">Completed rides</span>
 
-          <span class="meta">
-            {{ completedOpen ? 'Hide' : 'Show' }}
+          <span class="font-medium text-brand-600 dark:text-brand-400">
+            {{ completedOpen ? 'Hide ▲' : 'Show ▼' }}
           </span>
         </button>
 
@@ -362,16 +362,22 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
                 </p>
               </div>
 
-              <!-- Rate button -->
-              <button
-                v-if="!booking.reviewed"
-                :id="`booking-rate-btn-${booking.id}`"
-                type="button"
-                class="btn btn-primary"
-                @click="openReview(booking)"
-              >
-                Rate
-              </button>
+              <!-- Rate button or Rating display -->
+              <div v-if="!booking.reviewRating">
+                <button
+                  :id="`booking-rate-btn-${booking.id}`"
+                  type="button"
+                  class="btn btn-primary"
+                  @click="openReview(booking)"
+                >
+                  Rate
+                </button>
+              </div>
+              <div v-else class="flex items-center gap-1 text-brand-600 dark:text-brand-400" aria-label="Your rating">
+                <span v-for="star in 5" :key="star">
+                  {{ star <= booking.reviewRating ? '★' : '☆' }}
+                </span>
+              </div>
             </div>
 
             <!-- Driver -->
@@ -390,10 +396,11 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
     </template>
 
     <!-- ── Review modal ───────────────────────────────────────────────── -->
-    <div
-      v-if="reviewingBooking"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      role="dialog"
+    <Teleport to="body">
+      <div
+        v-if="reviewingBooking"
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+        role="dialog"
       aria-modal="true"
       aria-labelledby="review-modal-title"
     >
@@ -479,6 +486,7 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </Teleport>
   </section>
 </template>

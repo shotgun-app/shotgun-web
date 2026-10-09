@@ -77,15 +77,15 @@ function withPassengers(trip: Trip): TripWithPassengers {
     .flatMap((b) => {
       const p = publicUserOf(b.passengerId)
       if (!p) return []
-      const reviewed = currentUserId
-        ? reviews.some(
+      const reviewRating = currentUserId
+        ? reviews.find(
             (r) =>
               r.rideId === trip.id &&
               r.reviewerId === currentUserId &&
               r.revieweeId === b.passengerId,
-          )
-        : false
-      return [{ ...p, reviewed }]
+          )?.rating
+        : undefined
+      return [{ ...p, reviewRating }]
     })
   return { ...trip, passengers }
 }
@@ -335,14 +335,14 @@ export const fakeApi: Api = {
             throw new ApiError('Trip not found.', 404)
           }
 
-          const reviewed = reviews.some(
+          const reviewRating = reviews.find(
             (review) => review.rideId === trip.id && review.reviewerId === userId,
-          )
+          )?.rating
 
           return {
             ...b,
             trip: { ...withPassengers(trip), driver },
-            reviewed,
+            reviewRating,
           }
         })
     },

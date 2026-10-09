@@ -44,8 +44,8 @@ export interface Trip {
 
 /** What the API reveals about a driver or passenger to other users: no email or phone. */
 export interface PublicUser extends Omit<User, 'email' | 'phone'> {
-  /** True if the authenticated user has reviewed this passenger/driver for a specific ride context. */
-  reviewed?: boolean
+  /** The rating given by the authenticated user to this passenger/driver for a specific ride context. */
+  reviewRating?: number
 }
 
 export interface TripWithDriver extends Trip {
@@ -84,7 +84,7 @@ export interface BookingPayload {
 /** A confirmed booking together with a snapshot of the trip it belongs to. */
 export interface BookingWithTrip extends Booking {
   trip: TripWithDriver & TripWithPassengers
-  reviewed: boolean
+  reviewRating?: number
 }
 
 export interface Review {

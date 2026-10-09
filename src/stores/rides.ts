@@ -82,7 +82,7 @@ export const useRidesStore = defineStore('rides', () => {
       const trip = rides.value.find((r) => r.id === payload.rideId)
       if (trip) {
         const passenger = trip.passengers.find((p) => p.id === payload.targetId)
-        if (passenger) passenger.reviewed = true
+        if (passenger) passenger.reviewRating = payload.rating
       }
       return true
     } catch (e) {

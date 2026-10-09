@@ -416,14 +416,14 @@ async function submitReview() {
       <section v-if="completedRides.length > 0" class="mt-10">
         <button
           type="button"
-          class="flex w-full items-center justify-between border-b border-line pb-3 text-left dark:border-night-line"
+          class="flex w-full items-center justify-between rounded-lg bg-surface px-4 py-3 text-left shadow-sm hover:bg-surface-hover dark:bg-night-surface dark:hover:bg-night-surface-hover"
           :aria-expanded="completedOpen"
           @click="completedOpen = !completedOpen"
         >
           <span class="section-title">Completed rides</span>
 
-          <span class="meta">
-            {{ completedOpen ? 'Hide' : 'Show' }}
+          <span class="font-medium text-brand-600 dark:text-brand-400">
+            {{ completedOpen ? 'Hide ▲' : 'Show ▼' }}
           </span>
         </button>
 
@@ -466,15 +466,21 @@ async function submitReview() {
                           {{ passenger.name }}
                         </RouterLink>
                       </div>
-                      <button
-                        v-if="!passenger.reviewed"
-                        :id="`rate-passenger-btn-${passenger.id}`"
-                        type="button"
-                        class="btn btn-primary btn-sm"
-                        @click="openReview(ride, passenger)"
-                      >
-                        Rate
-                      </button>
+                      <div v-if="!passenger.reviewRating">
+                        <button
+                          :id="`rate-passenger-btn-${passenger.id}`"
+                          type="button"
+                          class="btn btn-primary btn-sm"
+                          @click="openReview(ride, passenger)"
+                        >
+                          Rate
+                        </button>
+                      </div>
+                      <div v-else class="flex items-center gap-1 text-brand-600 dark:text-brand-400" aria-label="Your rating">
+                        <span v-for="star in 5" :key="star">
+                          {{ star <= passenger.reviewRating ? '★' : '☆' }}
+                        </span>
+                      </div>
                     </li>
                   </ul>
                 </dd>
@@ -486,10 +492,11 @@ async function submitReview() {
     </template>
 
     <!-- ── Review modal ───────────────────────────────────────────────── -->
-    <div
-      v-if="reviewingRide && reviewingPassenger"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      role="dialog"
+    <Teleport to="body">
+      <div
+        v-if="reviewingRide && reviewingPassenger"
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+        role="dialog"
       aria-modal="true"
       aria-labelledby="review-modal-title"
     >
@@ -574,6 +581,7 @@ async function submitReview() {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </Teleport>
   </section>
 </template>

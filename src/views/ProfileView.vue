@@ -196,6 +196,12 @@ async function save() {
     <template v-if="!editing">
       <ProfileDetails v-if="auth.user" :user="auth.user" class="mt-10" />
 
+      <div class="mt-8">
+        <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">
+          Edit profile
+        </button>
+      </div>
+
       <template v-if="reviews.length > 0">
         <!-- Driver Score -->
         <section class="mt-10">
@@ -280,11 +286,7 @@ async function save() {
         </section>
       </template>
 
-      <div class="mt-8">
-        <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">
-          Edit profile
-        </button>
-      </div>
+
 
       <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
         <h2 class="section-title">Password</h2>
