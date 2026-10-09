@@ -476,7 +476,11 @@ async function submitReview() {
                           Rate
                         </button>
                       </div>
-                      <div v-else class="flex items-center gap-1 text-brand-600 dark:text-brand-400" aria-label="Your rating">
+                      <div
+                        v-else
+                        class="flex items-center gap-1 text-brand-600 dark:text-brand-400"
+                        aria-label="Your rating"
+                      >
                         <span v-for="star in 5" :key="star">
                           {{ star <= passenger.reviewRating ? '★' : '☆' }}
                         </span>
@@ -497,90 +501,90 @@ async function submitReview() {
         v-if="reviewingRide && reviewingPassenger"
         class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
         role="dialog"
-      aria-modal="true"
-      aria-labelledby="review-modal-title"
-    >
-      <div class="card w-full max-w-md">
-        <!-- Modal header -->
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 id="review-modal-title" class="section-title">Rate passenger</h2>
-            <p class="meta mt-1">
-              {{ reviewingPassenger.name }}
-            </p>
+        aria-modal="true"
+        aria-labelledby="review-modal-title"
+      >
+        <div class="card w-full max-w-md">
+          <!-- Modal header -->
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h2 id="review-modal-title" class="section-title">Rate passenger</h2>
+              <p class="meta mt-1">
+                {{ reviewingPassenger.name }}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-ghost"
+              aria-label="Close review"
+              :disabled="reviewSubmitting"
+              @click="closeReview"
+            >
+              ×
+            </button>
           </div>
 
-          <button
-            type="button"
-            class="btn btn-ghost"
-            aria-label="Close review"
-            :disabled="reviewSubmitting"
-            @click="closeReview"
-          >
-            ×
-          </button>
-        </div>
+          <!-- Stars -->
+          <div class="mt-6">
+            <p class="meta mb-2">Rating</p>
 
-        <!-- Stars -->
-        <div class="mt-6">
-          <p class="meta mb-2">Rating</p>
+            <div class="flex gap-2" role="radiogroup" aria-label="Rating">
+              <button
+                v-for="star in 5"
+                :key="star"
+                type="button"
+                :aria-label="`${star} star${star === 1 ? '' : 's'}`"
+                :aria-checked="reviewRating === star"
+                role="radio"
+                class="text-3xl"
+                :disabled="reviewSubmitting"
+                @click="reviewRating = star"
+              >
+                {{ star <= reviewRating ? '★' : '☆' }}
+              </button>
+            </div>
+          </div>
 
-          <div class="flex gap-2" role="radiogroup" aria-label="Rating">
-            <button
-              v-for="star in 5"
-              :key="star"
-              type="button"
-              :aria-label="`${star} star${star === 1 ? '' : 's'}`"
-              :aria-checked="reviewRating === star"
-              role="radio"
-              class="text-3xl"
+          <!-- Comment -->
+          <label class="field mt-6">
+            <span>Review</span>
+
+            <textarea
+              v-model="reviewComment"
+              rows="4"
+              maxlength="500"
+              placeholder="How was the ride with them?"
               :disabled="reviewSubmitting"
-              @click="reviewRating = star"
+            ></textarea>
+          </label>
+
+          <!-- Review error -->
+          <p v-if="reviewError" class="alert alert-error mt-4" role="alert">
+            {{ reviewError }}
+          </p>
+
+          <!-- Modal actions -->
+          <div class="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              class="btn btn-ghost"
+              :disabled="reviewSubmitting"
+              @click="closeReview"
             >
-              {{ star <= reviewRating ? '★' : '☆' }}
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-primary"
+              :disabled="reviewRating === 0 || reviewSubmitting"
+              @click="submitReview"
+            >
+              {{ reviewSubmitting ? 'Submitting…' : 'Submit review' }}
             </button>
           </div>
         </div>
-
-        <!-- Comment -->
-        <label class="field mt-6">
-          <span>Review</span>
-
-          <textarea
-            v-model="reviewComment"
-            rows="4"
-            maxlength="500"
-            placeholder="How was the ride with them?"
-            :disabled="reviewSubmitting"
-          ></textarea>
-        </label>
-
-        <!-- Review error -->
-        <p v-if="reviewError" class="alert alert-error mt-4" role="alert">
-          {{ reviewError }}
-        </p>
-
-        <!-- Modal actions -->
-        <div class="mt-6 flex justify-end gap-3">
-          <button
-            type="button"
-            class="btn btn-ghost"
-            :disabled="reviewSubmitting"
-            @click="closeReview"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            class="btn btn-primary"
-            :disabled="reviewRating === 0 || reviewSubmitting"
-            @click="submitReview"
-          >
-            {{ reviewSubmitting ? 'Submitting…' : 'Submit review' }}
-          </button>
-        </div>
-      </div>
       </div>
     </Teleport>
   </section>

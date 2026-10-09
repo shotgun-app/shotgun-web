@@ -286,8 +286,6 @@ async function save() {
         </section>
       </template>
 
-
-
       <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
         <h2 class="section-title">Password</h2>
 
