@@ -41,12 +41,50 @@ watch(() => props.id, users.load, { immediate: true })
           </div>
         </section>
 
-        <!-- Reviews -->
+        <!-- Driver Reviews -->
         <section class="mt-10">
-          <h2 class="section-title">Reviews</h2>
+          <h2 class="section-title">Driver Reviews</h2>
 
           <ul class="mt-4 grid gap-4">
             <li v-for="review in users.user.reviews" :key="review.id" class="card">
+              <div class="flex items-center gap-1">
+                <span v-for="star in 5" :key="star" class="text-lg">
+                  {{ star <= review.rating ? '★' : '☆' }}
+                </span>
+              </div>
+
+              <p v-if="review.comment" class="mt-3 text-sm">
+                {{ review.comment }}
+              </p>
+
+              <p class="meta mt-3 text-xs">
+                {{ new Date(review.createdAt).toLocaleDateString() }}
+              </p>
+            </li>
+          </ul>
+        </section>
+      </template>
+
+      <template v-if="users.user.passengerReviews && users.user.passengerReviews.length > 0">
+        <!-- Passenger score -->
+        <section class="mt-10">
+          <h2 class="section-title">Passenger Score</h2>
+
+          <div class="mt-3 flex items-center gap-3">
+            <span class="text-2xl font-semibold">
+              {{ users.user.passengerScore?.toFixed(1) }}
+            </span>
+
+            <span class="text-lg"> ★ </span>
+          </div>
+        </section>
+
+        <!-- Passenger Reviews -->
+        <section class="mt-10">
+          <h2 class="section-title">Passenger Reviews</h2>
+
+          <ul class="mt-4 grid gap-4">
+            <li v-for="review in users.user.passengerReviews" :key="review.id" class="card">
               <div class="flex items-center gap-1">
                 <span v-for="star in 5" :key="star" class="text-lg">
                   {{ star <= review.rating ? '★' : '☆' }}

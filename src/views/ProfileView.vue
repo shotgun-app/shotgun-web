@@ -14,6 +14,8 @@ const router = useRouter()
 
 const driverScore = ref(0)
 const reviews = ref<Review[]>([])
+const passengerScore = ref(0)
+const passengerReviews = ref<Review[]>([])
 
 async function loadDriverReviews() {
   if (!auth.user) return
@@ -22,9 +24,13 @@ async function loadDriverReviews() {
     const profile = await api.users.get(auth.user.id)
     driverScore.value = profile.driverScore
     reviews.value = profile.reviews
+    passengerScore.value = profile.passengerScore || 0
+    passengerReviews.value = profile.passengerReviews || []
   } catch {
     driverScore.value = 0
     reviews.value = []
+    passengerScore.value = 0
+    passengerReviews.value = []
   }
 }
 
@@ -190,6 +196,12 @@ async function save() {
     <template v-if="!editing">
       <ProfileDetails v-if="auth.user" :user="auth.user" class="mt-10" />
 
+      <div class="mt-8">
+        <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">
+          Edit profile
+        </button>
+      </div>
+
       <template v-if="reviews.length > 0">
         <!-- Driver Score -->
         <section class="mt-10">
@@ -210,7 +222,7 @@ async function save() {
 
         <!-- Reviews -->
         <section class="mt-10">
-          <h2 class="section-title">Reviews</h2>
+          <h2 class="section-title">Driver Reviews</h2>
 
           <ul class="mt-4 grid gap-4">
             <li v-for="review in reviews" :key="review.id" class="card">
@@ -232,11 +244,47 @@ async function save() {
         </section>
       </template>
 
-      <div class="mt-8">
-        <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">
-          Edit profile
-        </button>
-      </div>
+      <template v-if="passengerReviews.length > 0">
+        <!-- Passenger Score -->
+        <section class="mt-10">
+          <h2 class="section-title">Passenger Score</h2>
+
+          <div class="mt-4 flex items-center gap-3">
+            <span class="text-lg font-semibold">
+              {{ passengerScore.toFixed(1) }}
+            </span>
+
+            <div class="flex items-center gap-0.5 text-base" aria-label="Passenger rating">
+              <span v-for="star in 5" :key="star">
+                {{ star <= Math.round(passengerScore) ? '★' : '☆' }}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Passenger Reviews -->
+        <section class="mt-10">
+          <h2 class="section-title">Passenger Reviews</h2>
+
+          <ul class="mt-4 grid gap-4">
+            <li v-for="review in passengerReviews" :key="review.id" class="card">
+              <div class="flex items-center gap-1 text-sm">
+                <span v-for="star in 5" :key="star">
+                  {{ star <= review.rating ? '★' : '☆' }}
+                </span>
+              </div>
+
+              <p v-if="review.comment" class="mt-3 text-sm">
+                {{ review.comment }}
+              </p>
+
+              <p class="meta mt-2 text-xs">
+                {{ new Date(review.createdAt).toLocaleDateString() }}
+              </p>
+            </li>
+          </ul>
+        </section>
+      </template>
 
       <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
         <h2 class="section-title">Password</h2>

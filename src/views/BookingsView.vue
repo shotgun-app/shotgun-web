@@ -58,6 +58,7 @@ async function submitReview() {
 
   const success = await bookings.review({
     rideId: reviewingBooking.value.trip.id,
+    targetId: reviewingBooking.value.trip.driver.id,
     rating: reviewRating.value,
     comment: reviewComment.value.trim(),
   })
@@ -328,14 +329,14 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
       <section v-if="completedBookings.length > 0" class="mt-10">
         <button
           type="button"
-          class="flex w-full items-center justify-between border-b border-line pb-3 text-left dark:border-night-line"
+          class="flex w-full items-center justify-between rounded-lg bg-surface px-4 py-3 text-left shadow-sm hover:bg-surface-hover dark:bg-night-surface dark:hover:bg-night-surface-hover"
           :aria-expanded="completedOpen"
           @click="completedOpen = !completedOpen"
         >
           <span class="section-title">Completed rides</span>
 
-          <span class="meta">
-            {{ completedOpen ? 'Hide' : 'Show' }}
+          <span class="font-medium text-brand-600 dark:text-brand-400">
+            {{ completedOpen ? 'Hide ▲' : 'Show ▼' }}
           </span>
         </button>
 
@@ -361,16 +362,26 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
                 </p>
               </div>
 
-              <!-- Rate button -->
-              <button
-                v-if="!booking.reviewed"
-                :id="`booking-rate-btn-${booking.id}`"
-                type="button"
-                class="btn btn-primary"
-                @click="openReview(booking)"
+              <!-- Rate button or Rating display -->
+              <div v-if="!booking.reviewRating">
+                <button
+                  :id="`booking-rate-btn-${booking.id}`"
+                  type="button"
+                  class="btn btn-primary"
+                  @click="openReview(booking)"
+                >
+                  Rate
+                </button>
+              </div>
+              <div
+                v-else
+                class="flex items-center gap-1 text-brand-600 dark:text-brand-400"
+                aria-label="Your rating"
               >
-                Rate
-              </button>
+                <span v-for="star in 5" :key="star">
+                  {{ star <= booking.reviewRating ? '★' : '☆' }}
+                </span>
+              </div>
             </div>
 
             <!-- Driver -->
@@ -389,95 +400,97 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
     </template>
 
     <!-- ── Review modal ───────────────────────────────────────────────── -->
-    <div
-      v-if="reviewingBooking"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="review-modal-title"
-    >
-      <div class="card w-full max-w-md">
-        <!-- Modal header -->
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 id="review-modal-title" class="section-title">Rate your ride</h2>
+    <Teleport to="body">
+      <div
+        v-if="reviewingBooking"
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="review-modal-title"
+      >
+        <div class="card w-full max-w-md">
+          <!-- Modal header -->
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h2 id="review-modal-title" class="section-title">Rate your ride</h2>
 
-            <p class="meta mt-1">
-              {{ reviewingBooking.trip.driver.name }}
-            </p>
+              <p class="meta mt-1">
+                {{ reviewingBooking.trip.driver.name }}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-ghost"
+              aria-label="Close review"
+              :disabled="reviewSubmitting"
+              @click="closeReview"
+            >
+              ×
+            </button>
           </div>
 
-          <button
-            type="button"
-            class="btn btn-ghost"
-            aria-label="Close review"
-            :disabled="reviewSubmitting"
-            @click="closeReview"
-          >
-            ×
-          </button>
-        </div>
+          <!-- Stars -->
+          <div class="mt-6">
+            <p class="meta mb-2">Rating</p>
 
-        <!-- Stars -->
-        <div class="mt-6">
-          <p class="meta mb-2">Rating</p>
+            <div class="flex gap-2" role="radiogroup" aria-label="Rating">
+              <button
+                v-for="star in 5"
+                :key="star"
+                type="button"
+                :aria-label="`${star} star${star === 1 ? '' : 's'}`"
+                :aria-checked="reviewRating === star"
+                role="radio"
+                class="text-3xl"
+                :disabled="reviewSubmitting"
+                @click="reviewRating = star"
+              >
+                {{ star <= reviewRating ? '★' : '☆' }}
+              </button>
+            </div>
+          </div>
 
-          <div class="flex gap-2" role="radiogroup" aria-label="Rating">
-            <button
-              v-for="star in 5"
-              :key="star"
-              type="button"
-              :aria-label="`${star} star${star === 1 ? '' : 's'}`"
-              :aria-checked="reviewRating === star"
-              role="radio"
-              class="text-3xl"
+          <!-- Comment -->
+          <label class="field mt-6">
+            <span>Review</span>
+
+            <textarea
+              v-model="reviewComment"
+              rows="4"
+              maxlength="500"
+              placeholder="How was your experience?"
               :disabled="reviewSubmitting"
-              @click="reviewRating = star"
+            ></textarea>
+          </label>
+
+          <!-- Review error -->
+          <p v-if="reviewError" class="alert alert-error mt-4" role="alert">
+            {{ reviewError }}
+          </p>
+
+          <!-- Modal actions -->
+          <div class="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              class="btn btn-ghost"
+              :disabled="reviewSubmitting"
+              @click="closeReview"
             >
-              {{ star <= reviewRating ? '★' : '☆' }}
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-primary"
+              :disabled="reviewRating === 0 || reviewSubmitting"
+              @click="submitReview"
+            >
+              {{ reviewSubmitting ? 'Submitting…' : 'Submit review' }}
             </button>
           </div>
         </div>
-
-        <!-- Comment -->
-        <label class="field mt-6">
-          <span>Review</span>
-
-          <textarea
-            v-model="reviewComment"
-            rows="4"
-            maxlength="500"
-            placeholder="How was your experience?"
-            :disabled="reviewSubmitting"
-          ></textarea>
-        </label>
-
-        <!-- Review error -->
-        <p v-if="reviewError" class="alert alert-error mt-4" role="alert">
-          {{ reviewError }}
-        </p>
-
-        <!-- Modal actions -->
-        <div class="mt-6 flex justify-end gap-3">
-          <button
-            type="button"
-            class="btn btn-ghost"
-            :disabled="reviewSubmitting"
-            @click="closeReview"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            class="btn btn-primary"
-            :disabled="reviewRating === 0 || reviewSubmitting"
-            @click="submitReview"
-          >
-            {{ reviewSubmitting ? 'Submitting…' : 'Submit review' }}
-          </button>
-        </div>
       </div>
-    </div>
+    </Teleport>
   </section>
 </template>

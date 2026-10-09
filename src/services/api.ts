@@ -66,7 +66,7 @@ export interface BookingsApi {
 }
 
 export interface ReviewsApi {
-  /** Creates a passenger-to-driver review for a completed ride. */
+  /** Creates a review (driver-to-passenger or passenger-to-driver) for a completed ride. */
   create(payload: ReviewPayload): Promise<Review>
 }
 
