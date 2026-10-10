@@ -58,6 +58,7 @@ export const useBookingsStore = defineStore('bookings', () => {
     if (!booking) return null
 
     useTripsStore().applySeatsDelta(tripId, payload.seats)
+    useTripsStore().applyBagsDelta(tripId, booking.smallBags, booking.largeBags)
 
     // Re-fetch so the embedded trip snapshot is up to date.
     await fetchMine()
@@ -79,6 +80,11 @@ export const useBookingsStore = defineStore('bookings', () => {
 
     if (existing) {
       useTripsStore().applySeatsDelta(existing.tripId, payload.seats - existing.seats)
+      useTripsStore().applyBagsDelta(
+        existing.tripId,
+        updated.smallBags - existing.smallBags,
+        updated.largeBags - existing.largeBags,
+      )
     }
 
     await fetchMine()
@@ -102,6 +108,7 @@ export const useBookingsStore = defineStore('bookings', () => {
 
       if (existing) {
         useTripsStore().applySeatsDelta(existing.tripId, -existing.seats)
+        useTripsStore().applyBagsDelta(existing.tripId, -existing.smallBags, -existing.largeBags)
       }
 
       bookings.value = bookings.value.filter((b) => b.id !== bookingId)

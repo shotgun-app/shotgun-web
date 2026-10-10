@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 import { useUsersStore } from '@/stores/users'
+import StarRating from '@/components/StarRating.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import ProfileDetails from '@/components/ProfileDetails.vue'
 
@@ -37,7 +38,7 @@ watch(() => props.id, users.load, { immediate: true })
               {{ users.user.driverScore.toFixed(1) }}
             </span>
 
-            <span class="text-lg"> ★ </span>
+            <StarRating :value="users.user.driverScore" label="Driver rating" />
           </div>
         </section>
 
@@ -47,11 +48,7 @@ watch(() => props.id, users.load, { immediate: true })
 
           <ul class="mt-4 grid gap-4">
             <li v-for="review in users.user.reviews" :key="review.id" class="card">
-              <div class="flex items-center gap-1">
-                <span v-for="star in 5" :key="star" class="text-lg">
-                  {{ star <= review.rating ? '★' : '☆' }}
-                </span>
-              </div>
+              <StarRating :value="review.rating" label="Rating" :size="16" />
 
               <p v-if="review.comment" class="mt-3 text-sm">
                 {{ review.comment }}
@@ -75,7 +72,7 @@ watch(() => props.id, users.load, { immediate: true })
               {{ users.user.passengerScore?.toFixed(1) }}
             </span>
 
-            <span class="text-lg"> ★ </span>
+            <StarRating :value="users.user.passengerScore ?? 0" label="Passenger rating" />
           </div>
         </section>
 
@@ -85,11 +82,7 @@ watch(() => props.id, users.load, { immediate: true })
 
           <ul class="mt-4 grid gap-4">
             <li v-for="review in users.user.passengerReviews" :key="review.id" class="card">
-              <div class="flex items-center gap-1">
-                <span v-for="star in 5" :key="star" class="text-lg">
-                  {{ star <= review.rating ? '★' : '☆' }}
-                </span>
-              </div>
+              <StarRating :value="review.rating" label="Rating" :size="16" />
 
               <p v-if="review.comment" class="mt-3 text-sm">
                 {{ review.comment }}

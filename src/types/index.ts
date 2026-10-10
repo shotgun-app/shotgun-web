@@ -35,6 +35,11 @@ export interface Trip {
   departureAt: string
   seatsTotal: number
   seatsBooked: number
+  /** Small = cabin bag (~50x50cm), large = suitcase. Counted and limited separately. */
+  smallBagsTotal: number
+  smallBagsBooked: number
+  largeBagsTotal: number
+  largeBagsBooked: number
   pricePerSeat: number
   currency: string
   /** Free text: car model, luggage, meeting point. */
@@ -72,6 +77,8 @@ export interface Booking {
   tripId: string
   passengerId: string
   seats: number
+  smallBags: number
+  largeBags: number
   status: BookingStatus
   createdAt: string
 }
@@ -79,6 +86,9 @@ export interface Booking {
 /** Payload for creating or updating a booking. */
 export interface BookingPayload {
   seats: number
+  /** Omitted bag counts mean none when creating and "keep as is" when updating. */
+  smallBags?: number
+  largeBags?: number
 }
 
 /** A confirmed booking together with a snapshot of the trip it belongs to. */
@@ -149,6 +159,8 @@ export interface RidePayload {
   destinationCountry: string
   departureAt: string
   seatsTotal: number
+  smallBagsTotal?: number
+  largeBagsTotal?: number
   pricePerSeat: number
   currency?: string
   notes?: string

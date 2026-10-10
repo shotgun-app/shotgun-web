@@ -2,10 +2,14 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useBookingsStore } from '@/stores/bookings'
+import { PhCaretDown } from '@phosphor-icons/vue'
+import ReviewDialog from '@/components/ReviewDialog.vue'
 import SeatStepper from '@/components/SeatStepper.vue'
+import StarRating from '@/components/StarRating.vue'
 import RouteLine from '@/components/RouteLine.vue'
 import UserList from '@/components/UserList.vue'
 import { formatDeparture } from '@/utils/format'
+import { LARGE_BAG_HINT, SMALL_BAG_HINT, bagsSummary } from '@/utils/baggage'
 import type { BookingWithTrip, PublicUser } from '@/types'
 
 const bookings = useBookingsStore()
@@ -26,18 +30,14 @@ const completedBookings = computed(() =>
 
 const completedOpen = ref(false)
 
-// ── Review modal state ─────────────────────────────────────────────────────
+// ── Review dialog state ────────────────────────────────────────────────────
 
 const reviewingBooking = ref<BookingWithTrip | null>(null)
-const reviewRating = ref(0)
-const reviewComment = ref('')
 const reviewError = ref<string | null>(null)
 const reviewSubmitting = ref(false)
 
 function openReview(booking: BookingWithTrip) {
   reviewingBooking.value = booking
-  reviewRating.value = 0
-  reviewComment.value = ''
   reviewError.value = null
 }
 
@@ -45,13 +45,11 @@ function closeReview() {
   if (reviewSubmitting.value) return
 
   reviewingBooking.value = null
-  reviewRating.value = 0
-  reviewComment.value = ''
   reviewError.value = null
 }
 
-async function submitReview() {
-  if (!reviewingBooking.value || reviewRating.value === 0) return
+async function submitReview(review: { rating: number; comment: string }) {
+  if (!reviewingBooking.value) return
 
   reviewSubmitting.value = true
   reviewError.value = null
@@ -59,8 +57,7 @@ async function submitReview() {
   const success = await bookings.review({
     rideId: reviewingBooking.value.trip.id,
     targetId: reviewingBooking.value.trip.driver.id,
-    rating: reviewRating.value,
-    comment: reviewComment.value.trim(),
+    ...review,
   })
 
   reviewSubmitting.value = false
@@ -77,11 +74,15 @@ async function submitReview() {
 
 const editingId = ref<string | null>(null)
 const editSeats = ref(1)
+const editSmallBags = ref(0)
+const editLargeBags = ref(0)
 const editError = ref<string | null>(null)
 
 function openEdit(b: BookingWithTrip) {
   editingId.value = b.id
   editSeats.value = b.seats
+  editSmallBags.value = b.smallBags
+  editLargeBags.value = b.largeBags
   editError.value = null
   bookings.error = null
 }
@@ -100,7 +101,11 @@ async function submitEdit(bookingId: string) {
     return
   }
 
-  const ok = await bookings.update(bookingId, { seats: editSeats.value })
+  const ok = await bookings.update(bookingId, {
+    seats: editSeats.value,
+    smallBags: editSmallBags.value,
+    largeBags: editLargeBags.value,
+  })
 
   if (ok) closeEdit()
   else editError.value = bookings.error
@@ -128,6 +133,14 @@ async function confirmCancel(id: string) {
 
 function seatsLeft(b: BookingWithTrip): number {
   return b.trip.seatsTotal - b.trip.seatsBooked + b.seats
+}
+
+function smallBagsLeft(b: BookingWithTrip): number {
+  return b.trip.smallBagsTotal - b.trip.smallBagsBooked + b.smallBags
+}
+
+function largeBagsLeft(b: BookingWithTrip): number {
+  return b.trip.largeBagsTotal - b.trip.largeBagsBooked + b.largeBags
 }
 
 function otherPassengers(b: BookingWithTrip): PublicUser[] {
@@ -190,6 +203,10 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
                 {{ booking.seats }} seat{{ booking.seats === 1 ? '' : 's' }} booked ·
                 {{ booking.trip.pricePerSeat }} {{ booking.trip.currency }} / seat
               </p>
+
+              <p v-if="bagsSummary(booking.smallBags, booking.largeBags)" class="meta mt-0.5">
+                {{ bagsSummary(booking.smallBags, booking.largeBags) }}
+              </p>
             </div>
 
             <!-- Actions -->
@@ -203,7 +220,7 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
                 class="btn btn-ghost"
                 @click="openEdit(booking)"
               >
-                Change seats
+                Change seats and bags
               </button>
 
               <button
@@ -259,6 +276,42 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
                   />
 
                   <span class="meta"> of {{ seatsLeft(booking) }} available </span>
+                </div>
+              </div>
+
+              <div class="grid gap-3 sm:grid-cols-2">
+                <div v-if="booking.trip.smallBagsTotal > 0" class="field">
+                  <span>Small bags</span>
+
+                  <div class="flex items-center gap-3">
+                    <SeatStepper
+                      :id="`booking-edit-small-bags-${booking.id}`"
+                      v-model="editSmallBags"
+                      label="Small bags"
+                      :min="0"
+                      :max="smallBagsLeft(booking)"
+                    />
+
+                    <span class="meta">{{ smallBagsLeft(booking) }} available</span>
+                  </div>
+                  <p class="meta">{{ SMALL_BAG_HINT }}</p>
+                </div>
+
+                <div v-if="booking.trip.largeBagsTotal > 0" class="field">
+                  <span>Large bags</span>
+
+                  <div class="flex items-center gap-3">
+                    <SeatStepper
+                      :id="`booking-edit-large-bags-${booking.id}`"
+                      v-model="editLargeBags"
+                      label="Large bags"
+                      :min="0"
+                      :max="largeBagsLeft(booking)"
+                    />
+
+                    <span class="meta">{{ largeBagsLeft(booking) }} available</span>
+                  </div>
+                  <p class="meta">{{ LARGE_BAG_HINT }}</p>
                 </div>
               </div>
 
@@ -329,15 +382,21 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
       <section v-if="completedBookings.length > 0" class="mt-10">
         <button
           type="button"
-          class="flex w-full items-center justify-between rounded-lg bg-surface px-4 py-3 text-left shadow-sm hover:bg-surface-hover dark:bg-night-surface dark:hover:bg-night-surface-hover"
+          class="disclosure"
           :aria-expanded="completedOpen"
           @click="completedOpen = !completedOpen"
         >
-          <span class="section-title">Completed rides</span>
-
-          <span class="font-medium text-brand-600 dark:text-brand-400">
-            {{ completedOpen ? 'Hide ▲' : 'Show ▼' }}
+          <span class="section-title flex items-center gap-2.5">
+            Completed rides
+            <span class="badge badge-neutral">{{ completedBookings.length }}</span>
           </span>
+
+          <PhCaretDown
+            :size="18"
+            aria-hidden="true"
+            class="text-ink-soft transition-transform duration-200 dark:text-night-ink-soft"
+            :class="{ 'rotate-180': completedOpen }"
+          />
         </button>
 
         <ul v-if="completedOpen" class="mt-4 grid gap-4">
@@ -373,15 +432,7 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
                   Rate
                 </button>
               </div>
-              <div
-                v-else
-                class="flex items-center gap-1 text-brand-600 dark:text-brand-400"
-                aria-label="Your rating"
-              >
-                <span v-for="star in 5" :key="star">
-                  {{ star <= booking.reviewRating ? '★' : '☆' }}
-                </span>
-              </div>
+              <StarRating v-else :value="booking.reviewRating" label="Your rating" :size="16" />
             </div>
 
             <!-- Driver -->
@@ -399,98 +450,16 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
       </section>
     </template>
 
-    <!-- ── Review modal ───────────────────────────────────────────────── -->
-    <Teleport to="body">
-      <div
-        v-if="reviewingBooking"
-        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="review-modal-title"
-      >
-        <div class="card w-full max-w-md">
-          <!-- Modal header -->
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <h2 id="review-modal-title" class="section-title">Rate your ride</h2>
-
-              <p class="meta mt-1">
-                {{ reviewingBooking.trip.driver.name }}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              class="btn btn-ghost"
-              aria-label="Close review"
-              :disabled="reviewSubmitting"
-              @click="closeReview"
-            >
-              ×
-            </button>
-          </div>
-
-          <!-- Stars -->
-          <div class="mt-6">
-            <p class="meta mb-2">Rating</p>
-
-            <div class="flex gap-2" role="radiogroup" aria-label="Rating">
-              <button
-                v-for="star in 5"
-                :key="star"
-                type="button"
-                :aria-label="`${star} star${star === 1 ? '' : 's'}`"
-                :aria-checked="reviewRating === star"
-                role="radio"
-                class="text-3xl"
-                :disabled="reviewSubmitting"
-                @click="reviewRating = star"
-              >
-                {{ star <= reviewRating ? '★' : '☆' }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Comment -->
-          <label class="field mt-6">
-            <span>Review</span>
-
-            <textarea
-              v-model="reviewComment"
-              rows="4"
-              maxlength="500"
-              placeholder="How was your experience?"
-              :disabled="reviewSubmitting"
-            ></textarea>
-          </label>
-
-          <!-- Review error -->
-          <p v-if="reviewError" class="alert alert-error mt-4" role="alert">
-            {{ reviewError }}
-          </p>
-
-          <!-- Modal actions -->
-          <div class="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              class="btn btn-ghost"
-              :disabled="reviewSubmitting"
-              @click="closeReview"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              class="btn btn-primary"
-              :disabled="reviewRating === 0 || reviewSubmitting"
-              @click="submitReview"
-            >
-              {{ reviewSubmitting ? 'Submitting…' : 'Submit review' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <!-- ── Review dialog ──────────────────────────────────────────────── -->
+    <ReviewDialog
+      v-if="reviewingBooking"
+      title="Rate your ride"
+      :name="reviewingBooking.trip.driver.name"
+      placeholder="How was your experience?"
+      :submitting="reviewSubmitting"
+      :error="reviewError"
+      @submit="submitReview"
+      @close="closeReview"
+    />
   </section>
 </template>
