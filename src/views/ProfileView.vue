@@ -2,15 +2,28 @@
 import { onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useSessionsStore } from '@/stores/sessions'
+import { describeUserAgent } from '@/utils/userAgent'
 import UserAvatar from '@/components/UserAvatar.vue'
 import PasswordInput from '@/components/PasswordInput.vue'
 import PhoneInput from '@/components/PhoneInput.vue'
 import ProfileDetails from '@/components/ProfileDetails.vue'
 import { api } from '@/services/api'
-import type { Review } from '@/types'
+import type { Review, Session } from '@/types'
 
 const auth = useAuthStore()
+const sessions = useSessionsStore()
 const router = useRouter()
+
+onMounted(sessions.fetchAll)
+
+async function deleteSession(session: Session) {
+  const ok = await sessions.remove(session)
+
+  if (ok && session.current) {
+    await router.push({ name: 'landing' })
+  }
+}
 
 const driverScore = ref(0)
 const reviews = ref<Review[]>([])
@@ -370,6 +383,54 @@ async function save() {
             </button>
           </div>
         </form>
+      </div>
+
+      <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
+        <h2 class="section-title">Sessions</h2>
+        <p class="meta mt-2 text-sm">Devices that are signed in to your account.</p>
+
+        <p v-if="sessions.error" class="alert alert-error mt-4" role="alert">
+          {{ sessions.error }}
+        </p>
+
+        <p v-if="sessions.pending && sessions.sessions.length === 0" class="meta mt-4 text-sm">
+          Loading your sessions…
+        </p>
+
+        <ul v-else class="mt-4 grid gap-4">
+          <li
+            v-for="session in sessions.sessions"
+            :id="`session-${session.id}`"
+            :key="session.id"
+            class="card"
+          >
+            <div class="flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <p class="flex flex-wrap items-center gap-2 font-medium">
+                  {{ describeUserAgent(session.userAgent) }}
+                  <span v-if="session.current" class="badge badge-neutral">This device</span>
+                </p>
+
+                <p class="meta mt-1">
+                  Signed in {{ new Date(session.createdAt).toLocaleString() }}
+                </p>
+
+                <p class="meta mt-0.5">
+                  Expires {{ new Date(session.expiresAt).toLocaleString() }}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                class="btn btn-danger shrink-0"
+                :disabled="sessions.pending"
+                @click="deleteSession(session)"
+              >
+                Delete
+              </button>
+            </div>
+          </li>
+        </ul>
       </div>
 
       <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
