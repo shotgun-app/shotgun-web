@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import StarRating from '@/components/StarRating.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import PasswordInput from '@/components/PasswordInput.vue'
 import PhoneInput from '@/components/PhoneInput.vue'
@@ -212,11 +213,7 @@ async function save() {
               {{ driverScore.toFixed(1) }}
             </span>
 
-            <div class="flex items-center gap-0.5 text-base" aria-label="Driver rating">
-              <span v-for="star in 5" :key="star">
-                {{ star <= Math.round(driverScore) ? '★' : '☆' }}
-              </span>
-            </div>
+            <StarRating :value="driverScore" label="Driver rating" />
           </div>
         </section>
 
@@ -226,11 +223,7 @@ async function save() {
 
           <ul class="mt-4 grid gap-4">
             <li v-for="review in reviews" :key="review.id" class="card">
-              <div class="flex items-center gap-1 text-sm">
-                <span v-for="star in 5" :key="star">
-                  {{ star <= review.rating ? '★' : '☆' }}
-                </span>
-              </div>
+              <StarRating :value="review.rating" label="Rating" :size="16" />
 
               <p v-if="review.comment" class="mt-3 text-sm">
                 {{ review.comment }}
@@ -254,11 +247,7 @@ async function save() {
               {{ passengerScore.toFixed(1) }}
             </span>
 
-            <div class="flex items-center gap-0.5 text-base" aria-label="Passenger rating">
-              <span v-for="star in 5" :key="star">
-                {{ star <= Math.round(passengerScore) ? '★' : '☆' }}
-              </span>
-            </div>
+            <StarRating :value="passengerScore" label="Passenger rating" />
           </div>
         </section>
 
@@ -268,11 +257,7 @@ async function save() {
 
           <ul class="mt-4 grid gap-4">
             <li v-for="review in passengerReviews" :key="review.id" class="card">
-              <div class="flex items-center gap-1 text-sm">
-                <span v-for="star in 5" :key="star">
-                  {{ star <= review.rating ? '★' : '☆' }}
-                </span>
-              </div>
+              <StarRating :value="review.rating" label="Rating" :size="16" />
 
               <p v-if="review.comment" class="mt-3 text-sm">
                 {{ review.comment }}

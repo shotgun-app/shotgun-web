@@ -94,9 +94,30 @@ function nextId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
 }
 
-const MAX_SEATS = 15
+const MAX_SEATS = 8
+const MAX_SMALL_BAGS = 8
+const MAX_LARGE_BAGS = 4
 
-function assertValidRide(payload: RidePayload, minSeats: number): void {
+/** Mirrors the backend's bagsLeftError: a message when `want` exceeds what is left, else null. */
+function bagsError(size: string, want: number, total: number, left: number): string | null {
+  if (want <= left) return null
+  if (total === 0) return `This ride has no space for ${size} bags.`
+  if (left <= 0) return `No ${size} bag space left on this ride.`
+  return `Only ${left} ${size} bag${left === 1 ? '' : 's'} left.`
+}
+
+function assertValidBags(small: number, large: number): void {
+  if (!Number.isInteger(small) || !Number.isInteger(large) || small < 0 || large < 0) {
+    throw new ApiError('Bag counts cannot be negative.', 400)
+  }
+}
+
+function assertValidRide(
+  payload: RidePayload,
+  minSeats: number,
+  minSmallBags = 0,
+  minLargeBags = 0,
+): void {
   if (
     !payload.originCity.trim() ||
     !payload.originCountry.trim() ||
@@ -116,6 +137,27 @@ function assertValidRide(payload: RidePayload, minSeats: number): void {
   }
   if (payload.seatsTotal > MAX_SEATS) {
     throw new ApiError(`Free seats can't be more than ${MAX_SEATS}.`, 400)
+  }
+  const small = payload.smallBagsTotal ?? 0
+  const large = payload.largeBagsTotal ?? 0
+  if (small < 0 || large < 0) throw new ApiError('Bag space cannot be negative.', 400)
+  if (small > MAX_SMALL_BAGS) {
+    throw new ApiError(`Small bag space cannot exceed ${MAX_SMALL_BAGS}.`, 400)
+  }
+  if (large > MAX_LARGE_BAGS) {
+    throw new ApiError(`Large bag space cannot exceed ${MAX_LARGE_BAGS}.`, 400)
+  }
+  if (small < minSmallBags) {
+    throw new ApiError(
+      `Small bag space cannot be less than already booked small bags (${minSmallBags}).`,
+      400,
+    )
+  }
+  if (large < minLargeBags) {
+    throw new ApiError(
+      `Large bag space cannot be less than already booked large bags (${minLargeBags}).`,
+      400,
+    )
   }
 }
 
@@ -272,6 +314,10 @@ export const fakeApi: Api = {
         departureAt: payload.departureAt,
         seatsTotal: payload.seatsTotal,
         seatsBooked: 0,
+        smallBagsTotal: payload.smallBagsTotal ?? 0,
+        smallBagsBooked: 0,
+        largeBagsTotal: payload.largeBagsTotal ?? 0,
+        largeBagsBooked: 0,
         pricePerSeat: payload.pricePerSeat ?? 0,
         currency: payload.currency ?? 'EUR',
         notes: payload.notes ?? '',
@@ -287,7 +333,12 @@ export const fakeApi: Api = {
       if (!trip) {
         throw new ApiError('Ride not found.', 404)
       }
-      assertValidRide(payload, Math.max(1, trip.seatsBooked))
+      assertValidRide(
+        payload,
+        Math.max(1, trip.seatsBooked),
+        trip.smallBagsBooked,
+        trip.largeBagsBooked,
+      )
 
       trip.originCity = payload.originCity.trim()
       trip.originCountry = payload.originCountry.trim()
@@ -295,6 +346,8 @@ export const fakeApi: Api = {
       trip.destinationCountry = payload.destinationCountry.trim()
       trip.departureAt = payload.departureAt
       trip.seatsTotal = payload.seatsTotal
+      trip.smallBagsTotal = payload.smallBagsTotal ?? 0
+      trip.largeBagsTotal = payload.largeBagsTotal ?? 0
       if (payload.pricePerSeat !== undefined) trip.pricePerSeat = payload.pricePerSeat
       if (payload.currency) trip.currency = payload.currency
       if (payload.notes !== undefined) trip.notes = payload.notes
@@ -354,6 +407,9 @@ export const fakeApi: Api = {
       if (!Number.isInteger(payload.seats) || payload.seats < 1) {
         throw new ApiError('You must book at least 1 seat.', 400)
       }
+      const small = payload.smallBags ?? 0
+      const large = payload.largeBags ?? 0
+      assertValidBags(small, large)
       const freeSeats = trip.seatsTotal - trip.seatsBooked
       if (payload.seats > freeSeats) {
         throw new ApiError(
@@ -368,17 +424,30 @@ export const fakeApi: Api = {
         (b) => b.tripId === tripId && b.passengerId === account.user.id && b.status === 'confirmed',
       )
       if (existing) throw new ApiError('You already have a booking on this trip.', 409)
+      const bagsProblem =
+        bagsError(
+          'small',
+          small,
+          trip.smallBagsTotal,
+          trip.smallBagsTotal - trip.smallBagsBooked,
+        ) ??
+        bagsError('large', large, trip.largeBagsTotal, trip.largeBagsTotal - trip.largeBagsBooked)
+      if (bagsProblem) throw new ApiError(bagsProblem, 409)
 
       const booking: Booking = {
         id: nextId('bkg'),
         tripId,
         passengerId: account.user.id,
         seats: payload.seats,
+        smallBags: small,
+        largeBags: large,
         status: 'confirmed',
         createdAt: new Date().toISOString(),
       }
       bookings.push(booking)
       trip.seatsBooked += payload.seats
+      trip.smallBagsBooked += small
+      trip.largeBagsBooked += large
       return { ...booking }
     },
 
@@ -397,8 +466,30 @@ export const fakeApi: Api = {
       if (payload.seats > freeSeats) {
         throw new ApiError(`Only ${freeSeats} seat${freeSeats === 1 ? '' : 's'} available.`, 409)
       }
+      // Omitted bag counts keep what is booked, like the backend's PATCH
+      const small = payload.smallBags ?? booking.smallBags
+      const large = payload.largeBags ?? booking.largeBags
+      assertValidBags(small, large)
+      const bagsProblem =
+        bagsError(
+          'small',
+          small,
+          trip.smallBagsTotal,
+          trip.smallBagsTotal - trip.smallBagsBooked + booking.smallBags,
+        ) ??
+        bagsError(
+          'large',
+          large,
+          trip.largeBagsTotal,
+          trip.largeBagsTotal - trip.largeBagsBooked + booking.largeBags,
+        )
+      if (bagsProblem) throw new ApiError(bagsProblem, 409)
       trip.seatsBooked += payload.seats - booking.seats
+      trip.smallBagsBooked += small - booking.smallBags
+      trip.largeBagsBooked += large - booking.largeBags
       booking.seats = payload.seats
+      booking.smallBags = small
+      booking.largeBags = large
       return { ...booking }
     },
 
@@ -409,7 +500,11 @@ export const fakeApi: Api = {
       )
       if (!booking) throw new ApiError('Booking not found.', 404)
       const trip = trips.find((t) => t.id === booking.tripId)
-      if (trip) trip.seatsBooked = Math.max(0, trip.seatsBooked - booking.seats)
+      if (trip) {
+        trip.seatsBooked = Math.max(0, trip.seatsBooked - booking.seats)
+        trip.smallBagsBooked = Math.max(0, trip.smallBagsBooked - booking.smallBags)
+        trip.largeBagsBooked = Math.max(0, trip.largeBagsBooked - booking.largeBags)
+      }
       booking.status = 'cancelled'
     },
   },

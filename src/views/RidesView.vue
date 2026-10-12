@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
+import { PhCaretDown } from '@phosphor-icons/vue'
+import ReviewDialog from '@/components/ReviewDialog.vue'
 import SeatStepper from '@/components/SeatStepper.vue'
+import StarRating from '@/components/StarRating.vue'
 import RouteLine from '@/components/RouteLine.vue'
 import UserList from '@/components/UserList.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { formatDeparture } from '@/utils/format'
+import { LARGE_BAG_HINT, SMALL_BAG_HINT, largeBagsLeft, smallBagsLeft } from '@/utils/baggage'
 import { EUROPEAN_LOCATIONS, getTodayDateString } from '@/utils/locations'
 import { useRidesStore } from '@/stores/rides'
 import type { PublicUser, RidePayload, TripWithPassengers } from '@/types'
@@ -17,7 +21,9 @@ onMounted(() => {
 })
 
 const countries = Object.keys(EUROPEAN_LOCATIONS)
-const MAX_SEATS = 15
+const MAX_SEATS = 8
+const MAX_SMALL_BAGS = 8
+const MAX_LARGE_BAGS = 4
 
 // ── Form state: 'create', an existing ride's id, or null (closed) ──────────
 const formTarget = ref<'create' | string | null>(null)
@@ -31,6 +37,8 @@ const form = reactive({
   date: getTodayDateString(),
   time: '09:00',
   seatsTotal: 1,
+  smallBagsTotal: 0,
+  largeBagsTotal: 0,
 })
 
 const fromCities = computed<string[]>(() =>
@@ -63,6 +71,10 @@ const minSeats = computed(() =>
   editingRide.value ? Math.max(1, editingRide.value.seatsBooked) : 1,
 )
 
+/** Bag space can't drop below what's already booked either. */
+const minSmallBags = computed(() => editingRide.value?.smallBagsBooked ?? 0)
+const minLargeBags = computed(() => editingRide.value?.largeBagsBooked ?? 0)
+
 function resetForm() {
   form.fromCountry = ''
   form.fromCity = ''
@@ -71,6 +83,8 @@ function resetForm() {
   form.date = getTodayDateString()
   form.time = '09:00'
   form.seatsTotal = 1
+  form.smallBagsTotal = 0
+  form.largeBagsTotal = 0
   formError.value = null
 }
 
@@ -88,6 +102,8 @@ function openEdit(ride: TripWithPassengers) {
   form.date = ride.departureAt.slice(0, 10)
   form.time = ride.departureAt.slice(11, 16)
   form.seatsTotal = ride.seatsTotal
+  form.smallBagsTotal = ride.smallBagsTotal
+  form.largeBagsTotal = ride.largeBagsTotal
   formTarget.value = ride.id
 }
 
@@ -121,6 +137,23 @@ async function submitForm() {
     formError.value = `Free seats can't be more than ${MAX_SEATS}.`
     return
   }
+  if (
+    !Number.isInteger(form.smallBagsTotal) ||
+    !Number.isInteger(form.largeBagsTotal) ||
+    form.smallBagsTotal < minSmallBags.value ||
+    form.largeBagsTotal < minLargeBags.value
+  ) {
+    formError.value = "Bag space can't be less than the bags already booked."
+    return
+  }
+  if (form.smallBagsTotal > MAX_SMALL_BAGS) {
+    formError.value = `Small bag space can't be more than ${MAX_SMALL_BAGS}.`
+    return
+  }
+  if (form.largeBagsTotal > MAX_LARGE_BAGS) {
+    formError.value = `Large bag space can't be more than ${MAX_LARGE_BAGS}.`
+    return
+  }
 
   const payload: RidePayload = {
     originCity: form.fromCity,
@@ -129,6 +162,8 @@ async function submitForm() {
     destinationCountry: form.toCountry,
     departureAt: `${form.date}T${form.time}:00Z`,
     seatsTotal: form.seatsTotal,
+    smallBagsTotal: form.smallBagsTotal,
+    largeBagsTotal: form.largeBagsTotal,
     pricePerSeat: 0,
   }
 
@@ -178,27 +213,24 @@ const completedOpen = ref(false)
 // ── Review state ───────────────────────────────────────────────────────────
 const reviewingRide = ref<TripWithPassengers | null>(null)
 const reviewingPassenger = ref<PublicUser | null>(null)
-const reviewRating = ref(0)
-const reviewComment = ref('')
 const reviewSubmitting = ref(false)
 const reviewError = ref<string | null>(null)
 
 function openReview(ride: TripWithPassengers, passenger: PublicUser) {
   reviewingRide.value = ride
   reviewingPassenger.value = passenger
-  reviewRating.value = 0
-  reviewComment.value = ''
   reviewError.value = null
 }
 
 function closeReview() {
+  if (reviewSubmitting.value) return
   reviewingRide.value = null
   reviewingPassenger.value = null
   reviewError.value = null
 }
 
-async function submitReview() {
-  if (!reviewingRide.value || !reviewingPassenger.value || reviewRating.value === 0) return
+async function submitReview(review: { rating: number; comment: string }) {
+  if (!reviewingRide.value || !reviewingPassenger.value) return
 
   reviewSubmitting.value = true
   reviewError.value = null
@@ -206,8 +238,7 @@ async function submitReview() {
   const success = await rides.reviewPassenger({
     rideId: reviewingRide.value.id,
     targetId: reviewingPassenger.value.id,
-    rating: reviewRating.value,
-    comment: reviewComment.value.trim(),
+    ...review,
   })
 
   reviewSubmitting.value = false
@@ -298,7 +329,7 @@ async function submitReview() {
           <span>Hour</span>
           <input id="ride-form-time" v-model="form.time" type="time" required />
         </label>
-        <div class="field">
+        <div class="field sm:col-span-2">
           <span>Free seats</span>
           <SeatStepper
             id="ride-form-seats"
@@ -307,6 +338,28 @@ async function submitReview() {
             :min="minSeats"
             :max="MAX_SEATS"
           />
+        </div>
+        <div class="field">
+          <span>Small bags</span>
+          <SeatStepper
+            id="ride-form-small-bags"
+            v-model="form.smallBagsTotal"
+            label="Small bags"
+            :min="minSmallBags"
+            :max="MAX_SMALL_BAGS"
+          />
+          <p class="meta">{{ SMALL_BAG_HINT }}</p>
+        </div>
+        <div class="field">
+          <span>Large bags</span>
+          <SeatStepper
+            id="ride-form-large-bags"
+            v-model="form.largeBagsTotal"
+            label="Large bags"
+            :min="minLargeBags"
+            :max="MAX_LARGE_BAGS"
+          />
+          <p class="meta">{{ LARGE_BAG_HINT }}</p>
         </div>
       </div>
 
@@ -355,6 +408,10 @@ async function submitReview() {
               <p class="meta mt-1">
                 Departing {{ formatDeparture(ride.departureAt) }} · {{ seatsLeft(ride) }} of
                 {{ ride.seatsTotal }} seats free
+              </p>
+              <p :id="`ride-bags-${ride.id}`" class="meta mt-0.5">
+                Bags free: {{ smallBagsLeft(ride) }} of {{ ride.smallBagsTotal }} small,
+                {{ largeBagsLeft(ride) }} of {{ ride.largeBagsTotal }} large
               </p>
             </div>
 
@@ -416,15 +473,21 @@ async function submitReview() {
       <section v-if="completedRides.length > 0" class="mt-10">
         <button
           type="button"
-          class="flex w-full items-center justify-between rounded-lg bg-surface px-4 py-3 text-left shadow-sm hover:bg-surface-hover dark:bg-night-surface dark:hover:bg-night-surface-hover"
+          class="disclosure"
           :aria-expanded="completedOpen"
           @click="completedOpen = !completedOpen"
         >
-          <span class="section-title">Completed rides</span>
-
-          <span class="font-medium text-brand-600 dark:text-brand-400">
-            {{ completedOpen ? 'Hide ▲' : 'Show ▼' }}
+          <span class="section-title flex items-center gap-2.5">
+            Completed rides
+            <span class="badge badge-neutral">{{ completedRides.length }}</span>
           </span>
+
+          <PhCaretDown
+            :size="18"
+            aria-hidden="true"
+            class="text-ink-soft transition-transform duration-200 dark:text-night-ink-soft"
+            :class="{ 'rotate-180': completedOpen }"
+          />
         </button>
 
         <ul v-if="completedOpen" class="mt-4 grid gap-4">
@@ -476,15 +539,12 @@ async function submitReview() {
                           Rate
                         </button>
                       </div>
-                      <div
+                      <StarRating
                         v-else
-                        class="flex items-center gap-1 text-brand-600 dark:text-brand-400"
-                        aria-label="Your rating"
-                      >
-                        <span v-for="star in 5" :key="star">
-                          {{ star <= passenger.reviewRating ? '★' : '☆' }}
-                        </span>
-                      </div>
+                        :value="passenger.reviewRating"
+                        label="Your rating"
+                        :size="16"
+                      />
                     </li>
                   </ul>
                 </dd>
@@ -495,97 +555,16 @@ async function submitReview() {
       </section>
     </template>
 
-    <!-- ── Review modal ───────────────────────────────────────────────── -->
-    <Teleport to="body">
-      <div
-        v-if="reviewingRide && reviewingPassenger"
-        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="review-modal-title"
-      >
-        <div class="card w-full max-w-md">
-          <!-- Modal header -->
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <h2 id="review-modal-title" class="section-title">Rate passenger</h2>
-              <p class="meta mt-1">
-                {{ reviewingPassenger.name }}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              class="btn btn-ghost"
-              aria-label="Close review"
-              :disabled="reviewSubmitting"
-              @click="closeReview"
-            >
-              ×
-            </button>
-          </div>
-
-          <!-- Stars -->
-          <div class="mt-6">
-            <p class="meta mb-2">Rating</p>
-
-            <div class="flex gap-2" role="radiogroup" aria-label="Rating">
-              <button
-                v-for="star in 5"
-                :key="star"
-                type="button"
-                :aria-label="`${star} star${star === 1 ? '' : 's'}`"
-                :aria-checked="reviewRating === star"
-                role="radio"
-                class="text-3xl"
-                :disabled="reviewSubmitting"
-                @click="reviewRating = star"
-              >
-                {{ star <= reviewRating ? '★' : '☆' }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Comment -->
-          <label class="field mt-6">
-            <span>Review</span>
-
-            <textarea
-              v-model="reviewComment"
-              rows="4"
-              maxlength="500"
-              placeholder="How was the ride with them?"
-              :disabled="reviewSubmitting"
-            ></textarea>
-          </label>
-
-          <!-- Review error -->
-          <p v-if="reviewError" class="alert alert-error mt-4" role="alert">
-            {{ reviewError }}
-          </p>
-
-          <!-- Modal actions -->
-          <div class="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              class="btn btn-ghost"
-              :disabled="reviewSubmitting"
-              @click="closeReview"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              class="btn btn-primary"
-              :disabled="reviewRating === 0 || reviewSubmitting"
-              @click="submitReview"
-            >
-              {{ reviewSubmitting ? 'Submitting…' : 'Submit review' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <!-- ── Review dialog ──────────────────────────────────────────────── -->
+    <ReviewDialog
+      v-if="reviewingRide && reviewingPassenger"
+      title="Rate passenger"
+      :name="reviewingPassenger.name"
+      placeholder="How was the ride with them?"
+      :submitting="reviewSubmitting"
+      :error="reviewError"
+      @submit="submitReview"
+      @close="closeReview"
+    />
   </section>
 </template>

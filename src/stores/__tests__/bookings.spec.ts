@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { resetFakeApi } from '@/test/fakeApi'
+import { getFakeTrips, resetFakeApi } from '@/test/fakeApi'
 import { useAuthStore } from '../auth'
 import { useBookingsStore } from '../bookings'
 import { api } from '@/services/api'
@@ -59,6 +59,42 @@ describe('bookings store', () => {
     const cancelled = await bookings.cancel(b!.id)
     expect(cancelled).toBe(true)
     expect(bookings.bookings.length).toBe(0)
+  })
+
+  it('keeps small and large bags within the ride capacity, sized separately', async () => {
+    const auth = useAuthStore()
+    const bookings = useBookingsStore()
+
+    await api.auth.login({ email: 'ben@shotgun.app', password: 'password123' })
+    const trip = await api.trips.create({
+      originCity: 'Ljubljana',
+      originCountry: 'Slovenia',
+      destinationCity: 'Zagreb',
+      destinationCountry: 'Croatia',
+      departureAt: '2027-05-01T08:00:00Z',
+      seatsTotal: 3,
+      smallBagsTotal: 2,
+      largeBagsTotal: 1,
+      pricePerSeat: 0,
+    })
+    await api.auth.login({ email: 'clara@shotgun.app', password: 'password123' })
+    await api.bookings.create(trip.id, { seats: 1, smallBags: 1, largeBags: 1 })
+
+    await auth.login(DEMO_CREDENTIALS)
+    expect(await bookings.create(trip.id, { seats: 1, largeBags: 1 })).toBeNull()
+    expect(bookings.error).toMatch(/no large bag space left/i)
+    expect(await bookings.create(trip.id, { seats: 1, smallBags: 2 })).toBeNull()
+    expect(bookings.error).toBe('Only 1 small bag left.')
+
+    const booking = await bookings.create(trip.id, { seats: 1, smallBags: 1 })
+    expect(booking).toMatchObject({ smallBags: 1, largeBags: 0 })
+    expect(getFakeTrips()[0]).toMatchObject({ smallBagsBooked: 2, largeBagsBooked: 1 })
+
+    // A seats-only update keeps the bags, and cancelling frees them
+    await bookings.update(booking!.id, { seats: 2 })
+    expect(bookings.bookings[0]).toMatchObject({ seats: 2, smallBags: 1 })
+    await bookings.cancel(booking!.id)
+    expect(getFakeTrips()[0]).toMatchObject({ smallBagsBooked: 1, largeBagsBooked: 1 })
   })
 
   it('lists the driver and passengers of each booked trip', async () => {
