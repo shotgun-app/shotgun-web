@@ -409,6 +409,35 @@ describe('ProfileView phone and password', () => {
     expect(await auth.login({ email: DEMO_CREDENTIALS.email, password: 'brandnew456' })).toBe(true)
   })
 
+  it('lists sessions and deletes another device', async () => {
+    // A second login is a second device, and this browser is now the newest session
+    await useAuthStore().login(DEMO_CREDENTIALS)
+    const wrapper = await mountProfile(router)
+    await flushPromises()
+
+    const cards = wrapper.findAll('[id^="session-"]')
+    expect(cards).toHaveLength(2)
+    expect(cards[0]!.text()).toContain('This device')
+    expect(cards[1]!.text()).not.toContain('This device')
+
+    await cards[1]!.get('button').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.findAll('[id^="session-"]')).toHaveLength(1)
+    expect(useAuthStore().user).not.toBeNull()
+  })
+
+  it('signs out to the landing page when the current session is deleted', async () => {
+    const wrapper = await mountProfile(router)
+    await flushPromises()
+
+    await wrapper.get('[id^="session-"] button').trigger('click')
+    await flushPromises()
+
+    expect(useAuthStore().user).toBeNull()
+    expect(router.currentRoute.value.name).toBe('landing')
+  })
+
   it('rejects mismatched confirmation and a wrong current password', async () => {
     const wrapper = await mountProfile(router)
     await wrapper.get('#profile-password-btn').trigger('click')

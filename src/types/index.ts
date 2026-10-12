@@ -151,6 +151,17 @@ export interface ResetPasswordPayload {
   password: string
 }
 
+/** One signed-in device of the user. */
+export interface Session {
+  id: string
+  /** Raw User-Agent from login or register; '' for sessions created before it was stored. */
+  userAgent: string
+  createdAt: string
+  expiresAt: string
+  /** The session this browser is using. */
+  current: boolean
+}
+
 /** Fields a driver sends when creating or editing a ride. Mirrors the Go backend's `rideRequest`. */
 export interface RidePayload {
   originCity: string

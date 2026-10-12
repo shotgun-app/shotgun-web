@@ -23,6 +23,7 @@ import {
   type User,
   type Review,
   type ReviewPayload,
+  type Session,
   type UserProfile,
 } from '@/types'
 import type { Api } from '@/services/api'
@@ -33,6 +34,9 @@ let bookings: Booking[] = []
 let trips: Trip[] = []
 let reviews: Review[] = []
 let currentUserId: string | null = null
+/** Every login or register adds a session, like the backend; the newest is this browser's. */
+let sessions: { userId: string; session: Omit<Session, 'current'> }[] = []
+let currentSessionId: string | null = null
 /** Reset token -> email, filled by requestPasswordReset like the emailed link. */
 let resetTokens = new Map<string, string>()
 
@@ -42,6 +46,8 @@ export function resetFakeApi(): void {
   trips = []
   reviews = []
   currentUserId = null
+  sessions = []
+  currentSessionId = null
   resetTokens = new Map()
 }
 resetFakeApi()
@@ -64,6 +70,19 @@ function requireAccount(): MockAccount {
   const account = currentUserId && accounts.find((a) => a.user.id === currentUserId)
   if (!account) throw new ApiError('Not signed in.', 401)
   return account
+}
+
+function startSession(userId: string): void {
+  const now = new Date()
+  const session = {
+    id: nextId('ses'),
+    userAgent: navigator.userAgent,
+    createdAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+  }
+  sessions.unshift({ userId, session })
+  currentUserId = userId
+  currentSessionId = session.id
 }
 
 function publicUserOf(userId: string): PublicUser | undefined {
@@ -168,7 +187,7 @@ export const fakeApi: Api = {
       if (!account || account.password !== password) {
         throw new ApiError('Wrong email or password.', 401)
       }
-      currentUserId = account.user.id
+      startSession(account.user.id)
       return { ...account.user }
     },
 
@@ -184,12 +203,14 @@ export const fakeApi: Api = {
         joinedAt: new Date().toISOString(),
       }
       accounts.push({ password, user })
-      currentUserId = user.id
+      startSession(user.id)
       return { ...user }
     },
 
     async logout(): Promise<void> {
+      sessions = sessions.filter((s) => s.session.id !== currentSessionId)
       currentUserId = null
+      currentSessionId = null
     },
 
     async me(): Promise<User> {
@@ -248,6 +269,24 @@ export const fakeApi: Api = {
       const account = requireAccount()
       accounts = accounts.filter((a) => a !== account)
       currentUserId = null
+    },
+
+    async listSessions(): Promise<Session[]> {
+      const account = requireAccount()
+      return sessions
+        .filter((s) => s.userId === account.user.id)
+        .map(({ session }) => ({ ...session, current: session.id === currentSessionId }))
+    },
+
+    async deleteSession(sessionId: string): Promise<void> {
+      const account = requireAccount()
+      const found = sessions.find((s) => s.userId === account.user.id && s.session.id === sessionId)
+      if (!found) throw new ApiError('Session not found.', 404)
+      sessions = sessions.filter((s) => s !== found)
+      if (sessionId === currentSessionId) {
+        currentUserId = null
+        currentSessionId = null
+      }
     },
   },
 

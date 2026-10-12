@@ -14,6 +14,7 @@ import {
   type RidePayload,
   type Review,
   type ReviewPayload,
+  type Session,
   type TripSearchParams,
   type TripWithDriver,
   type TripWithPassengers,
@@ -90,6 +91,12 @@ export const httpApi: Api = {
       request<void>('/auth/reset-password', { method: 'POST', body: JSON.stringify(payload) }),
 
     deleteAccount: () => request<void>('/auth/me', { method: 'DELETE' }),
+
+    listSessions: async () =>
+      (await request<{ sessions: Session[] }>('/auth/me/sessions')).sessions,
+
+    deleteSession: (sessionId: string) =>
+      request<void>(`/auth/me/sessions/${sessionId}`, { method: 'DELETE' }),
   },
 
   trips: {
