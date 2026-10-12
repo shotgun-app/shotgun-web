@@ -101,10 +101,11 @@ component belong here; something used once stays inline.
 | `.alert` + `.alert-error` / `.alert-success`                     | inline message. Errors use `role="alert"`.                                                                  |
 | `.badge` + `.badge-neutral` / `.badge-success` / `.badge-danger` | small status pill (rating, seats left)                                                                      |
 | `.page-title`, `.page-lead`, `.section-title`, `.meta`           | typography, see above                                                                                       |
+| `.disclosure`                                                    | full-width toggle for a collapsed list, with a count badge and a rotating `PhCaretDown`                     |
 | `.rise`                                                          | the single motion primitive (see below)                                                                     |
 
 Disabled controls (`:disabled` on `.input` / `.field` inputs and selects) are flat, dashed,
-dimmed and show a not-allowed cursor. Disabled buttons dim to 60% and show a progress cursor.
+dimmed and show a not-allowed cursor. Disabled buttons dim to 60% and show the same not-allowed cursor.
 
 ## Components
 
@@ -120,6 +121,11 @@ dimmed and show a not-allowed cursor. Disabled buttons dim to 60% and show a pro
 - `SeatStepper` - minus / number / plus for seat counts (trip booking, booking edit, free
   seats on a ride). Buttons clamp to `min`/`max`; typing still works so forms can report errors.
   Wrap it in `div.field`, not `label.field` (a label would trigger the first button).
+  It has a fixed control height and never stretches with a taller grid neighbour. Put hint
+  text in a `p.meta` below it, not a `span` (`.field > span` is label styling). Bag counts
+  (small, large) sit side by side in their own row, below seats.
+- `ReviewDialog` - modal for rating a driver or passenger: Phosphor star radios (hover preview,
+  label), optional comment with counter, Esc and Cancel close it. Used by My rides and My bookings.
 - `ThemeToggle` - borderless, transparent icon button (moon in light, sun in dark).
 - `TripCard`, `TripSearch` - built only from the shared classes above.
 - `src/utils/format.ts` - `formatDeparture` (the one date format) and `initialsOf`.

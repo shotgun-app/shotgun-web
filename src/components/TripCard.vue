@@ -7,12 +7,20 @@
  * 2. computed(): Creating lightweight derived state (e.g. available seats, formatted dates).
  */
 import { computed, ref } from 'vue'
+import { PhStar } from '@phosphor-icons/vue'
 import type { TripWithDriver } from '@/types'
 import { useBookingsStore } from '@/stores/bookings'
 import SeatStepper from '@/components/SeatStepper.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import RouteLine from '@/components/RouteLine.vue'
 import { formatDeparture } from '@/utils/format'
+import {
+  LARGE_BAG_HINT,
+  SMALL_BAG_HINT,
+  bagSpaceLabel,
+  largeBagsLeft,
+  smallBagsLeft,
+} from '@/utils/baggage'
 
 // defineProps: compiler macro (no need to import it).
 // It defines what data this child component expects from its parent.
@@ -30,6 +38,8 @@ const bookingsStore = useBookingsStore()
 /** null = collapsed, 'form' = seat picker, 'done' = success confirmation */
 const bookingState = ref<null | 'form' | 'done'>(null)
 const seatCount = ref(1)
+const smallBagCount = ref(0)
+const largeBagCount = ref(0)
 const bookingError = ref<string | null>(null)
 
 // Computed property: automatically updates if props.trip changes
@@ -42,10 +52,16 @@ const seatsLabel = computed(() =>
     : 'Fully booked',
 )
 
+const smallLeft = computed(() => smallBagsLeft(props.trip))
+const largeLeft = computed(() => largeBagsLeft(props.trip))
+const bagSpace = computed(() => bagSpaceLabel(props.trip))
+
 const formattedDate = computed(() => formatDeparture(props.trip.departureAt))
 
 function openBooking() {
   seatCount.value = 1
+  smallBagCount.value = 0
+  largeBagCount.value = 0
   bookingError.value = null
   bookingState.value = 'form'
 }
@@ -57,7 +73,11 @@ function closeBooking() {
 
 async function submitBooking() {
   bookingError.value = null
-  const result = await bookingsStore.create(props.trip.id, { seats: seatCount.value })
+  const result = await bookingsStore.create(props.trip.id, {
+    seats: seatCount.value,
+    smallBags: smallBagCount.value,
+    largeBags: largeBagCount.value,
+  })
   if (result) {
     bookingState.value = 'done'
     emit('booked')
@@ -82,7 +102,8 @@ async function submitBooking() {
           <div class="flex items-center gap-2">
             <h3 class="font-medium text-ink dark:text-night-ink">{{ trip.driver.name }}</h3>
             <span v-if="(trip.driver.rating ?? 0) > 0" class="badge badge-neutral">
-              ★ {{ (trip.driver.rating ?? 0).toFixed(1) }}
+              <PhStar :size="12" weight="fill" aria-hidden="true" />
+              {{ (trip.driver.rating ?? 0).toFixed(1) }}
               <span class="text-[0.6875rem]">({{ trip.driver.ratingCount }})</span>
             </span>
           </div>
@@ -100,6 +121,13 @@ async function submitBooking() {
 
         <span class="badge" :class="seatsLeft > 0 ? 'badge-success' : 'badge-danger'">
           {{ seatsLabel }}
+        </span>
+        <span
+          :id="`trip-card-bags-${trip.id}`"
+          class="badge mt-1"
+          :class="bagSpace.full ? 'badge-neutral' : 'badge-success'"
+        >
+          {{ bagSpace.text }}
         </span>
       </div>
     </div>
@@ -142,6 +170,38 @@ async function submitBooking() {
                 :max="seatsLeft"
               />
               <span class="meta">of {{ seatsLeft }} available</span>
+            </div>
+          </div>
+
+          <div v-if="smallLeft > 0 || largeLeft > 0" class="grid gap-3 sm:grid-cols-2">
+            <div v-if="smallLeft > 0" class="field">
+              <span>Small bags</span>
+              <div class="flex items-center gap-3">
+                <SeatStepper
+                  id="trip-card-small-bags-input"
+                  v-model="smallBagCount"
+                  label="Small bags"
+                  :min="0"
+                  :max="smallLeft"
+                />
+                <span class="meta">{{ smallLeft }} available</span>
+              </div>
+              <p class="meta">{{ SMALL_BAG_HINT }}</p>
+            </div>
+
+            <div v-if="largeLeft > 0" class="field">
+              <span>Large bags</span>
+              <div class="flex items-center gap-3">
+                <SeatStepper
+                  id="trip-card-large-bags-input"
+                  v-model="largeBagCount"
+                  label="Large bags"
+                  :min="0"
+                  :max="largeLeft"
+                />
+                <span class="meta">{{ largeLeft }} available</span>
+              </div>
+              <p class="meta">{{ LARGE_BAG_HINT }}</p>
             </div>
           </div>
 

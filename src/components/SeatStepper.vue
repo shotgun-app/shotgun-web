@@ -22,7 +22,7 @@ function step(by: number) {
 </script>
 
 <template>
-  <div class="flex items-stretch gap-2">
+  <div class="flex items-center gap-2 self-start">
     <button
       type="button"
       class="btn btn-ghost size-10.5 shrink-0 p-0"
@@ -37,7 +37,7 @@ function step(by: number) {
       v-model.number="model"
       type="number"
       inputmode="numeric"
-      class="input w-16 min-w-0 text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+      class="input h-10.5 w-16 min-w-0 text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       :aria-label="label"
       :min="min ?? 1"
       :max="max"
