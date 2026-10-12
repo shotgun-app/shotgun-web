@@ -14,6 +14,7 @@ import type {
   RidePayload,
   Review,
   ReviewPayload,
+  Session,
   TripSearchParams,
   TripWithDriver,
   TripWithPassengers,
@@ -41,6 +42,10 @@ export interface AuthApi {
   resetPassword(payload: ResetPasswordPayload): Promise<void>
   /** Permanently removes the account. The caller is responsible for clearing the session. */
   deleteAccount(): Promise<void>
+  /** The user's unexpired sessions, newest first. */
+  listSessions(): Promise<Session[]>
+  /** Ends one session, or throws ApiError(404). Ending the current one signs this browser out. */
+  deleteSession(sessionId: string): Promise<void>
 }
 
 export interface TripsApi {
