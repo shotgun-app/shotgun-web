@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -23,9 +22,7 @@ const selectedBrand = ref('')
 const carSuccess = ref<string | null>(null)
 
 const carBrands = computed(() =>
-  [...new Set(carsStore.cars.map((car) => car.brand))].sort((a, b) =>
-    a.localeCompare(b),
-  ),
+  [...new Set(carsStore.cars.map((car) => car.brand))].sort((a, b) => a.localeCompare(b)),
 )
 
 const filteredModels = computed(() =>
@@ -44,9 +41,7 @@ const canSaveCar = computed(() => {
   }
 
   const car = carsStore.cars.find(
-    (item) =>
-      item.id === selectedCarId.value &&
-      item.brand === selectedBrand.value,
+    (item) => item.id === selectedCarId.value && item.brand === selectedBrand.value,
   )
 
   if (!car) {
@@ -97,9 +92,7 @@ async function saveCar() {
   }
 
   const car = carsStore.cars.find(
-    (item) =>
-      item.id === selectedCarId.value &&
-      item.brand === selectedBrand.value,
+    (item) => item.id === selectedCarId.value && item.brand === selectedBrand.value,
   )
 
   if (!car) {
@@ -344,11 +337,7 @@ async function save() {
               required
             >
               <option value="" disabled>Select a brand</option>
-              <option
-                v-for="brand in carBrands"
-                :key="brand"
-                :value="brand"
-              >
+              <option v-for="brand in carBrands" :key="brand" :value="brand">
                 {{ brand }}
               </option>
             </select>
@@ -364,11 +353,7 @@ async function save() {
               required
             >
               <option value="" disabled>Select a model</option>
-              <option
-                v-for="car in filteredModels"
-                :key="car.id"
-                :value="car.id"
-              >
+              <option v-for="car in filteredModels" :key="car.id" :value="car.id">
                 {{ car.model }}
               </option>
             </select>
@@ -395,20 +380,14 @@ async function save() {
               aria-hidden="true"
             />
             <div>
-              <p class="font-medium">
-                {{ selectedCar.co2 }} g CO₂/km
-              </p>
+              <p class="font-medium">{{ selectedCar.co2 }} g CO₂/km</p>
               <p class="meta mt-1">
                 Estimated emissions for {{ selectedCar.brand }} {{ selectedCar.model }}.
               </p>
             </div>
           </div>
 
-          <p
-            v-if="carSuccess"
-            class="alert alert-success"
-            role="status"
-          >
+          <p v-if="carSuccess" class="alert alert-success" role="status">
             {{ carSuccess }}
           </p>
 
@@ -424,10 +403,7 @@ async function save() {
           </div>
         </form>
 
-        <p
-          v-else-if="!carsStore.pending && !carsStore.error"
-          class="empty mt-4"
-        >
+        <p v-else-if="!carsStore.pending && !carsStore.error" class="empty mt-4">
           No cars are available right now.
         </p>
       </section>

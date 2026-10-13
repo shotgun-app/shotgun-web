@@ -57,13 +57,11 @@ describe('ProfileView', () => {
     await flushPromises()
 
     // Select Zoe.
-    const modelSelect = wrapper.get<HTMLSelectElement>(
-      '#profile-car-model',
-    )
+    const modelSelect = wrapper.get<HTMLSelectElement>('#profile-car-model')
 
-    const zoeOption = Array.from(
-      modelSelect.element.options,
-    ).find((option) => option.value === 'car_3')
+    const zoeOption = Array.from(modelSelect.element.options).find(
+      (option) => option.value === 'car_3',
+    )
 
     expect(zoeOption).toBeDefined()
 
@@ -76,9 +74,6 @@ describe('ProfileView', () => {
     expect(wrapper.text()).toContain('0 g CO₂/km')
     expect(wrapper.text()).toContain('Your car has been saved.')
   })
-
-
-
 
   it('shows name, email and member-since in view mode', async () => {
     const wrapper = await mountProfile(router)
