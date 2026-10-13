@@ -1,5 +1,5 @@
 /** Seed data for the test-only fake API (src/test/fakeApi.ts). Not part of the app bundle. */
-import type { User } from '@/types'
+import type { Car, User } from '@/types'
 
 /** Passwords are plain text on purpose: test double only. */
 export interface MockAccount {
@@ -64,6 +64,16 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
       co2SavedKg: 88.6,
     },
   },
+]
+
+/** A small catalogue for specs, sorted by brand and model like the real API. */
+export const MOCK_CARS: Car[] = [
+  { id: 'car_1', brand: 'Ford', model: 'Ranger 2.0 EcoBlue', co2: 237 },
+  { id: 'car_2', brand: 'Kia', model: 'Niro Plug-in Hybrid', co2: 29 },
+  { id: 'car_3', brand: 'Renault', model: 'Zoe', co2: 0 },
+  { id: 'car_4', brand: 'Tesla', model: 'Model 3', co2: 0 },
+  { id: 'car_5', brand: 'Toyota', model: 'Prius', co2: 82 },
+  { id: 'car_6', brand: 'Volkswagen', model: 'Golf 1.5 TSI', co2: 128 },
 ]
 
 /** Seeded account most specs log in as. */

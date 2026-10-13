@@ -10,6 +10,7 @@ import {
   type ChangePasswordPayload,
   type BookingPayload,
   type BookingWithTrip,
+  type Car,
   type Credentials,
   type PublicUser,
   type RegisterPayload,
@@ -27,7 +28,7 @@ import {
   type UserProfile,
 } from '@/types'
 import type { Api } from '@/services/api'
-import { MOCK_ACCOUNTS, type MockAccount } from './seed'
+import { MOCK_ACCOUNTS, MOCK_CARS, type MockAccount } from './seed'
 
 let accounts: MockAccount[] = []
 let bookings: Booking[] = []
@@ -287,6 +288,18 @@ export const fakeApi: Api = {
         currentUserId = null
         currentSessionId = null
       }
+    },
+
+    async setCar(carId: string | null): Promise<User> {
+      const account = requireAccount()
+      if (carId === null) {
+        account.user.car = null
+        return { ...account.user }
+      }
+      const car = MOCK_CARS.find((c) => c.id === carId)
+      if (!car) throw new ApiError('Car not found.', 404)
+      account.user.car = { ...car }
+      return { ...account.user }
     },
   },
 
@@ -656,6 +669,13 @@ export const fakeApi: Api = {
         reviews: driverReviews.map((review) => ({ ...review })),
         passengerReviews: passengerReviews.map((review) => ({ ...review })),
       }
+    },
+  },
+
+  cars: {
+    async list(): Promise<Car[]> {
+      requireAccount()
+      return MOCK_CARS.map((car) => ({ ...car }))
     },
   },
 }
