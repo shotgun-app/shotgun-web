@@ -8,6 +8,7 @@ import type {
   ChangePasswordPayload,
   BookingPayload,
   BookingWithTrip,
+  Car,
   Credentials,
   RegisterPayload,
   ResetPasswordPayload,
@@ -46,6 +47,8 @@ export interface AuthApi {
   listSessions(): Promise<Session[]>
   /** Ends one session, or throws ApiError(404). Ending the current one signs this browser out. */
   deleteSession(sessionId: string): Promise<void>
+  /** Picks the driver's car, or clears it with null. Resolves the updated user. */
+  setCar(carId: string | null): Promise<User>
 }
 
 export interface TripsApi {
@@ -80,12 +83,18 @@ export interface UsersApi {
   get(userId: string): Promise<UserProfile>
 }
 
+export interface CarsApi {
+  /** The whole catalogue, sorted by brand and model. */
+  list(): Promise<Car[]>
+}
+
 export interface Api {
   auth: AuthApi
   trips: TripsApi
   bookings: BookingsApi
   reviews: ReviewsApi
   users: UsersApi
+  cars: CarsApi
 }
 
 export const api: Api = httpApi

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSessionsStore } from '@/stores/sessions'
@@ -11,8 +11,101 @@ import PhoneInput from '@/components/PhoneInput.vue'
 import ProfileDetails from '@/components/ProfileDetails.vue'
 import { api } from '@/services/api'
 import type { Review, Session } from '@/types'
+import { useCarsStore } from '@/stores/cars'
+import { PhLeaf } from '@phosphor-icons/vue'
 
 const auth = useAuthStore()
+const carsStore = useCarsStore()
+
+const selectedCarId = ref('')
+const selectedBrand = ref('')
+const carSuccess = ref<string | null>(null)
+
+const carBrands = computed(() =>
+  [...new Set(carsStore.cars.map((car) => car.brand))].sort((a, b) => a.localeCompare(b)),
+)
+
+const filteredModels = computed(() =>
+  carsStore.cars
+    .filter((car) => car.brand === selectedBrand.value)
+    .sort((a, b) => a.model.localeCompare(b.model)),
+)
+
+const selectedCar = computed(
+  () => carsStore.cars.find((car) => car.id === selectedCarId.value) ?? null,
+)
+
+const canSaveCar = computed(() => {
+  if (!selectedBrand.value || !selectedCarId.value) {
+    return false
+  }
+
+  const car = carsStore.cars.find(
+    (item) => item.id === selectedCarId.value && item.brand === selectedBrand.value,
+  )
+
+  if (!car) {
+    return false
+  }
+
+  return car.id !== (auth.user?.car?.id ?? '')
+})
+
+onMounted(() => {
+  void carsStore.fetchAll()
+})
+
+watch(
+  () => auth.user?.car,
+  (car) => {
+    selectedCarId.value = car?.id ?? ''
+    selectedBrand.value = car?.brand ?? ''
+    carSuccess.value = null
+  },
+  { immediate: true },
+)
+
+watch(selectedBrand, (brand) => {
+  if (selectedCar.value?.brand !== brand) {
+    selectedCarId.value = ''
+    carSuccess.value = null
+  }
+})
+
+watch(
+  () => carsStore.cars,
+  (cars) => {
+    const currentCar = cars.find((car) => car.id === selectedCarId.value)
+
+    if (currentCar) {
+      selectedBrand.value = currentCar.brand
+    }
+  },
+  { immediate: true },
+)
+
+async function saveCar() {
+  carSuccess.value = null
+
+  if (!selectedBrand.value || !selectedCarId.value) {
+    return
+  }
+
+  const car = carsStore.cars.find(
+    (item) => item.id === selectedCarId.value && item.brand === selectedBrand.value,
+  )
+
+  if (!car) {
+    return
+  }
+
+  const ok = await carsStore.select(car.id)
+
+  if (ok) {
+    carSuccess.value = 'Your car has been saved.'
+  }
+}
+
 const sessions = useSessionsStore()
 const router = useRouter()
 
@@ -210,6 +303,111 @@ async function save() {
     <template v-if="!editing">
       <ProfileDetails v-if="auth.user" :user="auth.user" class="mt-10" />
 
+      <section class="mt-10 border-t border-line pt-6 dark:border-night-line">
+        <h2 class="section-title">Car and environmental impact</h2>
+        <p class="meta mt-2 text-sm">
+          Choose your car to show its estimated CO₂ emissions per kilometre.
+        </p>
+
+        <p
+          v-if="carsStore.pending && carsStore.cars.length === 0"
+          class="meta mt-4 text-sm"
+          role="status"
+        >
+          Loading cars…
+        </p>
+
+        <p v-if="carsStore.error" class="alert alert-error mt-4" role="alert">
+          {{ carsStore.error }}
+        </p>
+
+        <form
+          v-if="carsStore.cars.length > 0"
+          id="profile-car-form"
+          class="mt-4 grid gap-4"
+          @submit.prevent="saveCar"
+        >
+          <label class="field">
+            <span>Car brand <span aria-hidden="true">*</span></span>
+            <select
+              id="profile-car-brand"
+              v-model="selectedBrand"
+              class="input"
+              :disabled="carsStore.pending"
+              required
+            >
+              <option value="" disabled>Select a brand</option>
+              <option v-for="brand in carBrands" :key="brand" :value="brand">
+                {{ brand }}
+              </option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Car model <span aria-hidden="true">*</span></span>
+            <select
+              id="profile-car-model"
+              v-model="selectedCarId"
+              class="input"
+              :disabled="carsStore.pending || !selectedBrand"
+              required
+            >
+              <option value="" disabled>Select a model</option>
+              <option v-for="car in filteredModels" :key="car.id" :value="car.id">
+                {{ car.model }}
+              </option>
+            </select>
+          </label>
+
+          <p
+            v-if="!selectedBrand || !selectedCarId"
+            id="profile-car-validation"
+            class="meta text-sm"
+          >
+            Please select both a car brand and a model before saving.
+          </p>
+
+          <div
+            v-if="selectedCar && selectedCar.brand === selectedBrand"
+            id="profile-car-emissions"
+            class="flex items-center gap-3 rounded-xl bg-green-50 p-4 text-sm dark:bg-green-950/30"
+            role="status"
+          >
+            <PhLeaf
+              :size="24"
+              weight="fill"
+              class="shrink-0 text-green-600 dark:text-green-400"
+              aria-hidden="true"
+            />
+            <div>
+              <p class="font-medium">{{ selectedCar.co2 }} g CO₂/km</p>
+              <p class="meta mt-1">
+                Estimated emissions for {{ selectedCar.brand }} {{ selectedCar.model }}.
+              </p>
+            </div>
+          </div>
+
+          <p v-if="carSuccess" class="alert alert-success" role="status">
+            {{ carSuccess }}
+          </p>
+
+          <div class="flex items-center gap-3">
+            <button
+              id="profile-car-save-btn"
+              type="submit"
+              class="btn btn-primary"
+              :disabled="carsStore.pending || !canSaveCar"
+            >
+              {{ carsStore.pending ? 'Saving…' : 'Save car' }}
+            </button>
+          </div>
+        </form>
+
+        <p v-else-if="!carsStore.pending && !carsStore.error" class="empty mt-4">
+          No cars are available right now.
+        </p>
+      </section>
+
       <div class="mt-8">
         <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">
           Edit profile
@@ -217,7 +415,6 @@ async function save() {
       </div>
 
       <template v-if="reviews.length > 0">
-        <!-- Driver Score -->
         <section class="mt-10">
           <h2 class="section-title">Driver Score</h2>
 
@@ -230,7 +427,6 @@ async function save() {
           </div>
         </section>
 
-        <!-- Reviews -->
         <section class="mt-10">
           <h2 class="section-title">Driver Reviews</h2>
 
@@ -251,7 +447,6 @@ async function save() {
       </template>
 
       <template v-if="passengerReviews.length > 0">
-        <!-- Passenger Score -->
         <section class="mt-10">
           <h2 class="section-title">Passenger Score</h2>
 
@@ -264,7 +459,6 @@ async function save() {
           </div>
         </section>
 
-        <!-- Passenger Reviews -->
         <section class="mt-10">
           <h2 class="section-title">Passenger Reviews</h2>
 

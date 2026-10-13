@@ -6,6 +6,14 @@
  * a *passenger* books **seats** on it (a booking).
  */
 
+export interface Car {
+  id: string
+  brand: string
+  model: string
+  /** Grams of CO2 per km; 0 for fully electric cars. */
+  co2: number
+}
+
 export interface User {
   id: string
   email: string
@@ -19,6 +27,8 @@ export interface User {
   ratingCount?: number
   /** Kilograms of CO2 saved by sharing instead of driving alone. */
   co2SavedKg?: number
+  /** The driver's car, or null when none is picked. Optional so seeded test users need none. */
+  car?: Car | null
 }
 
 /**

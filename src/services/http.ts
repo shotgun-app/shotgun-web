@@ -8,6 +8,7 @@ import {
   type ChangePasswordPayload,
   type BookingPayload,
   type BookingWithTrip,
+  type Car,
   type Credentials,
   type RegisterPayload,
   type ResetPasswordPayload,
@@ -97,6 +98,14 @@ export const httpApi: Api = {
 
     deleteSession: (sessionId: string) =>
       request<void>(`/auth/me/sessions/${sessionId}`, { method: 'DELETE' }),
+
+    setCar: async (carId: string | null) =>
+      (
+        await request<{ user: User }>('/auth/me/car', {
+          method: 'PUT',
+          body: JSON.stringify({ carId }),
+        })
+      ).user,
   },
 
   trips: {
@@ -161,5 +170,9 @@ export const httpApi: Api = {
 
   users: {
     get: (userId: string) => request<UserProfile>(`/api/users/${userId}`),
+  },
+
+  cars: {
+    list: async () => (await request<{ cars: Car[] }>('/api/cars')).cars,
   },
 }
