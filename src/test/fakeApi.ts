@@ -26,6 +26,7 @@ import {
   type ReviewPayload,
   type Session,
   type UserProfile,
+  type SustainabilityImpact,
 } from '@/types'
 import type { Api } from '@/services/api'
 import { MOCK_ACCOUNTS, MOCK_CARS, type MockAccount } from './seed'
@@ -40,6 +41,26 @@ let sessions: { userId: string; session: Omit<Session, 'current'> }[] = []
 let currentSessionId: string | null = null
 /** Reset token -> email, filled by requestPasswordReset like the emailed link. */
 let resetTokens = new Map<string, string>()
+let customImpact: SustainabilityImpact | null = null
+
+export function setFakeImpact(stats: Partial<SustainabilityImpact> | null): void {
+  if (!stats) {
+    customImpact = null
+    return
+  }
+  customImpact = {
+    co2ConsumedKg: 15.2,
+    co2WouldHaveBeenConsumedKg: 45.6,
+    co2SavedKg: 30.4,
+    totalCompletedRides: 3,
+    totalSharedRides: 3,
+    totalPassengers: 6,
+    individualRidesSaved: 6,
+    driversWithoutShotgun: 9,
+    totalDistanceKm: 380,
+    ...stats,
+  }
+}
 
 export function resetFakeApi(): void {
   accounts = MOCK_ACCOUNTS.map((a) => ({ ...a, user: { ...a.user } }))
@@ -50,6 +71,7 @@ export function resetFakeApi(): void {
   sessions = []
   currentSessionId = null
   resetTokens = new Map()
+  customImpact = null
 }
 resetFakeApi()
 
@@ -727,6 +749,57 @@ export const fakeApi: Api = {
     async list(): Promise<Car[]> {
       requireAccount()
       return MOCK_CARS.map((car) => ({ ...car }))
+    },
+  },
+
+  impact: {
+    async get(): Promise<SustainabilityImpact> {
+      if (customImpact) return { ...customImpact }
+
+      const now = new Date()
+      const completedTrips = trips.filter((t) => new Date(t.departureAt) <= now)
+      let totalDistanceKm = 0
+      let totalPassengers = 0
+      let totalSharedRides = 0
+      let co2ConsumedKg = 0
+      let co2SavedKg = 0
+
+      for (const trip of completedTrips) {
+        const confirmedBookings = bookings.filter(
+          (b) => b.tripId === trip.id && b.status === 'confirmed',
+        )
+        const seatsBooked = confirmedBookings.reduce((sum, b) => sum + b.seats, 0)
+        if (seatsBooked > 0) totalSharedRides++
+        totalPassengers += seatsBooked
+
+        const dist = trip.distanceKm ?? 300
+        totalDistanceKm += dist
+
+        const isElec = trip.isElectric ?? false
+        const carCO2 = isElec ? 0 : 120
+        const consumed = (dist * carCO2) / 1000
+        co2ConsumedKg += consumed
+
+        const passengerSaved = (seatsBooked * dist * 120) / 1000
+        const cleanSaved = isElec ? (dist * 120) / 1000 : 0
+        co2SavedKg += passengerSaved + cleanSaved
+      }
+
+      co2ConsumedKg = Math.round(co2ConsumedKg * 100) / 100
+      co2SavedKg = Math.round(co2SavedKg * 100) / 100
+      const co2WouldHaveBeenConsumedKg = Math.round((co2ConsumedKg + co2SavedKg) * 100) / 100
+
+      return {
+        co2ConsumedKg,
+        co2WouldHaveBeenConsumedKg,
+        co2SavedKg,
+        totalCompletedRides: completedTrips.length,
+        totalSharedRides,
+        totalPassengers,
+        individualRidesSaved: totalPassengers,
+        driversWithoutShotgun: completedTrips.length + totalPassengers,
+        totalDistanceKm,
+      }
     },
   },
 }
