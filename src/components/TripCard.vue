@@ -7,7 +7,7 @@
  * 2. computed(): Creating lightweight derived state (e.g. available seats, formatted dates).
  */
 import { computed, ref } from 'vue'
-import { PhStar } from '@phosphor-icons/vue'
+import { PhLeaf, PhStar } from '@phosphor-icons/vue'
 import type { TripWithDriver } from '@/types'
 import { useBookingsStore } from '@/stores/bookings'
 import SeatStepper from '@/components/SeatStepper.vue'
@@ -208,7 +208,7 @@ async function submitBooking() {
       <div
         class="inline-flex items-center gap-1.5 font-medium text-accent-700 dark:text-accent-400"
       >
-        <span aria-hidden="true">🌿</span>
+        <PhLeaf :size="16" weight="fill" aria-hidden="true" />
         <span>{{ ecoConsumedText }}</span>
       </div>
 
