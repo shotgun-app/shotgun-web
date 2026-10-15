@@ -49,4 +49,3 @@ describe('useImpactStore', () => {
     expect(store.percentSaved).toBe(0)
   })
 })
-
