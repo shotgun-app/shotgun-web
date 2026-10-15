@@ -177,11 +177,6 @@ export const httpApi: Api = {
     list: async () => (await request<{ cars: Car[] }>('/api/cars')).cars,
   },
   impact: {
-    get: async () => {
-      const res = await request<SustainabilityImpact & { impact?: SustainabilityImpact }>(
-        '/api/impact',
-      )
-      return res.impact ?? res
-    },
+    get: () => request<SustainabilityImpact>('/api/impact'),
   },
 }

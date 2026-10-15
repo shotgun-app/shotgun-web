@@ -222,13 +222,4 @@ export interface SustainabilityImpact {
   individualRidesSaved: number
   driversWithoutShotgun: number
   totalDistanceKm: number
-  co2_consumed_kg?: number
-  co2_would_have_been_consumed_kg?: number
-  co2_saved_kg?: number
-  total_completed_rides?: number
-  total_shared_rides?: number
-  total_passengers?: number
-  individual_rides_saved?: number
-  drivers_without_shotgun?: number
-  total_distance_km?: number
 }

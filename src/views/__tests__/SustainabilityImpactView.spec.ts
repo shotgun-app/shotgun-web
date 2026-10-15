@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
+import { api } from '@/services/api'
 import { resetFakeApi, setFakeImpact } from '@/test/fakeApi'
 import SustainabilityImpactView from '../SustainabilityImpactView.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -98,6 +99,15 @@ describe('SustainabilityImpactView', () => {
 
     expect(wrapper.text()).toContain('0 kg CO₂')
     expect(wrapper.text()).toContain('Methodology & Baseline Assumptions')
+  })
+
+  it('shows only the error, not zeroed metrics, when the first load fails', async () => {
+    vi.spyOn(api.impact, 'get').mockRejectedValueOnce(new Error('offline'))
+
+    const wrapper = await mountImpactView()
+
+    expect(wrapper.get('[role="alert"]').text()).toContain('Unable to load impact metrics.')
+    expect(wrapper.text()).not.toContain('Total CO₂ Saved')
   })
 
   it('adapts the back button for guests vs authenticated users', async () => {

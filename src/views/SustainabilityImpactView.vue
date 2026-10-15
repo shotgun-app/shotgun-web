@@ -114,7 +114,7 @@ onMounted(async () => {
       </div>
 
       <!-- METRICS CONTENT -->
-      <template v-else>
+      <template v-else-if="impactStore.impact">
         <!-- 3 PRIMARY HIGHLIGHTS -->
         <section class="rise mt-10" style="animation-delay: 100ms">
           <div class="mb-4 flex items-center justify-between">
