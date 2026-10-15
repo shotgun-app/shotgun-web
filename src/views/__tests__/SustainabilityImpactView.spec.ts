@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
@@ -39,6 +39,10 @@ describe('SustainabilityImpactView', () => {
   beforeEach(async () => {
     setActivePinia(createPinia())
     resetFakeApi()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('renders heading, 3 highlights and community impact metrics from live data', async () => {
