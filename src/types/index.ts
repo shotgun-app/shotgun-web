@@ -55,6 +55,19 @@ export interface Trip {
   /** Free text: car model, luggage, meeting point. */
   notes: string
   createdAt: string
+  /** Driving distance in kilometers. */
+  distanceKm?: number
+  /** Total CO2 consumed by the vehicle for this trip in kg. */
+  co2ConsumedKg?: number
+  /** CO2 saved per passenger compared to driving alone in kg. */
+  co2SavedKg?: number
+  /** True when the driver's vehicle has zero direct emissions. */
+  isElectric?: boolean
+  /** Backend snake_case response compatibility. */
+  distance_km?: number
+  co2_consumed_kg?: number
+  co2_saved_kg?: number
+  is_electric?: boolean
 }
 
 /** What the API reveals about a driver or passenger to other users: no email or phone. */
