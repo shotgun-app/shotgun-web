@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
+import { PhLeaf } from '@phosphor-icons/vue'
 import { useAuthStore } from '@/stores/auth'
 import UserAvatar from '@/components/UserAvatar.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
@@ -54,6 +55,15 @@ async function logout() {
       </RouterLink>
 
       <div class="flex items-center gap-3">
+        <RouterLink
+          :to="{ name: 'sustainability-impact' }"
+          class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-ink-soft transition-colors duration-200 hover:bg-slate-100 hover:text-brand-600 dark:text-night-ink-soft dark:hover:bg-night-raised dark:hover:text-brand-400"
+          aria-label="Sustainability impact"
+        >
+          <PhLeaf class="size-4 text-accent-500" />
+          <span class="hidden sm:inline">Sustainability impact</span>
+        </RouterLink>
+
         <ThemeToggle />
 
         <div ref="root" class="relative">
