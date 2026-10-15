@@ -210,3 +210,25 @@ export class ApiError extends Error {
     this.name = 'ApiError'
   }
 }
+
+/** Aggregated platform-wide sustainability metrics for all completed rides. */
+export interface SustainabilityImpact {
+  co2ConsumedKg: number
+  co2WouldHaveBeenConsumedKg: number
+  co2SavedKg: number
+  totalCompletedRides: number
+  totalSharedRides: number
+  totalPassengers: number
+  individualRidesSaved: number
+  driversWithoutShotgun: number
+  totalDistanceKm: number
+  co2_consumed_kg?: number
+  co2_would_have_been_consumed_kg?: number
+  co2_saved_kg?: number
+  total_completed_rides?: number
+  total_shared_rides?: number
+  total_passengers?: number
+  individual_rides_saved?: number
+  drivers_without_shotgun?: number
+  total_distance_km?: number
+}
