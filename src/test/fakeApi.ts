@@ -337,8 +337,29 @@ export const fakeApi: Api = {
               co2SavedKg: 50,
             }
 
+        const distanceKm = trip.distanceKm ?? 470
+        const isElectric = trip.isElectric ?? (driver.car ? driver.car.co2 === 0 : false)
+        const co2PerKm = driver.car ? driver.car.co2 : 120
+        const co2ConsumedKg =
+          trip.co2ConsumedKg ?? Math.round(((distanceKm * co2PerKm) / 1000) * 100) / 100
+        const co2SavedKg =
+          trip.co2SavedKg ??
+          Math.max(
+            0,
+            Math.round(((distanceKm * 120) / 1000 - co2ConsumedKg / (trip.seatsBooked + 1)) * 100) /
+              100,
+          )
+
         return {
           ...trip,
+          distanceKm,
+          co2ConsumedKg,
+          co2SavedKg,
+          isElectric,
+          distance_km: distanceKm,
+          co2_consumed_kg: co2ConsumedKg,
+          co2_saved_kg: co2SavedKg,
+          is_electric: isElectric,
           driver,
         }
       })
@@ -355,6 +376,13 @@ export const fakeApi: Api = {
     async create(payload: RidePayload): Promise<TripWithPassengers> {
       const account = requireAccount()
       assertValidRide(payload, 1)
+
+      const distanceKm = 470
+      const isElectric = account.user.car ? account.user.car.co2 === 0 : false
+      const co2PerKm = account.user.car ? account.user.car.co2 : 120
+      const co2ConsumedKg = Math.round(((distanceKm * co2PerKm) / 1000) * 100) / 100
+      const co2SavedKg =
+        Math.round(((distanceKm * 120) / 1000 - co2ConsumedKg / (0 + 1)) * 100) / 100
 
       const trip: Trip = {
         id: nextId('trip'),
@@ -374,6 +402,14 @@ export const fakeApi: Api = {
         currency: payload.currency ?? 'EUR',
         notes: payload.notes ?? '',
         createdAt: new Date().toISOString(),
+        distanceKm,
+        co2ConsumedKg,
+        co2SavedKg,
+        isElectric,
+        distance_km: distanceKm,
+        co2_consumed_kg: co2ConsumedKg,
+        co2_saved_kg: co2SavedKg,
+        is_electric: isElectric,
       }
       trips.push(trip)
       return withPassengers(trip)
