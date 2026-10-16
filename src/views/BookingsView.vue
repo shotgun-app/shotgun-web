@@ -2,13 +2,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useBookingsStore } from '@/stores/bookings'
-import { PhCaretDown } from '@phosphor-icons/vue'
+import { PhCaretDown, PhLeaf } from '@phosphor-icons/vue'
 import ReviewDialog from '@/components/ReviewDialog.vue'
 import SeatStepper from '@/components/SeatStepper.vue'
 import StarRating from '@/components/StarRating.vue'
 import RouteLine from '@/components/RouteLine.vue'
 import UserList from '@/components/UserList.vue'
-import { formatDeparture } from '@/utils/format'
+import { formatCo2, formatDeparture } from '@/utils/format'
 import { LARGE_BAG_HINT, SMALL_BAG_HINT, bagsSummary } from '@/utils/baggage'
 import type { BookingWithTrip, PublicUser } from '@/types'
 
@@ -146,6 +146,35 @@ function largeBagsLeft(b: BookingWithTrip): number {
 function otherPassengers(b: BookingWithTrip): PublicUser[] {
   return b.trip.passengers.filter((p) => p.id !== b.passengerId)
 }
+
+// ── Eco impact helpers ─────────────────────────────────────────────────────
+
+function tripDistance(b: BookingWithTrip): number | undefined {
+  return b.trip.distanceKm ?? b.trip.distance_km
+}
+
+function tripIsElectric(b: BookingWithTrip): boolean {
+  return Boolean(b.trip.isElectric ?? b.trip.is_electric)
+}
+
+function tripCo2Consumed(b: BookingWithTrip): number | undefined {
+  return b.trip.co2ConsumedKg ?? b.trip.co2_consumed_kg
+}
+
+function tripCo2Saved(b: BookingWithTrip): number | undefined {
+  return b.trip.co2SavedKg ?? b.trip.co2_saved_kg
+}
+
+function ecoConsumedText(b: BookingWithTrip): string | null {
+  if (tripIsElectric(b)) return '0 kg CO₂ (Electric)'
+  const consumed = tripCo2Consumed(b)
+  if (consumed !== undefined) return formatCo2(consumed)
+  return null
+}
+
+function hasEcoInfo(b: BookingWithTrip): boolean {
+  return tripIsElectric(b) || tripCo2Consumed(b) !== undefined || (tripCo2Saved(b) ?? 0) > 0
+}
 </script>
 
 <template>
@@ -234,24 +263,48 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
             </div>
           </div>
 
-          <!-- Who's on the ride -->
-          <dl class="mt-4 grid gap-2 border-t border-line pt-4 dark:border-night-line">
-            <div class="grid grid-cols-[7rem_1fr] items-center gap-4">
-              <dt class="meta">Driver</dt>
+          <!-- Who's on the ride + Environmental impact -->
+          <div
+            class="mt-4 flex flex-wrap items-start justify-between gap-4 border-t border-line pt-4 dark:border-night-line"
+          >
+            <dl class="grid min-w-0 gap-2">
+              <div class="grid grid-cols-[7rem_1fr] items-center gap-4">
+                <dt class="meta">Driver</dt>
 
-              <dd class="min-w-0">
-                <UserList :users="[booking.trip.driver]" />
-              </dd>
+                <dd class="min-w-0">
+                  <UserList :users="[booking.trip.driver]" />
+                </dd>
+              </div>
+
+              <div class="grid grid-cols-[7rem_1fr] items-center gap-4">
+                <dt class="meta">Other passengers</dt>
+
+                <dd class="min-w-0">
+                  <UserList :users="otherPassengers(booking)" empty="No other passengers" />
+                </dd>
+              </div>
+            </dl>
+
+            <div
+              v-if="hasEcoInfo(booking)"
+              :id="`booking-eco-${booking.id}`"
+              class="flex shrink-0 flex-col items-end gap-1.5 text-xs"
+              aria-label="Environmental impact"
+            >
+              <div
+                class="inline-flex items-center gap-1.5 font-medium text-accent-700 dark:text-accent-400"
+              >
+                <PhLeaf :size="16" weight="fill" aria-hidden="true" />
+                <span>{{ ecoConsumedText(booking) }}</span>
+              </div>
+              <span v-if="tripDistance(booking)" class="text-ink-soft dark:text-night-ink-soft">
+                {{ tripDistance(booking) }} km
+              </span>
+              <div v-if="(tripCo2Saved(booking) ?? 0) > 0" class="badge badge-success">
+                Saves ~{{ formatCo2(tripCo2Saved(booking)!) }}
+              </div>
             </div>
-
-            <div class="grid grid-cols-[7rem_1fr] items-center gap-4">
-              <dt class="meta">Other passengers</dt>
-
-              <dd class="min-w-0">
-                <UserList :users="otherPassengers(booking)" empty="No other passengers" />
-              </dd>
-            </div>
-          </dl>
+          </div>
 
           <!-- Edit form -->
           <div
@@ -435,16 +488,40 @@ function otherPassengers(b: BookingWithTrip): PublicUser[] {
               <StarRating v-else :value="booking.reviewRating" label="Your rating" :size="16" />
             </div>
 
-            <!-- Driver -->
-            <dl class="mt-4 border-t border-line pt-4 dark:border-night-line">
-              <div class="grid grid-cols-[7rem_1fr] items-center gap-4">
-                <dt class="meta">Driver</dt>
+            <!-- Driver + Environmental impact -->
+            <div
+              class="mt-4 flex flex-wrap items-start justify-between gap-4 border-t border-line pt-4 dark:border-night-line"
+            >
+              <dl class="grid min-w-0 gap-2">
+                <div class="grid grid-cols-[7rem_1fr] items-center gap-4">
+                  <dt class="meta">Driver</dt>
 
-                <dd class="min-w-0">
-                  <UserList :users="[booking.trip.driver]" />
-                </dd>
+                  <dd class="min-w-0">
+                    <UserList :users="[booking.trip.driver]" />
+                  </dd>
+                </div>
+              </dl>
+
+              <div
+                v-if="hasEcoInfo(booking)"
+                :id="`completed-booking-eco-${booking.id}`"
+                class="flex shrink-0 flex-col items-end gap-1.5 text-xs"
+                aria-label="Environmental impact"
+              >
+                <div
+                  class="inline-flex items-center gap-1.5 font-medium text-accent-700 dark:text-accent-400"
+                >
+                  <PhLeaf :size="16" weight="fill" aria-hidden="true" />
+                  <span>{{ ecoConsumedText(booking) }}</span>
+                </div>
+                <span v-if="tripDistance(booking)" class="text-ink-soft dark:text-night-ink-soft">
+                  {{ tripDistance(booking) }} km
+                </span>
+                <div v-if="(tripCo2Saved(booking) ?? 0) > 0" class="badge badge-success">
+                  Saves ~{{ formatCo2(tripCo2Saved(booking)!) }}
+                </div>
               </div>
-            </dl>
+            </div>
           </li>
         </ul>
       </section>
