@@ -210,3 +210,16 @@ export class ApiError extends Error {
     this.name = 'ApiError'
   }
 }
+
+/** Aggregated platform-wide sustainability metrics for all completed rides. */
+export interface SustainabilityImpact {
+  co2ConsumedKg: number
+  co2WouldHaveBeenConsumedKg: number
+  co2SavedKg: number
+  totalCompletedRides: number
+  totalSharedRides: number
+  totalPassengers: number
+  individualRidesSaved: number
+  driversWithoutShotgun: number
+  totalDistanceKm: number
+}

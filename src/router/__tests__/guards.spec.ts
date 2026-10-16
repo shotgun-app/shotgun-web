@@ -85,4 +85,18 @@ describe('router guards', () => {
     await router.push('/reset-password?token=abc')
     expect(router.currentRoute.value.name).toBe('reset-password')
   })
+
+  it('serves the sustainability impact page to guests and logged-in users', async () => {
+    await router.push('/sustainability-impact')
+    expect(router.currentRoute.value.name).toBe('sustainability-impact')
+
+    await useAuthStore().login(DEMO_CREDENTIALS)
+    await router.push('/sustainability-impact')
+    expect(router.currentRoute.value.name).toBe('sustainability-impact')
+  })
+
+  it('redirects /impact to /sustainability-impact', async () => {
+    await router.push('/impact')
+    expect(router.currentRoute.value.name).toBe('sustainability-impact')
+  })
 })

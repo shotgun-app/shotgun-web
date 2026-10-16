@@ -22,6 +22,7 @@ import {
   type UpdateProfilePayload,
   type User,
   type UserProfile,
+  type SustainabilityImpact,
 } from '@/types'
 import type { Api } from './api'
 
@@ -174,5 +175,8 @@ export const httpApi: Api = {
 
   cars: {
     list: async () => (await request<{ cars: Car[] }>('/api/cars')).cars,
+  },
+  impact: {
+    get: () => request<SustainabilityImpact>('/api/impact'),
   },
 }
