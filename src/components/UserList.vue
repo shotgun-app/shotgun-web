@@ -14,7 +14,7 @@ defineProps<{ users: PublicUser[]; empty?: string }>()
         target="_blank"
         class="flex items-center gap-1.5 font-medium text-ink hover:text-brand-600 hover:underline dark:text-night-ink dark:hover:text-brand-400"
       >
-        <UserAvatar :name="user.name" size="sm" />
+        <UserAvatar :name="user.name" :src="user.avatarUrl" size="sm" />
         {{ user.name }}
       </RouterLink>
       <template v-if="i < users.length - 1">,</template>

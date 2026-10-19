@@ -49,6 +49,9 @@ export interface AuthApi {
   deleteSession(sessionId: string): Promise<void>
   /** Picks the driver's car, or clears it with null. Resolves the updated user. */
   setCar(carId: string | null): Promise<User>
+  /** Sets the profile picture (JPEG, PNG or WebP, at most 5 MB), or throws ApiError(400/413). */
+  uploadProfilePicture(file: File): Promise<User>
+  deleteProfilePicture(): Promise<User>
 }
 
 export interface TripsApi {

@@ -96,7 +96,7 @@ async function submitBooking() {
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <!-- DRIVER DETAILS -->
       <div class="flex items-center gap-3.5">
-        <UserAvatar :name="trip.driver.name" />
+        <UserAvatar :name="trip.driver.name" :src="trip.driver.avatarUrl" />
 
         <div>
           <div class="flex items-center gap-2">
