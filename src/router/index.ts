@@ -19,6 +19,16 @@ const router = createRouter({
       props: { panel: 'reset' },
     },
     {
+      // Public: accessible without login to display environmental metrics
+      path: '/sustainability-impact',
+      name: 'sustainability-impact',
+      component: () => import('@/views/SustainabilityImpactView.vue'),
+    },
+    {
+      path: '/impact',
+      redirect: '/sustainability-impact',
+    },
+    {
       path: '/app',
       component: () => import('@/views/AppLayout.vue'),
       meta: { requiresAuth: true },

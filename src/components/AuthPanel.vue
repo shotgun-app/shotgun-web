@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
+import { PhLeaf } from '@phosphor-icons/vue'
 import { useAuthStore } from '@/stores/auth'
 import ForgotPasswordForm from './ForgotPasswordForm.vue'
 import PasswordInput from './PasswordInput.vue'
@@ -134,5 +135,15 @@ async function submit() {
         </button>
       </p>
     </template>
+
+    <div class="mt-8 border-t border-line pt-4 text-center dark:border-night-line">
+      <RouterLink
+        to="/sustainability-impact"
+        class="inline-flex items-center gap-1.5 text-xs font-medium text-ink-soft underline-offset-4 transition-colors duration-200 hover:text-brand-600 hover:underline dark:text-night-ink-soft dark:hover:text-brand-400"
+      >
+        <PhLeaf class="size-4 text-accent-500" />
+        Sustainability Impact
+      </RouterLink>
+    </div>
   </div>
 </template>

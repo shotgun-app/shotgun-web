@@ -22,6 +22,7 @@ import type {
   UpdateProfilePayload,
   UserProfile,
   User,
+  SustainabilityImpact,
 } from '@/types'
 import { httpApi } from './http'
 
@@ -91,6 +92,11 @@ export interface CarsApi {
   list(): Promise<Car[]>
 }
 
+export interface ImpactApi {
+  /** Aggregated environmental metrics of completed rides. Public, unauthenticated. */
+  get(): Promise<SustainabilityImpact>
+}
+
 export interface Api {
   auth: AuthApi
   trips: TripsApi
@@ -98,6 +104,7 @@ export interface Api {
   reviews: ReviewsApi
   users: UsersApi
   cars: CarsApi
+  impact: ImpactApi
 }
 
 export const api: Api = httpApi

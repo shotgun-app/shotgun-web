@@ -24,6 +24,7 @@ describe('AuthPanel', () => {
       routes: [
         { path: '/', name: 'landing', component: blank },
         { path: '/app', name: 'app', component: blank },
+        { path: '/sustainability-impact', name: 'sustainability-impact', component: blank },
       ],
     })
     await router.push('/')
@@ -124,5 +125,12 @@ describe('AuthPanel', () => {
     const back = wrapper.findAll('button').find((b) => b.text() === 'Back to log in')!
     await back.trigger('click')
     expect(wrapper.get('h2').text()).toBe('Welcome back')
+  })
+
+  it('renders the public link to Sustainability Impact', () => {
+    const wrapper = mountPanel(router)
+    const impactLink = wrapper.findAll('a').find((a) => a.text().includes('Sustainability Impact'))
+    expect(impactLink).toBeDefined()
+    expect(impactLink?.attributes('href')).toBe('/sustainability-impact')
   })
 })
