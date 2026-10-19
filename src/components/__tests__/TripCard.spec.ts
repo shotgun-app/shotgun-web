@@ -71,3 +71,57 @@ describe('TripCard.vue bags', () => {
     expect(wrapper.find('#trip-card-large-bags-input').exists()).toBe(false)
   })
 })
+
+describe('TripCard.vue environmental impact', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('shows distance when distanceKm is provided', () => {
+    const wrapper = mount(TripCard, {
+      props: { trip: makeTrip({ distanceKm: 580 }) },
+      global: { stubs },
+    })
+    expect(wrapper.get('#trip-card-distance-trip_1').text()).toBe('580 km')
+  })
+
+  it('displays zero emissions and savings for electric rides', () => {
+    const wrapper = mount(TripCard, {
+      props: {
+        trip: makeTrip({
+          distanceKm: 500,
+          isElectric: true,
+          co2ConsumedKg: 0,
+          co2SavedKg: 60,
+        }),
+      },
+      global: { stubs },
+    })
+    expect(wrapper.get('#trip-card-eco-trip_1').text()).toContain('0 kg CO₂ (Electric)')
+    expect(wrapper.get('#trip-card-saved-trip_1').text()).toBe('Saves ~60 kg CO₂ vs driving alone')
+  })
+
+  it('displays CO2 consumed and savings for combustion rides', () => {
+    const wrapper = mount(TripCard, {
+      props: {
+        trip: makeTrip({
+          distanceKm: 100,
+          co2ConsumedKg: 14.2,
+          co2SavedKg: 4.9,
+        }),
+      },
+      global: { stubs },
+    })
+    expect(wrapper.get('#trip-card-eco-trip_1').text()).toContain('14.2 kg CO₂')
+    expect(wrapper.get('#trip-card-saved-trip_1').text()).toBe('Saves ~4.9 kg CO₂ vs driving alone')
+  })
+
+  it('hides eco section when no eco info or distance is available', () => {
+    const wrapper = mount(TripCard, {
+      props: { trip: makeTrip() },
+      global: { stubs },
+    })
+    expect(wrapper.find('#trip-card-eco-trip_1').exists()).toBe(false)
+    expect(wrapper.find('#trip-card-distance-trip_1').exists()).toBe(false)
+  })
+})

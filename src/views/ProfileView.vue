@@ -320,6 +320,12 @@ async function save() {
     <template v-if="!editing">
       <ProfileDetails v-if="auth.user" :user="auth.user" class="mt-10" />
 
+      <div class="mt-6">
+        <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">
+          Edit profile
+        </button>
+      </div>
+
       <section class="mt-10 border-t border-line pt-6 dark:border-night-line">
         <h2 class="section-title">Profile picture</h2>
         <p class="meta mt-2 text-sm">Shown next to your name to drivers and passengers.</p>
@@ -499,14 +505,10 @@ async function save() {
         </p>
       </section>
 
-      <div class="mt-8">
-        <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">
-          Edit profile
-        </button>
-      </div>
-
       <template v-if="reviews.length > 0">
-        <section class="mt-10">
+        <section
+          class="mt-10 rounded-card border border-line bg-white p-6 dark:border-night-line dark:bg-night-raised"
+        >
           <h2 class="section-title">Driver Score</h2>
 
           <div class="mt-4 flex items-center gap-3">
@@ -516,13 +518,15 @@ async function save() {
 
             <StarRating :value="driverScore" label="Driver rating" />
           </div>
-        </section>
 
-        <section class="mt-10">
-          <h2 class="section-title">Driver Reviews</h2>
+          <h3 class="mt-6 text-sm font-medium text-ink-soft dark:text-night-ink-soft">Reviews</h3>
 
-          <ul class="mt-4 grid gap-4">
-            <li v-for="review in reviews" :key="review.id" class="card">
+          <ul class="mt-3 grid gap-3">
+            <li
+              v-for="review in reviews"
+              :key="review.id"
+              class="rounded-lg border border-line bg-slate-50/60 p-4 dark:border-night-line dark:bg-night/60"
+            >
               <StarRating :value="review.rating" label="Rating" :size="16" />
 
               <p v-if="review.comment" class="mt-3 text-sm">
@@ -538,7 +542,9 @@ async function save() {
       </template>
 
       <template v-if="passengerReviews.length > 0">
-        <section class="mt-10">
+        <section
+          class="mt-10 rounded-card border border-line bg-white p-6 dark:border-night-line dark:bg-night-raised"
+        >
           <h2 class="section-title">Passenger Score</h2>
 
           <div class="mt-4 flex items-center gap-3">
@@ -548,13 +554,15 @@ async function save() {
 
             <StarRating :value="passengerScore" label="Passenger rating" />
           </div>
-        </section>
 
-        <section class="mt-10">
-          <h2 class="section-title">Passenger Reviews</h2>
+          <h3 class="mt-6 text-sm font-medium text-ink-soft dark:text-night-ink-soft">Reviews</h3>
 
-          <ul class="mt-4 grid gap-4">
-            <li v-for="review in passengerReviews" :key="review.id" class="card">
+          <ul class="mt-3 grid gap-3">
+            <li
+              v-for="review in passengerReviews"
+              :key="review.id"
+              class="rounded-lg border border-line bg-slate-50/60 p-4 dark:border-night-line dark:bg-night/60"
+            >
               <StarRating :value="review.rating" label="Rating" :size="16" />
 
               <p v-if="review.comment" class="mt-3 text-sm">
@@ -569,7 +577,9 @@ async function save() {
         </section>
       </template>
 
-      <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
+      <div
+        class="mt-10 rounded-card border border-line bg-white p-6 dark:border-night-line dark:bg-night-raised"
+      >
         <h2 class="section-title">Password</h2>
 
         <p
@@ -655,7 +665,9 @@ async function save() {
         </form>
       </div>
 
-      <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
+      <div
+        class="mt-10 rounded-card border border-line bg-white p-6 dark:border-night-line dark:bg-night-raised"
+      >
         <h2 class="section-title">Sessions</h2>
         <p class="meta mt-2 text-sm">Devices that are signed in to your account.</p>
 
@@ -703,7 +715,9 @@ async function save() {
         </ul>
       </div>
 
-      <div class="mt-10 border-t border-line pt-6 dark:border-night-line">
+      <div
+        class="mt-10 rounded-card border border-red-200 bg-white p-6 dark:border-red-900/40 dark:bg-night-raised"
+      >
         <h2 class="section-title">Delete account</h2>
 
         <template v-if="!confirmingDelete">

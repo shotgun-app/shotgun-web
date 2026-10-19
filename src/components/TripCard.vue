@@ -7,13 +7,13 @@
  * 2. computed(): Creating lightweight derived state (e.g. available seats, formatted dates).
  */
 import { computed, ref } from 'vue'
-import { PhStar } from '@phosphor-icons/vue'
+import { PhLeaf, PhStar } from '@phosphor-icons/vue'
 import type { TripWithDriver } from '@/types'
 import { useBookingsStore } from '@/stores/bookings'
 import SeatStepper from '@/components/SeatStepper.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import RouteLine from '@/components/RouteLine.vue'
-import { formatDeparture } from '@/utils/format'
+import { formatDeparture, formatCo2 } from '@/utils/format'
 import {
   LARGE_BAG_HINT,
   SMALL_BAG_HINT,
@@ -57,6 +57,52 @@ const largeLeft = computed(() => largeBagsLeft(props.trip))
 const bagSpace = computed(() => bagSpaceLabel(props.trip))
 
 const formattedDate = computed(() => formatDeparture(props.trip.departureAt))
+
+const distance = computed(() => props.trip.distanceKm ?? props.trip.distance_km)
+
+const isElectric = computed(() =>
+  Boolean(props.trip.isElectric ?? props.trip.is_electric ?? props.trip.driver?.car?.co2 === 0),
+)
+
+const co2Consumed = computed(() => {
+  const direct = props.trip.co2ConsumedKg ?? props.trip.co2_consumed_kg
+  if (direct !== undefined) return direct
+  if (distance.value !== undefined) {
+    if (isElectric.value) return 0
+    const co2PerKm = props.trip.driver?.car?.co2 ?? 120
+    return Math.round(((distance.value * co2PerKm) / 1000) * 10) / 10
+  }
+  return undefined
+})
+
+const co2Saved = computed(() => {
+  const direct = props.trip.co2SavedKg ?? props.trip.co2_saved_kg
+  if (direct !== undefined) return direct
+  if (distance.value !== undefined && co2Consumed.value !== undefined) {
+    const individualBaseline = (distance.value * 120) / 1000
+    const passengersTotal = (props.trip.seatsBooked ?? 0) + 1
+    const saved = individualBaseline - co2Consumed.value / passengersTotal
+    return Math.round(Math.max(0, saved) * 10) / 10
+  }
+  return undefined
+})
+
+const ecoConsumedText = computed(() => {
+  if (isElectric.value) {
+    return '0 kg CO₂ (Electric)'
+  }
+  if (co2Consumed.value !== undefined) {
+    return formatCo2(co2Consumed.value)
+  }
+  return null
+})
+
+const hasEcoInfo = computed(
+  () =>
+    Boolean(isElectric.value) ||
+    co2Consumed.value !== undefined ||
+    (co2Saved.value !== undefined && co2Saved.value > 0),
+)
 
 function openBooking() {
   seatCount.value = 1
@@ -136,11 +182,43 @@ async function submitBooking() {
     <div
       class="mt-4 border-t border-line pt-3 text-sm text-ink-soft dark:border-night-line dark:text-night-ink-soft"
     >
-      <RouteLine :origin="trip.originCity" :destination="trip.destinationCity" />
+      <div class="flex items-center justify-between gap-2">
+        <RouteLine :origin="trip.originCity" :destination="trip.destinationCity" />
+        <span
+          v-if="distance !== undefined"
+          :id="`trip-card-distance-${trip.id}`"
+          class="badge badge-neutral font-medium"
+        >
+          {{ distance }} km
+        </span>
+      </div>
 
       <p v-if="trip.notes" class="meta mt-1.5 line-clamp-2">
         {{ trip.notes }}
       </p>
+    </div>
+
+    <!-- ENVIRONMENTAL IMPACT -->
+    <div
+      v-if="hasEcoInfo"
+      :id="`trip-card-eco-${trip.id}`"
+      class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-card border border-accent-100 bg-accent-100/40 px-3.5 py-2.5 text-xs dark:border-accent-700/30 dark:bg-accent-700/10"
+      aria-label="Environmental impact"
+    >
+      <div
+        class="inline-flex items-center gap-1.5 font-medium text-accent-700 dark:text-accent-400"
+      >
+        <PhLeaf :size="16" weight="fill" aria-hidden="true" />
+        <span>{{ ecoConsumedText }}</span>
+      </div>
+
+      <div
+        v-if="co2Saved !== undefined && co2Saved > 0"
+        :id="`trip-card-saved-${trip.id}`"
+        class="badge badge-success"
+      >
+        Saves ~{{ formatCo2(co2Saved) }} vs driving alone
+      </div>
     </div>
 
     <!-- BOOKING WIDGET -->
