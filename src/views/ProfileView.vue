@@ -12,6 +12,7 @@ import ProfileDetails from '@/components/ProfileDetails.vue'
 import { api } from '@/services/api'
 import type { Review, Session } from '@/types'
 import { useCarsStore } from '@/stores/cars'
+import { useProfilePictureStore } from '@/stores/profilePicture'
 import { PhLeaf } from '@phosphor-icons/vue'
 
 const auth = useAuthStore()
@@ -195,6 +196,22 @@ watch(
   },
 )
 
+const picture = useProfilePictureStore()
+const pictureInput = ref<HTMLInputElement | null>(null)
+const confirmingPictureRemoval = ref(false)
+
+async function uploadPicture(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  // Cleared so picking the same file again still fires change
+  input.value = ''
+  if (file) await picture.upload(file)
+}
+
+async function removePicture() {
+  if (await picture.remove()) confirmingPictureRemoval.value = false
+}
+
 const confirmingDelete = ref(false)
 
 function requestDelete() {
@@ -302,6 +319,80 @@ async function save() {
 
     <template v-if="!editing">
       <ProfileDetails v-if="auth.user" :user="auth.user" class="mt-10" />
+
+      <section class="mt-10 border-t border-line pt-6 dark:border-night-line">
+        <h2 class="section-title">Profile picture</h2>
+        <p class="meta mt-2 text-sm">Shown next to your name to drivers and passengers.</p>
+
+        <p v-if="picture.error" class="alert alert-error mt-4" role="alert">
+          {{ picture.error }}
+        </p>
+
+        <input
+          id="profile-picture-input"
+          ref="pictureInput"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          class="hidden"
+          @change="uploadPicture"
+        />
+
+        <div v-if="!confirmingPictureRemoval" class="mt-4 flex items-center gap-3">
+          <button
+            id="profile-picture-btn"
+            type="button"
+            class="btn btn-ghost"
+            :disabled="picture.pending"
+            @click="pictureInput?.click()"
+          >
+            {{
+              picture.pending
+                ? 'Saving…'
+                : auth.user?.avatarUrl
+                  ? 'Change picture'
+                  : 'Upload picture'
+            }}
+          </button>
+
+          <button
+            v-if="auth.user?.avatarUrl"
+            id="profile-picture-remove-btn"
+            type="button"
+            class="btn btn-danger"
+            :disabled="picture.pending"
+            @click="confirmingPictureRemoval = true"
+          >
+            Remove picture
+          </button>
+        </div>
+
+        <template v-else>
+          <p class="mt-4 text-sm font-medium text-red-600 dark:text-red-400">
+            Remove your profile picture?
+          </p>
+
+          <div class="mt-4 flex items-center gap-3">
+            <button
+              id="profile-picture-remove-confirm-btn"
+              type="button"
+              class="btn btn-danger-solid"
+              :disabled="picture.pending"
+              @click="removePicture"
+            >
+              {{ picture.pending ? 'Removing…' : 'Yes, remove' }}
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-ghost"
+              :disabled="picture.pending"
+              @click="confirmingPictureRemoval = false"
+            >
+              Cancel
+            </button>
+          </div>
+        </template>
+      </section>
 
       <section class="mt-10 border-t border-line pt-6 dark:border-night-line">
         <h2 class="section-title">Car and environmental impact</h2>

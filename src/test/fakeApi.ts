@@ -301,6 +301,21 @@ export const fakeApi: Api = {
       account.user.car = { ...car }
       return { ...account.user }
     },
+
+    async uploadProfilePicture(file: File): Promise<User> {
+      const account = requireAccount()
+      const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[file.type]
+      if (!ext) throw new ApiError('Picture must be a JPEG, PNG or WebP image.', 400)
+      if (file.size > 5 << 20) throw new ApiError('Picture must be at most 5 MB.', 413)
+      account.user.avatarUrl = `/api/images/profile/${account.user.id}.${ext}`
+      return { ...account.user }
+    },
+
+    async deleteProfilePicture(): Promise<User> {
+      const account = requireAccount()
+      account.user.avatarUrl = null
+      return { ...account.user }
+    },
   },
 
   trips: {

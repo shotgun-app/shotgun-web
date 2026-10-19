@@ -493,3 +493,48 @@ describe('ProfileView phone and password', () => {
     expect(wrapper.text()).toContain('Current password is incorrect.')
   })
 })
+
+describe('ProfileView – profile picture', () => {
+  let router: Router
+
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    resetFakeApi()
+    router = buildRouter()
+    await router.push('/app/profile')
+    await router.isReady()
+    await useAuthStore().login(DEMO_CREDENTIALS)
+  })
+
+  async function choose(wrapper: Awaited<ReturnType<typeof mountProfile>>, file: File) {
+    const input = wrapper.get<HTMLInputElement>('#profile-picture-input')
+    Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
+    await input.trigger('change')
+    await flushPromises()
+  }
+
+  it('uploads a picture, then removes it after confirming', async () => {
+    const wrapper = await mountProfile(router)
+    expect(wrapper.find('#profile-picture-remove-btn').exists()).toBe(false)
+
+    await choose(wrapper, new File(['png'], 'me.png', { type: 'image/png' }))
+
+    expect(wrapper.find('img').exists()).toBe(true)
+    expect(wrapper.get('#profile-picture-btn').text()).toBe('Change picture')
+
+    await wrapper.get('#profile-picture-remove-btn').trigger('click')
+    await wrapper.get('#profile-picture-remove-confirm-btn').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('img').exists()).toBe(false)
+    expect(wrapper.get('#profile-picture-btn').text()).toBe('Upload picture')
+  })
+
+  it('shows the error for a file that is not an image', async () => {
+    const wrapper = await mountProfile(router)
+
+    await choose(wrapper, new File(['hi'], 'notes.txt', { type: 'text/plain' }))
+
+    expect(wrapper.get('[role="alert"]').text()).toBe('Picture must be a JPEG, PNG or WebP image.')
+  })
+})
