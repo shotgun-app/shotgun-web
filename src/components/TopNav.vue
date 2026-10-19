@@ -64,7 +64,7 @@ async function logout() {
             aria-haspopup="menu"
             @click="open = !open"
           >
-            <UserAvatar :name="auth.user?.name" size="sm" />
+            <UserAvatar :name="auth.user?.name" :src="auth.user?.avatarUrl" size="sm" />
             <span class="hidden text-sm sm:inline">{{ auth.user?.name }}</span>
           </button>
 

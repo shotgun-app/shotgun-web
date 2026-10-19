@@ -297,7 +297,7 @@ async function save() {
         <p class="page-lead">Your public details visible to drivers and fellow passengers.</p>
       </div>
 
-      <UserAvatar :name="auth.user?.name" size="lg" />
+      <UserAvatar :name="auth.user?.name" :src="auth.user?.avatarUrl" size="lg" />
     </div>
 
     <template v-if="!editing">

@@ -521,7 +521,7 @@ async function submitReview(review: { rating: number; comment: string }) {
                       class="flex items-center justify-between gap-2 rounded-lg bg-surface p-2 shadow-sm dark:bg-night-surface"
                     >
                       <div class="flex items-center gap-2 font-medium">
-                        <UserAvatar :name="passenger.name" size="sm" />
+                        <UserAvatar :name="passenger.name" :src="passenger.avatarUrl" size="sm" />
                         <RouterLink
                           :to="{ name: 'user', params: { id: passenger.id } }"
                           class="text-ink hover:text-brand-600 hover:underline dark:text-night-ink dark:hover:text-brand-400"

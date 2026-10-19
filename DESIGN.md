@@ -109,7 +109,8 @@ dimmed and show a not-allowed cursor. Disabled buttons dim to 60% and show the s
 
 ## Components
 
-- `UserAvatar` - initials on `brand-600`. Sizes `sm` (nav, `UserList`), `md` (trip card), `lg` (profile).
+- `UserAvatar` - the profile picture (`src`, cropped to a circle), or initials on `brand-600`
+  without one. Sizes `sm` (nav, `UserList`), `md` (trip card), `lg` (profile).
 - `UserList` - drivers and passengers on one line, comma separated: small avatar plus name, each
   linking to their profile in a new tab. Takes an `empty` text for when nobody is listed.
 - `ProfileDetails` - read-only name, email, phone and member since. Used on your own profile

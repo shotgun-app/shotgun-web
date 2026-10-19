@@ -20,7 +20,7 @@ export interface User {
   name: string
   phone: string | null
   joinedAt: string
-  /** Not served by the backend yet (rating flows are release 4.0, CO2 release 5.0). */
+  /** Path of the profile picture on the backend, null without one. Use with `apiUrl`. */
   avatarUrl?: string | null
   /** 0-5, average of the ratings received. */
   rating?: number

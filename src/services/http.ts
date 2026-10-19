@@ -23,15 +23,14 @@ import {
   type User,
   type UserProfile,
 } from '@/types'
+import { API_BASE_URL } from '@/utils/apiUrl'
 import type { Api } from './api'
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers)
   if (init.body) headers.set('Content-Type', 'application/json')
 
-  const response = await fetch(`${BASE_URL}${path}`, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     credentials: 'include',
     headers,

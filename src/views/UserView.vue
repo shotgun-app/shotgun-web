@@ -23,7 +23,7 @@ watch(() => props.id, users.load, { immediate: true })
       <div class="flex items-start justify-between gap-4">
         <h1 class="page-title">{{ users.user.user.name }}</h1>
 
-        <UserAvatar :name="users.user.user.name" size="lg" />
+        <UserAvatar :name="users.user.user.name" :src="users.user.user.avatarUrl" size="lg" />
       </div>
 
       <ProfileDetails :user="users.user.user" class="mt-10" />
