@@ -51,6 +51,16 @@
 }
 
 @layer base {
+  /* Tailwind v4 resets buttons to the default cursor */
+  button:not(:disabled),
+  [role='button'],
+  select:not(:disabled),
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     scroll-behavior: smooth;

@@ -130,12 +130,20 @@ export interface Review {
   createdAt: string
 }
 
+/** CO2 a user saved in one role, counting completed rides only. */
+export interface ProfileImpact {
+  rides: number
+  co2SavedKg: number
+}
+
 export interface UserProfile {
   user: User
   driverScore: number
   passengerScore: number
   reviews: Review[]
   passengerReviews: Review[]
+  passengerImpact: ProfileImpact
+  // TODO(driver impact): add `driverImpact: ProfileImpact` once GET /api/users/:id returns it
 }
 
 export interface ReviewPayload {

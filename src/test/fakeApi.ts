@@ -26,6 +26,7 @@ import {
   type ReviewPayload,
   type Session,
   type UserProfile,
+  type ProfileImpact,
   type SustainabilityImpact,
 } from '@/types'
 import type { Api } from '@/services/api'
@@ -84,6 +85,33 @@ export function getFakeTrips(): Trip[] {
 export function getFakeResetToken(email: string): string | undefined {
   return [...resetTokens].find(([, e]) => e === email.trim().toLowerCase())?.[0]
 }
+
+/** Same rule as the backend: confirmed bookings on departed trips, saving per seat against driving alone. */
+function passengerImpactOf(userId: string): ProfileImpact {
+  const now = new Date()
+  let rides = 0
+  let co2SavedKg = 0
+
+  for (const booking of bookings) {
+    if (booking.passengerId !== userId || booking.status !== 'confirmed') continue
+    const trip = trips.find((t) => t.id === booking.tripId)
+    if (!trip || new Date(trip.departureAt) > now) continue
+
+    const seatsBooked = bookings
+      .filter((b) => b.tripId === trip.id && b.status === 'confirmed')
+      .reduce((sum, b) => sum + b.seats, 0)
+    const dist = trip.distanceKm ?? 300
+    const consumed = (dist * (trip.isElectric ? 0 : 120)) / 1000
+    const perSeat = Math.max(0, (dist * 120) / 1000 - consumed / (seatsBooked + 1))
+
+    rides++
+    co2SavedKg += perSeat * booking.seats
+  }
+
+  return { rides, co2SavedKg: Math.round(co2SavedKg * 100) / 100 }
+}
+
+// TODO(driver impact): add driverImpactOf(userId) mirroring the backend driverImpact
 
 function findByEmail(email: string): MockAccount | undefined {
   return accounts.find((a) => a.user.email.toLowerCase() === email.trim().toLowerCase())
@@ -741,6 +769,7 @@ export const fakeApi: Api = {
         passengerScore,
         reviews: driverReviews.map((review) => ({ ...review })),
         passengerReviews: passengerReviews.map((review) => ({ ...review })),
+        passengerImpact: passengerImpactOf(userId),
       }
     },
   },

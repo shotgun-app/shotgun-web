@@ -68,8 +68,8 @@ headings, no invented statistics. Use an ellipsis character for in-progress labe
   Exceptions: fully round (`rounded-full`) for avatars, badges and the icon-only swap
   button; `rounded-lg` for items inside a menu (nested inside a `rounded-card`).
 - **Flat.** No shadows on cards or buttons. The only shadow is the top-nav dropdown menu.
-- Page container: `max-w-5xl px-6 py-16` (`AppLayout`). Content pages (profile, rides,
-  bookings) are `max-w-2xl` and must all match. Home uses the full container for its
+- Page container: `max-w-6xl px-6 py-16` (`AppLayout`, same width as the top nav). Content pages
+  (profile, user, rides, bookings) are `max-w-4xl` and must all match. Home uses the full container for its
   search grid.
 - Spacing: `gap-4` between list items, `gap-5` between form fields, `gap-6` inside a
   card's form, `mt-8`/`mt-10` between a page header and its content. Cards use `p-6`.

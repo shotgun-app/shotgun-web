@@ -4,6 +4,7 @@ import { useUsersStore } from '@/stores/users'
 import StarRating from '@/components/StarRating.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import ProfileDetails from '@/components/ProfileDetails.vue'
+import ProfileImpactCard from '@/components/ProfileImpactCard.vue'
 
 const props = defineProps<{ id: string }>()
 const users = useUsersStore()
@@ -12,7 +13,7 @@ watch(() => props.id, users.load, { immediate: true })
 </script>
 
 <template>
-  <section class="rise max-w-2xl">
+  <section class="rise max-w-4xl">
     <p v-if="users.error" class="alert alert-error" role="alert">
       {{ users.error }}
     </p>
@@ -27,6 +28,17 @@ watch(() => props.id, users.load, { immediate: true })
       </div>
 
       <ProfileDetails :user="users.user.user" class="mt-10" />
+
+      <ProfileImpactCard
+        id="user-passenger-impact"
+        class="mt-10"
+        title="Passenger impact"
+        rides-label="Rides as passenger"
+        co2-hint="Compared with driving alone."
+        :impact="users.user.passengerImpact"
+      />
+      <!-- TODO(driver impact): add a ProfileImpactCard for users.user.driverImpact
+           (title "Driver impact", rides-label "Rides as driver") -->
 
       <template v-if="users.user.reviews.length > 0">
         <!-- Driver score -->

@@ -253,7 +253,7 @@ async function submitReview(review: { rating: number; comment: string }) {
 </script>
 
 <template>
-  <section class="rise max-w-2xl">
+  <section class="rise max-w-4xl">
     <!-- ── Page header ────────────────────────────────────────────────── -->
     <div class="flex items-start justify-between gap-4">
       <div>

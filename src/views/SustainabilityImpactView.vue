@@ -12,7 +12,6 @@ import {
   PhCar,
   PhUsers,
   PhGasPump,
-  PhArrowLeft,
   PhArrowClockwise,
   PhShieldCheck,
   PhGlobe,
@@ -37,23 +36,14 @@ onMounted(async () => {
       class="border-b border-line bg-white/80 backdrop-blur-md dark:border-night-line dark:bg-night-raised/80"
     >
       <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-8">
-        <div class="flex items-center gap-4">
-          <RouterLink
-            :to="auth.isAuthenticated ? '/app' : '/'"
-            class="inline-flex items-center gap-1.5 text-sm font-medium text-ink-soft transition-colors duration-200 hover:text-ink dark:text-night-ink-soft dark:hover:text-night-ink"
-            aria-label="Back"
-          >
-            <PhArrowLeft class="size-4" />
-            <span>{{ auth.isAuthenticated ? 'Back to App' : 'Back to Home' }}</span>
-          </RouterLink>
-
-          <span class="text-line dark:text-night-line">|</span>
-
-          <RouterLink to="/" class="flex items-center gap-2.5 font-medium tracking-tight">
-            <img src="/logo.png" alt="Shotgun" class="size-7" width="28" height="28" />
-            <span class="text-lg text-ink dark:text-night-ink">Shotgun</span>
-          </RouterLink>
-        </div>
+        <!-- The logo is the only way back, so it leads signed-in users to the app -->
+        <RouterLink
+          :to="auth.isAuthenticated ? '/app' : '/'"
+          class="flex items-center gap-2.5 font-medium tracking-tight"
+        >
+          <img src="/logo.png" alt="Shotgun" class="size-7" width="28" height="28" />
+          <span class="text-lg text-ink dark:text-night-ink">Shotgun</span>
+        </RouterLink>
 
         <div class="flex items-center gap-3">
           <RouterLink v-if="!auth.isAuthenticated" to="/" class="btn btn-ghost text-xs sm:text-sm">
@@ -395,38 +385,6 @@ onMounted(async () => {
           </div>
         </section>
 
-        <!-- METHODOLOGY NOTES -->
-        <section
-          class="rise mt-10 text-xs text-ink-soft dark:text-night-ink-soft"
-          style="animation-delay: 300ms"
-        >
-          <div class="card border-dashed p-6">
-            <h3 class="font-medium text-ink dark:text-night-ink">
-              Methodology & Baseline Assumptions
-            </h3>
-            <ul class="mt-2 list-inside list-disc space-y-1 leading-relaxed">
-              <li>
-                <strong>Completed rides:</strong> Derived dynamically from rides whose departure
-                time has passed.
-              </li>
-              <li>
-                <strong>CO₂ calculation:</strong> Computed using verified European driving distances
-                between cities and specific vehicle emissions registered in the Shotgun catalogue
-                (fully electric vehicles emit 0 g/km direct CO₂).
-              </li>
-              <li>
-                <strong>Single-occupancy baseline:</strong> Assumes each passenger and driver would
-                otherwise have driven their own average car with 120 g CO₂/km (standard European
-                passenger vehicle baseline).
-              </li>
-              <li>
-                <strong>Individual rides saved:</strong> Represents the count of passengers who
-                shared a car rather than driving solo.
-              </li>
-            </ul>
-          </div>
-        </section>
-
         <!-- CALL TO ACTION -->
         <section class="rise mt-10 text-center" style="animation-delay: 360ms">
           <div class="card flex flex-col items-center justify-between gap-4 p-8 sm:flex-row">
@@ -442,6 +400,34 @@ onMounted(async () => {
               {{ auth.isAuthenticated ? 'Go to Trips' : 'Join Shotgun Today' }}
             </RouterLink>
           </div>
+        </section>
+
+        <!-- METHODOLOGY NOTES -->
+        <section
+          class="rise mt-12 text-xs leading-relaxed text-ink-soft dark:text-night-ink-soft"
+          style="animation-delay: 420ms"
+        >
+          <h3 class="font-medium">Methodology & Baseline Assumptions</h3>
+          <ul class="mt-2 list-inside list-disc space-y-1">
+            <li>
+              <strong class="font-medium">Completed rides:</strong> Derived dynamically from rides
+              whose departure time has passed.
+            </li>
+            <li>
+              <strong class="font-medium">CO₂ calculation:</strong> Computed using verified European
+              driving distances between cities and specific vehicle emissions registered in the
+              Shotgun catalogue (fully electric vehicles emit 0 g/km direct CO₂).
+            </li>
+            <li>
+              <strong class="font-medium">Single-occupancy baseline:</strong> Assumes each passenger
+              and driver would otherwise have driven their own average car with 120 g CO₂/km
+              (standard European passenger vehicle baseline).
+            </li>
+            <li>
+              <strong class="font-medium">Individual rides saved:</strong> Represents the count of
+              passengers who shared a car rather than driving solo.
+            </li>
+          </ul>
         </section>
       </template>
     </main>

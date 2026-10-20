@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { mount } from '@vue/test-utils'
+import { mount, RouterLinkStub } from '@vue/test-utils'
 
 import TripCard from '../TripCard.vue'
 import type { TripWithDriver } from '@/types'
@@ -123,5 +123,22 @@ describe('TripCard.vue environmental impact', () => {
     })
     expect(wrapper.find('#trip-card-eco-trip_1').exists()).toBe(false)
     expect(wrapper.find('#trip-card-distance-trip_1').exists()).toBe(false)
+  })
+})
+
+describe('TripCard.vue driver', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it("links the driver's name to their profile", () => {
+    const wrapper = mount(TripCard, {
+      props: { trip: makeTrip() },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    })
+    const link = wrapper.getComponent<typeof RouterLinkStub>('#trip-card-driver-trip_1')
+
+    expect(link.props('to')).toEqual({ name: 'user', params: { id: 'usr_2' } })
+    expect(link.text()).toBe('Ben')
   })
 })

@@ -45,7 +45,7 @@ async function logout() {
   <header
     class="sticky top-0 z-20 bg-white/80 backdrop-blur-md dark:border-night-line dark:bg-night/80"
   >
-    <div class="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4">
+    <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
       <RouterLink
         :to="{ name: 'app' }"
         class="flex items-center gap-2.5 text-xl font-medium tracking-tight"
