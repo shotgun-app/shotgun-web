@@ -178,7 +178,7 @@ function hasEcoInfo(b: BookingWithTrip): boolean {
 </script>
 
 <template>
-  <section class="rise max-w-2xl">
+  <section class="rise max-w-4xl">
     <!-- ── Page header ────────────────────────────────────────────────── -->
     <div>
       <h1 class="page-title">My bookings</h1>

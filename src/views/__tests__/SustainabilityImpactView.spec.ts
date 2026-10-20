@@ -114,14 +114,13 @@ describe('SustainabilityImpactView', () => {
     expect(wrapper.text()).not.toContain('Total CO₂ Saved')
   })
 
-  it('adapts the back button for guests vs authenticated users', async () => {
-    // Guest
+  it('has no back button and the logo leads guests home and users to the app', async () => {
     const guestWrapper = await mountImpactView()
-    expect(guestWrapper.get('header a[aria-label="Back"]').text()).toContain('Back to Home')
+    expect(guestWrapper.find('header a[aria-label="Back"]').exists()).toBe(false)
+    expect(guestWrapper.get('header a').attributes('href')).toBe('/')
 
-    // Logged in user
     await useAuthStore().login(DEMO_CREDENTIALS)
     const userWrapper = await mountImpactView()
-    expect(userWrapper.get('header a[aria-label="Back"]').text()).toContain('Back to App')
+    expect(userWrapper.get('header a').attributes('href')).toBe('/app')
   })
 })

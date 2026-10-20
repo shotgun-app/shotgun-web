@@ -520,14 +520,14 @@ describe('ProfileView – profile picture', () => {
     await choose(wrapper, new File(['png'], 'me.png', { type: 'image/png' }))
 
     expect(wrapper.find('img').exists()).toBe(true)
-    expect(wrapper.get('#profile-picture-btn').text()).toBe('Change picture')
+    expect(wrapper.get('#profile-picture-btn').attributes('aria-label')).toBe('Change picture')
 
     await wrapper.get('#profile-picture-remove-btn').trigger('click')
     await wrapper.get('#profile-picture-remove-confirm-btn').trigger('click')
     await flushPromises()
 
     expect(wrapper.find('img').exists()).toBe(false)
-    expect(wrapper.get('#profile-picture-btn').text()).toBe('Upload picture')
+    expect(wrapper.get('#profile-picture-btn').attributes('aria-label')).toBe('Upload picture')
   })
 
   it('shows the error for a file that is not an image', async () => {

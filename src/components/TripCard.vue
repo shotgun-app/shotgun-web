@@ -7,6 +7,7 @@
  * 2. computed(): Creating lightweight derived state (e.g. available seats, formatted dates).
  */
 import { computed, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { PhLeaf, PhStar } from '@phosphor-icons/vue'
 import type { TripWithDriver } from '@/types'
 import { useBookingsStore } from '@/stores/bookings'
@@ -146,7 +147,17 @@ async function submitBooking() {
 
         <div>
           <div class="flex items-center gap-2">
-            <h3 class="font-medium text-ink dark:text-night-ink">{{ trip.driver.name }}</h3>
+            <h3 class="font-medium text-ink dark:text-night-ink">
+              <!-- New tab like UserList, so the search results stay put -->
+              <RouterLink
+                :id="`trip-card-driver-${trip.id}`"
+                :to="{ name: 'user', params: { id: trip.driver.id } }"
+                target="_blank"
+                class="hover:text-brand-600 hover:underline dark:hover:text-brand-400"
+              >
+                {{ trip.driver.name }}
+              </RouterLink>
+            </h3>
             <span v-if="(trip.driver.rating ?? 0) > 0" class="badge badge-neutral">
               <PhStar :size="12" weight="fill" aria-hidden="true" />
               {{ (trip.driver.rating ?? 0).toFixed(1) }}

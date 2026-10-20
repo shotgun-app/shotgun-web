@@ -5,15 +5,16 @@ import { useAuthStore } from '@/stores/auth'
 import { useSessionsStore } from '@/stores/sessions'
 import { describeUserAgent } from '@/utils/userAgent'
 import StarRating from '@/components/StarRating.vue'
+import ProfileImpactCard from '@/components/ProfileImpactCard.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import PasswordInput from '@/components/PasswordInput.vue'
 import PhoneInput from '@/components/PhoneInput.vue'
 import ProfileDetails from '@/components/ProfileDetails.vue'
 import { api } from '@/services/api'
-import type { Review, Session } from '@/types'
+import type { ProfileImpact, Review, Session } from '@/types'
 import { useCarsStore } from '@/stores/cars'
 import { useProfilePictureStore } from '@/stores/profilePicture'
-import { PhLeaf } from '@phosphor-icons/vue'
+import { PhCamera, PhLeaf } from '@phosphor-icons/vue'
 
 const auth = useAuthStore()
 const carsStore = useCarsStore()
@@ -124,6 +125,8 @@ const driverScore = ref(0)
 const reviews = ref<Review[]>([])
 const passengerScore = ref(0)
 const passengerReviews = ref<Review[]>([])
+const passengerImpact = ref<ProfileImpact>({ rides: 0, co2SavedKg: 0 })
+// TODO(driver impact): add a driverImpact ref, filled and reset like passengerImpact
 
 async function loadDriverReviews() {
   if (!auth.user) return
@@ -134,11 +137,13 @@ async function loadDriverReviews() {
     reviews.value = profile.reviews
     passengerScore.value = profile.passengerScore || 0
     passengerReviews.value = profile.passengerReviews || []
+    passengerImpact.value = profile.passengerImpact
   } catch {
     driverScore.value = 0
     reviews.value = []
     passengerScore.value = 0
     passengerReviews.value = []
+    passengerImpact.value = { rides: 0, co2SavedKg: 0 }
   }
 }
 
@@ -307,33 +312,15 @@ async function save() {
 </script>
 
 <template>
-  <section class="rise max-w-2xl">
+  <section class="rise max-w-4xl">
     <div class="flex items-start justify-between gap-4">
       <div>
         <h1 class="page-title">My profile</h1>
         <p class="page-lead">Your public details visible to drivers and fellow passengers.</p>
       </div>
 
-      <UserAvatar :name="auth.user?.name" :src="auth.user?.avatarUrl" size="lg" />
-    </div>
-
-    <template v-if="!editing">
-      <ProfileDetails v-if="auth.user" :user="auth.user" class="mt-10" />
-
-      <div class="mt-6">
-        <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">
-          Edit profile
-        </button>
-      </div>
-
-      <section class="mt-10 border-t border-line pt-6 dark:border-night-line">
-        <h2 class="section-title">Profile picture</h2>
-        <p class="meta mt-2 text-sm">Shown next to your name to drivers and passengers.</p>
-
-        <p v-if="picture.error" class="alert alert-error mt-4" role="alert">
-          {{ picture.error }}
-        </p>
-
+      <!-- Remove controls sit outside the flow so their changing text never moves the avatar -->
+      <div class="relative shrink-0">
         <input
           id="profile-picture-input"
           ref="pictureInput"
@@ -343,54 +330,54 @@ async function save() {
           @change="uploadPicture"
         />
 
-        <div v-if="!confirmingPictureRemoval" class="mt-4 flex items-center gap-3">
-          <button
-            id="profile-picture-btn"
-            type="button"
-            class="btn btn-ghost"
-            :disabled="picture.pending"
-            @click="pictureInput?.click()"
-          >
-            {{
-              picture.pending
-                ? 'Saving…'
-                : auth.user?.avatarUrl
-                  ? 'Change picture'
-                  : 'Upload picture'
-            }}
-          </button>
+        <button
+          id="profile-picture-btn"
+          type="button"
+          class="group relative rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-wait"
+          :aria-label="auth.user?.avatarUrl ? 'Change picture' : 'Upload picture'"
+          :title="auth.user?.avatarUrl ? 'Change picture' : 'Upload picture'"
+          :disabled="picture.pending"
+          @click="pictureInput?.click()"
+        >
+          <UserAvatar :name="auth.user?.name" :src="auth.user?.avatarUrl" size="lg" />
 
+          <span
+            class="absolute inset-0 grid place-items-center rounded-full bg-ink/75 text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+            :class="{ 'opacity-100': picture.pending }"
+            aria-hidden="true"
+          >
+            <PhCamera :size="18" />
+          </span>
+        </button>
+
+        <template v-if="auth.user?.avatarUrl">
           <button
-            v-if="auth.user?.avatarUrl"
+            v-if="!confirmingPictureRemoval"
             id="profile-picture-remove-btn"
             type="button"
-            class="btn btn-danger"
+            class="absolute top-full right-1/2 mt-2 translate-x-1/2 text-xs whitespace-nowrap text-ink-soft hover:text-red-600 dark:text-night-ink-soft dark:hover:text-red-400"
             :disabled="picture.pending"
             @click="confirmingPictureRemoval = true"
           >
-            Remove picture
+            Remove
           </button>
-        </div>
 
-        <template v-else>
-          <p class="mt-4 text-sm font-medium text-red-600 dark:text-red-400">
-            Remove your profile picture?
-          </p>
-
-          <div class="mt-4 flex items-center gap-3">
+          <div
+            v-else
+            class="absolute top-full right-0 mt-2 flex items-center gap-2 text-xs whitespace-nowrap"
+          >
             <button
               id="profile-picture-remove-confirm-btn"
               type="button"
-              class="btn btn-danger-solid"
+              class="font-medium text-red-600 hover:underline dark:text-red-400"
               :disabled="picture.pending"
               @click="removePicture"
             >
-              {{ picture.pending ? 'Removing…' : 'Yes, remove' }}
+              {{ picture.pending ? 'Removing…' : 'Confirm removal' }}
             </button>
-
             <button
               type="button"
-              class="btn btn-ghost"
+              class="text-ink-soft hover:underline dark:text-night-ink-soft"
               :disabled="picture.pending"
               @click="confirmingPictureRemoval = false"
             >
@@ -398,7 +385,21 @@ async function save() {
             </button>
           </div>
         </template>
-      </section>
+      </div>
+    </div>
+
+    <p v-if="picture.error" class="alert alert-error mt-4" role="alert">
+      {{ picture.error }}
+    </p>
+
+    <template v-if="!editing">
+      <ProfileDetails v-if="auth.user" :user="auth.user" class="mt-10" />
+
+      <div class="mt-6">
+        <button id="profile-edit-btn" type="button" class="btn btn-primary" @click="startEditing">
+          Edit profile
+        </button>
+      </div>
 
       <section class="mt-10 border-t border-line pt-6 dark:border-night-line">
         <h2 class="section-title">Car and environmental impact</h2>
@@ -504,6 +505,17 @@ async function save() {
           No cars are available right now.
         </p>
       </section>
+
+      <ProfileImpactCard
+        id="profile-passenger-impact"
+        class="mt-10"
+        title="Passenger impact"
+        rides-label="Rides as passenger"
+        co2-hint="Compared with driving alone."
+        :impact="passengerImpact"
+      />
+      <!-- TODO(driver impact): add a ProfileImpactCard for driverImpact
+           (title "Driver impact", rides-label "Rides as driver") -->
 
       <template v-if="reviews.length > 0">
         <section
