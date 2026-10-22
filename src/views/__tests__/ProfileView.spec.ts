@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import { resetFakeApi } from '@/test/fakeApi'
+import { api } from '@/services/api'
 
 import ProfileView from '../ProfileView.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -536,5 +537,38 @@ describe('ProfileView – profile picture', () => {
     await choose(wrapper, new File(['hi'], 'notes.txt', { type: 'text/plain' }))
 
     expect(wrapper.get('[role="alert"]').text()).toBe('Picture must be a JPEG, PNG or WebP image.')
+  })
+})
+
+describe('ProfileView – environmental impact', () => {
+  let router: Router
+
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    resetFakeApi()
+    router = buildRouter()
+    await router.push('/app/profile')
+    await router.isReady()
+    await useAuthStore().login(DEMO_CREDENTIALS)
+  })
+
+  it('renders passenger and driver impact cards', async () => {
+    const get = api.users.get.bind(api.users)
+    vi.spyOn(api.users, 'get').mockImplementation(async (id: string) => ({
+      ...(await get(id)),
+      passengerImpact: { rides: 2, co2SavedKg: 28.5 },
+      driverImpact: { rides: 4, co2SavedKg: 95.2 },
+    }))
+
+    const wrapper = await mountProfile(router)
+
+    const passengerCard = wrapper.get('#profile-passenger-impact')
+    expect(passengerCard.get('[data-test="impact-co2"]').text()).toBe('28.5 kg CO₂')
+    expect(passengerCard.get('[data-test="impact-rides"]').text()).toBe('2')
+
+    const driverCard = wrapper.get('#profile-driver-impact')
+    expect(driverCard.get('[data-test="impact-co2"]').text()).toBe('95.2 kg CO₂')
+    expect(driverCard.get('[data-test="impact-rides"]').text()).toBe('4')
+    expect(driverCard.text()).toContain('Helped reduce cars on the road.')
   })
 })

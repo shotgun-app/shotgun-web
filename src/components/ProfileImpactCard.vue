@@ -9,6 +9,7 @@ defineProps<{
   impact: ProfileImpact
   ridesLabel: string
   co2Hint: string
+  subHint?: string
 }>()
 </script>
 
@@ -38,7 +39,7 @@ defineProps<{
         <dd data-test="impact-rides" class="mt-2 text-2xl font-medium tracking-tight">
           {{ impact.rides }}
         </dd>
-        <dd class="meta mt-1">Completed rides only.</dd>
+        <dd class="meta mt-1">{{ subHint || 'Completed rides only.' }}</dd>
       </div>
     </dl>
   </section>
