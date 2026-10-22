@@ -134,6 +134,9 @@ export interface Review {
 export interface ProfileImpact {
   rides: number
   co2SavedKg: number
+  ridesOfferedCount?: number
+  driverCo2SavedKg?: number
+  carsReducedCount?: number
 }
 
 export interface UserProfile {
@@ -143,7 +146,10 @@ export interface UserProfile {
   reviews: Review[]
   passengerReviews: Review[]
   passengerImpact: ProfileImpact
-  // TODO(driver impact): add `driverImpact: ProfileImpact` once GET /api/users/:id returns it
+  driverImpact: ProfileImpact
+  driver_co2_saved_kg?: number
+  rides_offered_count?: number
+  cars_reduced_count?: number
 }
 
 export interface ReviewPayload {

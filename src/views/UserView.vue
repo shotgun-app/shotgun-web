@@ -37,8 +37,16 @@ watch(() => props.id, users.load, { immediate: true })
         co2-hint="Compared with driving alone."
         :impact="users.user.passengerImpact"
       />
-      <!-- TODO(driver impact): add a ProfileImpactCard for users.user.driverImpact
-           (title "Driver impact", rides-label "Rides as driver") -->
+
+      <ProfileImpactCard
+        id="user-driver-impact"
+        class="mt-6"
+        title="Driver impact"
+        rides-label="Rides offered"
+        co2-hint="From sharing rides and vehicle efficiency."
+        sub-hint="Helped reduce cars on the road."
+        :impact="users.user.driverImpact || { rides: 0, co2SavedKg: 0 }"
+      />
 
       <template v-if="users.user.reviews.length > 0">
         <!-- Driver score -->

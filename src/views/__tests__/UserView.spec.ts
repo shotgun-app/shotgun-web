@@ -61,5 +61,25 @@ describe('UserView', () => {
     expect(card.get('[data-test="impact-rides"]').text()).toBe('0')
   })
 
-  // TODO(driver impact): add the same two cases for the driver impact card
+  it('shows the CO₂ a driver saved and how many rides they offered', async () => {
+    const get = api.users.get.bind(api.users)
+    vi.spyOn(api.users, 'get').mockImplementation(async (id) => ({
+      ...(await get(id)),
+      driverImpact: { rides: 5, co2SavedKg: 85.5 },
+    }))
+
+    const wrapper = await mountUser('usr_2')
+    const card = wrapper.get('#user-driver-impact')
+
+    expect(card.get('[data-test="impact-co2"]').text()).toBe('85.5 kg CO₂')
+    expect(card.get('[data-test="impact-rides"]').text()).toBe('5')
+  })
+
+  it('shows zero driver impact for a user with no completed rides as driver', async () => {
+    const wrapper = await mountUser('usr_2')
+    const card = wrapper.get('#user-driver-impact')
+
+    expect(card.get('[data-test="impact-co2"]').text()).toBe('0 kg CO₂')
+    expect(card.get('[data-test="impact-rides"]').text()).toBe('0')
+  })
 })

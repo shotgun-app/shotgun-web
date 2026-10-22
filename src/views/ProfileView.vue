@@ -126,7 +126,7 @@ const reviews = ref<Review[]>([])
 const passengerScore = ref(0)
 const passengerReviews = ref<Review[]>([])
 const passengerImpact = ref<ProfileImpact>({ rides: 0, co2SavedKg: 0 })
-// TODO(driver impact): add a driverImpact ref, filled and reset like passengerImpact
+const driverImpact = ref<ProfileImpact>({ rides: 0, co2SavedKg: 0 })
 
 async function loadDriverReviews() {
   if (!auth.user) return
@@ -138,12 +138,14 @@ async function loadDriverReviews() {
     passengerScore.value = profile.passengerScore || 0
     passengerReviews.value = profile.passengerReviews || []
     passengerImpact.value = profile.passengerImpact
+    driverImpact.value = profile.driverImpact || { rides: 0, co2SavedKg: 0 }
   } catch {
     driverScore.value = 0
     reviews.value = []
     passengerScore.value = 0
     passengerReviews.value = []
     passengerImpact.value = { rides: 0, co2SavedKg: 0 }
+    driverImpact.value = { rides: 0, co2SavedKg: 0 }
   }
 }
 
@@ -514,8 +516,16 @@ async function save() {
         co2-hint="Compared with driving alone."
         :impact="passengerImpact"
       />
-      <!-- TODO(driver impact): add a ProfileImpactCard for driverImpact
-           (title "Driver impact", rides-label "Rides as driver") -->
+
+      <ProfileImpactCard
+        id="profile-driver-impact"
+        class="mt-6"
+        title="Driver impact"
+        rides-label="Rides offered"
+        co2-hint="From sharing rides and vehicle efficiency."
+        sub-hint="Helped reduce cars on the road."
+        :impact="driverImpact"
+      />
 
       <template v-if="reviews.length > 0">
         <section

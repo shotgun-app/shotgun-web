@@ -111,7 +111,37 @@ function passengerImpactOf(userId: string): ProfileImpact {
   return { rides, co2SavedKg: Math.round(co2SavedKg * 100) / 100 }
 }
 
-// TODO(driver impact): add driverImpactOf(userId) mirroring the backend driverImpact
+/** Same rule as the backend: completed trips offered by the driver, saving from avoided solo drives + clean vehicle. */
+function driverImpactOf(userId: string): ProfileImpact {
+  const now = new Date()
+  let rides = 0
+  let co2SavedKg = 0
+
+  for (const trip of trips) {
+    if (trip.driverId !== userId || new Date(trip.departureAt) > now) continue
+
+    const seatsBooked = bookings
+      .filter((b) => b.tripId === trip.id && b.status === 'confirmed')
+      .reduce((sum, b) => sum + b.seats, 0)
+    const dist = trip.distanceKm ?? 300
+    const carEmission = trip.isElectric ? 0 : 120
+
+    const passengerSaved = (seatsBooked * dist * 120) / 1000
+    const cleanCarSaved = carEmission < 120 ? (dist * (120 - carEmission)) / 1000 : 0
+
+    rides++
+    co2SavedKg += passengerSaved + cleanCarSaved
+  }
+
+  const rounded = Math.round(co2SavedKg * 100) / 100
+  return {
+    rides,
+    co2SavedKg: rounded,
+    ridesOfferedCount: rides,
+    driverCo2SavedKg: rounded,
+    carsReducedCount: rides,
+  }
+}
 
 function findByEmail(email: string): MockAccount | undefined {
   return accounts.find((a) => a.user.email.toLowerCase() === email.trim().toLowerCase())
@@ -770,6 +800,10 @@ export const fakeApi: Api = {
         reviews: driverReviews.map((review) => ({ ...review })),
         passengerReviews: passengerReviews.map((review) => ({ ...review })),
         passengerImpact: passengerImpactOf(userId),
+        driverImpact: driverImpactOf(userId),
+        driver_co2_saved_kg: driverImpactOf(userId).co2SavedKg,
+        rides_offered_count: driverImpactOf(userId).rides,
+        cars_reduced_count: driverImpactOf(userId).rides,
       }
     },
   },
