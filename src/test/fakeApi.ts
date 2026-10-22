@@ -309,6 +309,12 @@ export const fakeApi: Api = {
       account.user.name = payload.name.trim()
       account.user.email = payload.email.trim()
       account.user.phone = payload.phone.trim() || null
+      if (payload.bio !== undefined) {
+        if (payload.bio.length > 1000) {
+          throw new ApiError('Bio must be at most 1000 characters.', 400)
+        }
+        account.user.bio = payload.bio.trim()
+      }
       return { ...account.user }
     },
 

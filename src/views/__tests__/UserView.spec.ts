@@ -33,6 +33,23 @@ describe('UserView', () => {
     expect(wrapper.find('button').exists()).toBe(false)
   })
 
+  it('shows another user’s bio', async () => {
+    const get = api.users.get.bind(api.users)
+    vi.spyOn(api.users, 'get').mockImplementation(async (id) => {
+      const profile = await get(id)
+      return {
+        ...profile,
+        user: {
+          ...profile.user,
+          bio: 'Frequent passenger who loves quiet rides.',
+        },
+      }
+    })
+
+    const wrapper = await mountUser('usr_2')
+    expect(wrapper.get('#profile-bio').text()).toBe('Frequent passenger who loves quiet rides.')
+  })
+
   it('shows an error for an unknown user', async () => {
     const wrapper = await mountUser('usr_missing')
 
