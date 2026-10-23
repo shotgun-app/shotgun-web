@@ -29,6 +29,15 @@ const memberSince = computed(() =>
       </dd>
     </div>
     <div class="grid grid-cols-[7rem_1fr] gap-4 py-4">
+      <dt class="text-sm text-ink-soft dark:text-night-ink-soft">Bio</dt>
+      <dd
+        id="profile-bio"
+        class="text-sm font-medium text-ink dark:text-night-ink whitespace-pre-wrap break-words"
+      >
+        {{ user.bio || 'Not added' }}
+      </dd>
+    </div>
+    <div class="grid grid-cols-[7rem_1fr] gap-4 py-4">
       <dt class="text-sm text-ink-soft dark:text-night-ink-soft">Member since</dt>
       <dd class="text-sm font-medium text-ink dark:text-night-ink">{{ memberSince }}</dd>
     </div>

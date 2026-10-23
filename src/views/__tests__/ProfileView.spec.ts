@@ -190,6 +190,27 @@ describe('ProfileView', () => {
     expect(wrapper.find('#profile-edit-btn').exists()).toBe(true)
     expect(wrapper.text()).toContain('Alice Updated')
   })
+
+  it('shows and edits bio', async () => {
+    const auth = useAuthStore()
+    const wrapper = await mountProfile(router)
+
+    expect(wrapper.get('#profile-bio').text()).toBe('Not added')
+
+    await wrapper.find('#profile-edit-btn').trigger('click')
+    await flushPromises()
+
+    const bioInput = wrapper.find<HTMLTextAreaElement>('#profile-bio-input')
+    expect(bioInput.exists()).toBe(true)
+    await bioInput.setValue('Music enthusiast & carpooler.')
+    expect(wrapper.text()).toContain('29 / 1000')
+
+    await wrapper.find('#profile-edit-form').trigger('submit')
+    await flushPromises()
+
+    expect(auth.user?.bio).toBe('Music enthusiast & carpooler.')
+    expect(wrapper.get('#profile-bio').text()).toBe('Music enthusiast & carpooler.')
+  })
 })
 
 describe('auth store – updateProfile', () => {
@@ -211,6 +232,21 @@ describe('auth store – updateProfile', () => {
     expect(ok).toBe(true)
     expect(auth.user?.name).toBe('New Name')
     expect(auth.user?.email).toBe('new@shotgun.app')
+  })
+
+  it('updates bio in the store', async () => {
+    const auth = useAuthStore()
+    await auth.login(DEMO_CREDENTIALS)
+
+    const ok = await auth.updateProfile({
+      name: 'Alice',
+      email: 'alice@shotgun.app',
+      phone: '',
+      bio: 'Eco-conscious driver.',
+    })
+
+    expect(ok).toBe(true)
+    expect(auth.user?.bio).toBe('Eco-conscious driver.')
   })
 
   it('returns false and sets error when email is already taken', async () => {

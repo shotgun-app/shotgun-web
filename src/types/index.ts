@@ -19,6 +19,7 @@ export interface User {
   email: string
   name: string
   phone: string | null
+  bio?: string
   joinedAt: string
   /** Path of the profile picture on the backend, null without one. Use with `apiUrl`. */
   avatarUrl?: string | null
@@ -175,6 +176,7 @@ export interface UpdateProfilePayload {
   email: string
   /** E.164 ("+38640123456"), or '' to remove the number. */
   phone: string
+  bio?: string
 }
 
 export interface ChangePasswordPayload {

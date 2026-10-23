@@ -32,7 +32,7 @@ export interface AuthApi {
   logout(): Promise<void>
   /** Resolves the user behind the session cookie, or throws ApiError(401). */
   me(): Promise<User>
-  /** Updates name and/or email for the authenticated user. */
+  /** Updates name, email, phone and/or bio for the authenticated user. */
   updateProfile(payload: UpdateProfilePayload): Promise<User>
   /** Verifies the current password; the backend ends the user's other sessions. */
   changePassword(payload: ChangePasswordPayload): Promise<void>

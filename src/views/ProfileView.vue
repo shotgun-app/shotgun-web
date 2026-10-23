@@ -153,10 +153,11 @@ onMounted(loadDriverReviews)
 
 const editing = ref(false)
 
-const form = reactive({ name: '', email: '', phone: '' })
+const form = reactive({ name: '', email: '', phone: '', bio: '' })
 const nameError = ref<string | null>(null)
 const emailError = ref<string | null>(null)
 const phoneError = ref<string | null>(null)
+const bioError = ref<string | null>(null)
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -164,6 +165,7 @@ function validate(): boolean {
   nameError.value = null
   emailError.value = null
   phoneError.value = null
+  bioError.value = null
 
   if (!form.name.trim()) {
     nameError.value = 'Name is required.'
@@ -179,7 +181,11 @@ function validate(): boolean {
     phoneError.value = 'Phone number is required.'
   }
 
-  return !nameError.value && !emailError.value && !phoneError.value
+  if (form.bio.length > 1000) {
+    bioError.value = 'Bio must be at most 1000 characters.'
+  }
+
+  return !nameError.value && !emailError.value && !phoneError.value && !bioError.value
 }
 
 watch(
@@ -200,6 +206,13 @@ watch(
   () => form.email,
   () => {
     emailError.value = null
+  },
+)
+
+watch(
+  () => form.bio,
+  () => {
+    bioError.value = null
   },
 )
 
@@ -241,9 +254,11 @@ function startEditing() {
   form.name = auth.user?.name ?? ''
   form.email = auth.user?.email ?? ''
   form.phone = auth.user?.phone ?? ''
+  form.bio = auth.user?.bio ?? ''
   nameError.value = null
   emailError.value = null
   phoneError.value = null
+  bioError.value = null
   confirmingDelete.value = false
   auth.error = null
   editing.value = true
@@ -298,6 +313,10 @@ function cancel() {
   editing.value = false
   confirmingDelete.value = false
   auth.error = null
+  nameError.value = null
+  emailError.value = null
+  phoneError.value = null
+  bioError.value = null
 }
 
 async function save() {
@@ -307,6 +326,7 @@ async function save() {
     name: form.name,
     email: form.email,
     phone: form.phone,
+    bio: form.bio,
   })
 
   if (ok) editing.value = false
@@ -846,6 +866,33 @@ async function save() {
             {{ phoneError }}
           </p>
         </div>
+
+        <label class="field">
+          <span
+            >Bio
+            <span class="font-normal text-ink-soft dark:text-night-ink-soft">(optional)</span></span
+          >
+          <textarea
+            id="profile-bio-input"
+            v-model="form.bio"
+            rows="4"
+            maxlength="1000"
+            placeholder="Tell people a little about yourself"
+            :aria-invalid="!!bioError"
+            :aria-describedby="bioError ? 'profile-bio-error' : undefined"
+          ></textarea>
+
+          <p
+            v-if="bioError"
+            id="profile-bio-error"
+            class="mt-0.5 text-xs text-red-600 dark:text-red-400"
+            role="alert"
+          >
+            {{ bioError }}
+          </p>
+
+          <span class="meta justify-self-end font-normal">{{ form.bio.length }} / 1000</span>
+        </label>
 
         <p v-if="auth.error" class="alert alert-error" role="alert">
           {{ auth.error }}

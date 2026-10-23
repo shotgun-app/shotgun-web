@@ -80,6 +80,9 @@ export const useAuthStore = defineStore('auth', () => {
       user.value.name = updated.name
       user.value.email = updated.email
       user.value.phone = updated.phone
+      if (updated.bio !== undefined) {
+        user.value.bio = updated.bio
+      }
     }
     return true
   }
