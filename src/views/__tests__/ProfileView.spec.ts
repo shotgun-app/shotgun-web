@@ -195,7 +195,7 @@ describe('ProfileView', () => {
     const auth = useAuthStore()
     const wrapper = await mountProfile(router)
 
-    expect(wrapper.get('#profile-bio').text()).toBe('Not added')
+    expect(wrapper.find('#profile-bio').exists()).toBe(false)
 
     await wrapper.find('#profile-edit-btn').trigger('click')
     await flushPromises()

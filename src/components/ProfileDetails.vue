@@ -28,13 +28,13 @@ const memberSince = computed(() =>
         {{ formatPhone(user.phone) || 'Not added' }}
       </dd>
     </div>
-    <div class="grid grid-cols-[7rem_1fr] gap-4 py-4">
+    <div v-if="user.bio" class="grid grid-cols-[7rem_1fr] gap-4 py-4">
       <dt class="text-sm text-ink-soft dark:text-night-ink-soft">Bio</dt>
       <dd
         id="profile-bio"
         class="text-sm font-medium text-ink dark:text-night-ink whitespace-pre-wrap break-words"
       >
-        {{ user.bio || 'Not added' }}
+        {{ user.bio }}
       </dd>
     </div>
     <div class="grid grid-cols-[7rem_1fr] gap-4 py-4">
