@@ -210,6 +210,15 @@
     @apply bg-accent-100 text-accent-700 dark:bg-accent-700/20 dark:text-accent-400;
   }
 
+  /* Availability: plain text with a colored dot, so it never reads as the filled green eco panel. */
+  .status {
+    @apply inline-flex items-center gap-1.5 text-xs font-medium text-ink-soft dark:text-night-ink-soft;
+  }
+
+  .status-dot {
+    @apply size-2 shrink-0 rounded-full;
+  }
+
   .badge-danger {
     @apply bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300;
   }

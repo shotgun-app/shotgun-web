@@ -46,6 +46,11 @@ const bookingError = ref<string | null>(null)
 // Computed property: automatically updates if props.trip changes
 const seatsLeft = computed(() => props.trip.seatsTotal - props.trip.seatsBooked)
 
+/** Dot color: green while seats are plentiful, amber on the last one, red when full. */
+const seatsDotClass = computed(() =>
+  seatsLeft.value <= 0 ? 'bg-red-500' : seatsLeft.value === 1 ? 'bg-amber-500' : 'bg-accent-500',
+)
+
 /** "2 of 4 seats left": shows the car's capacity as well as what is free. */
 const seatsLabel = computed(() =>
   seatsLeft.value > 0
@@ -176,14 +181,16 @@ async function submitBooking() {
           <span class="meta font-normal">/ seat</span>
         </div>
 
-        <span class="badge" :class="seatsLeft > 0 ? 'badge-success' : 'badge-danger'">
+        <span class="status">
+          <span class="status-dot" :class="seatsDotClass" aria-hidden="true"></span>
           {{ seatsLabel }}
         </span>
-        <span
-          :id="`trip-card-bags-${trip.id}`"
-          class="badge mt-1"
-          :class="bagSpace.full ? 'badge-neutral' : 'badge-success'"
-        >
+        <span :id="`trip-card-bags-${trip.id}`" class="status mt-1">
+          <span
+            class="status-dot"
+            :class="bagSpace.full ? 'bg-slate-400' : 'bg-accent-500'"
+            aria-hidden="true"
+          ></span>
           {{ bagSpace.text }}
         </span>
       </div>
