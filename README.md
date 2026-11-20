@@ -3,29 +3,14 @@
   <h1 align="center">shotgun-web</h1>
 </div>
 
-# shotgun-web
-
-Web client for **Shotgun**, a carpooling app: drivers publish trips they are
-driving anyway, passengers book the empty seats.
-
-This repo is the Vue 3 front end. The backend lives in a sibling repo,
-[`../shotgun-api`](../shotgun-api) (Go).
-
-## Status
-
-Auth and profile use the real API:
-
-- `/` - public landing page: photographic hero on the left, login/register on the right.
-- `/app` - protected area; visiting it logged out redirects to `/`. Home shows a time-based greeting and trip search.
-- `/app/profile` - name, email, phone (with country code), change password, delete account.
-- `/app/rides` and `/app/bookings` - screens exist, but the API has no ride or booking endpoints yet.
-- Top nav with a user dropdown (profile, bookings, rides, log out).
+Web client for Shotgun, a carpooling app. Built with Vue 3, TypeScript and Tailwind CSS. It talks to the Go API in [`../shotgun-api`](../shotgun-api).
 
 ## Setup
 
 Start the API and database first (see [`../shotgun-api`](../shotgun-api)):
-`docker compose up -d --build` there, it listens on http://localhost:8080.
+`docker compose up -d --build`. The API listens on http://localhost:8080.
 
+Start the web client:
 ```sh
 npm install
 npm run dev
@@ -61,23 +46,6 @@ pass:
 | `Tests`  | `npm run check:test`                          |
 
 If `Format` fails, run `npm run format` and commit the result.
-
-## Architecture
-
-```
-src/
-  services/
-    api.ts            the Api interface; `api` is the HTTP client
-    http.ts           fetch client for ../shotgun-api (sends the session cookie)
-  test/               test-only fake api + seed data (installed by vitest setup)
-  utils/              locations, greeting, dial codes, date/initials formatting
-  assets/main.css     Tailwind import, @theme design tokens, shared classes (see DESIGN.md)
-  stores/auth.ts      Pinia store: the only owner of "who is logged in"
-  router/index.ts     routes + the requiresAuth / guestOnly guard
-  views/              LandingView, AppLayout, HomeView, ProfileView, RidesView, BookingsView
-  components/         AuthPanel, TopNav, TripCard, TripSearch, UserAvatar, RouteLine, ...
-  types/index.ts      domain types shared by http and UI
-```
 
 Components never call a service directly - they go through a Pinia store, which
 calls `api` from `src/services/api.ts`.
